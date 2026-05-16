@@ -6,7 +6,8 @@ function cauldronApp() {
       { id: 'system', label: 'Design System', icon: '03' },
       { id: 'blueprint', label: 'Blueprint', icon: '04' },
       { id: 'prototype', label: 'Prototype', icon: '05' },
-      { id: 'export', label: 'Export', icon: '06' },
+      { id: 'build', label: 'Build', icon: '06' },
+      { id: 'export', label: 'Export', icon: '07' },
     ],
     activeStage: 'dump',
     busy: false,
@@ -31,6 +32,9 @@ function cauldronApp() {
     clarifyResult: null,
     blueprint: '',
     prototypeHtml: '',
+    buildSession: null,
+    buildFiles: [],
+    workspacePreviewUrl: '',
     tasteInjectionEnabled: true,
     stageModels: {
       interrogate: { provider: 'gemini', cloudModel: '', label: 'Interrogate', stage: 'interrogate' },
@@ -77,6 +81,7 @@ function cauldronApp() {
       if (this.form.designReference || this.researchResult) complete.add('system');
       if (this.blueprint) complete.add('blueprint');
       if (this.prototypeHtml) complete.add('prototype');
+      if (this.buildSession) complete.add('build');
       if (this.savedDraftId || this.handoffResult) complete.add('export');
       return complete;
     },
@@ -275,6 +280,9 @@ function cauldronApp() {
       this.clarifyResult = null;
       this.blueprint = '';
       this.prototypeHtml = '';
+      this.buildSession = null;
+      this.buildFiles = [];
+      this.workspacePreviewUrl = '';
       this.previewMode = 'prototype';
       this.status = 'New workspace ready.';
       this.toast('New workspace', 'Cleared the brew without touching saved API keys.');
@@ -440,7 +448,7 @@ This is a premium production, not a starter template. Follow these rules strictl
         this.form.brainDump.trim(),
         '',
         '# Product Direction',
-        'Private Cauldron 3 is a focused high-end website/prototype generator. The result should favour premium interactive websites over generic app scaffolding.',
+        'Cauldron OS is a focused high-end website/prototype generator. The result should favour premium interactive websites over generic app scaffolding.',
         'It should feel like Lovable + Replit + Volt if the baby was aborted, survived in a witches cauldron in a sewer, then became a professional SaaS designer.',
         '',
         tasteBlock,
@@ -538,6 +546,67 @@ This is a premium production, not a starter template. Follow these rules strictl
         this.toast('OpenCode dispatched', data.projectPath || 'Project folder created.');
         this.setStage('export');
       });
+    },
+
+    async startBuild() {
+      if (!this.blueprint.trim()) {
+        this.toast('No blueprint', 'Generate a blueprint first.', 'error');
+        return;
+      }
+      await this.withBusy('Creating build workspace...', async () => {
+        const data = await this.api('/api/build/start', {
+          method: 'POST',
+          body: JSON.stringify({
+            prompt: this.form.brainDump,
+            model: this.form.cloudModel || 'gemini-3.1-flash-lite',
+            sessionId: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+            designReference: this.form.designReference || 'none',
+            templateId: this.form.templateId,
+            projectType: this.form.projectType,
+          }),
+        });
+        this.buildSession = data;
+        this.workspacePreviewUrl = `/workspace-preview/${data.sessionId}/`;
+        this.status = `Build workspace ready: ${data.sessionId.slice(0, 8)}...`;
+        this.toast('Build started', `Workspace created at ${data.workspaceDir}`);
+        await this.loadBuildFiles();
+        this.setStage('build');
+      });
+    },
+
+    async loadBuildFiles() {
+      if (!this.buildSession?.sessionId) return;
+      await this.withBusy('Loading workspace files...', async () => {
+        const data = await this.api(`/api/build/files/${this.buildSession.sessionId}`);
+        this.buildFiles = data.files || [];
+        this.status = `${this.buildFiles.filter(f => f.type === 'file').length} files in workspace.`;
+      });
+    },
+
+    async handoffFromBuild() {
+      if (!this.buildSession?.sessionId) {
+        this.toast('No build session', 'Start a build first.', 'error');
+        return;
+      }
+      await this.withBusy('Handing off build to export...', async () => {
+        const data = await this.api('/api/handoff', {
+          method: 'POST',
+          body: JSON.stringify({
+            projectName: this.form.projectName || 'cauldron-project',
+            sessionId: this.buildSession.sessionId,
+            blueprint: this.blueprint,
+          }),
+        });
+        this.handoffResult = data;
+        this.status = 'Build exported to project folder.';
+        this.toast('Build handed off', `${data.message || 'Project folder created.'}`);
+        this.setStage('export');
+      });
+    },
+
+    previewWorkspaceFile(filePath) {
+      if (!this.buildSession?.sessionId) return '';
+      return `/workspace-preview/${this.buildSession.sessionId}/${filePath}`;
     },
 
     loadDraft(draft) {

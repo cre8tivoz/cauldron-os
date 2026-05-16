@@ -51,9 +51,9 @@ async function request(pathname, options = {}) {
     const r = await request('/api/cloud-models');
     assert.equal(r.res.status, 200);
     assert.equal(r.body.success, true);
-    assert.equal(r.body.providers.gemini.defaultModel, 'gemini-3.1-flash-lite');
+    assert.equal(r.body.providers.gemini.defaultModel, 'gemini-3.1-flash-lite-preview');
     assert.deepEqual(r.body.providers.gemini.models, [
-      'gemini-3.1-flash-lite',
+      'gemini-3.1-flash-lite-preview',
       'gemini-3.1-pro-preview',
     ]);
     assert.doesNotMatch(JSON.stringify(r.body), /gemini-2\.5/i);

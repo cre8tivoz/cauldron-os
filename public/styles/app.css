@@ -805,6 +805,35 @@ select:focus {
 .route-select { min-width: 140px; }
 .route-input { min-width: 0; flex: 1; }
 
+/* Build stage — workspace file tree */
+.ws-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  max-height: 280px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+  padding: 8px;
+}
+.ws-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  font-size: 13px;
+  font-family: var(--font-code);
+  line-height: 1.6;
+}
+.ws-file-item:hover {
+  background: rgba(193,255,0,0.06);
+  border-radius: 4px;
+}
+.ws-file-size {
+  font-family: var(--font-body);
+  opacity: 0.6;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

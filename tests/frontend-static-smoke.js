@@ -4,16 +4,14 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'index.html'), 'utf8');
 
-assert.match(html, /id="clarifyBtn"/);
-assert.match(html, /Interrogate Idea/);
-assert.match(html, /id="clarifyPanel"/);
-assert.match(html, /id="clarifyList"/);
-assert.match(html, /currentClarification/);
-assert.match(html, /clarificationAnswers/);
-assert.match(html, /function interrogateIdea/);
-assert.match(html, /fetch\('\/api\/clarify'/);
-assert.match(html, /function buildClarifiedPrompt/);
-assert.match(html, /Clarifying intake/);
-assert.match(html, /buildClarifiedPrompt\(prompt\)/);
+// New unified frontend structure
+assert.match(html, /x-data="cauldronApp/, 'AlpineJS app should be wired');
+assert.match(html, /Interrogate brief/, 'Interrogate button should exist');
+assert.match(html, /Blueprint next/, 'Blueprint button should exist');
+assert.match(html, /Build this/, 'Build stage button should exist');
+assert.match(html, /Handoff to export/, 'Handoff to export button should exist');
+assert.match(html, /Create project \+ OpenCode handoff/, 'OpenCode handoff button should exist');
+assert.match(html, /stageModels/, 'Stage model routing should be configured');
+assert.match(html, /Brain dump →/, 'Pipeline subtitle should reference brain dump');
 
-console.log('Frontend Annoying PM static smoke tests passed');
+console.log('Frontend static smoke tests passed');
