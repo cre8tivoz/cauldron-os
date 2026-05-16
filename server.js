@@ -2223,7 +2223,7 @@ app.use((req, res) => {
   try {
     await db.init();
     app.listen(PORT, () => {
-      console.log(`\n🔥 Cauldron OS v0.240 — Witch Daddy Labs (Unification Sprint 1)`);
+      console.log(`\n🔥 Cauldron OS v0.250 — Witch Daddy Labs (Unification Sprint 4)`);
       console.log(`   Merged features from public open-source + private advanced builds`);
       console.log(`   Master Brain upgrades loaded:`);
       console.log(`   • Impeccable Taste (Grendel)`);

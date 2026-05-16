@@ -18,11 +18,12 @@ Fixes #(issue)
 
 ## Testing
 
-- [ ] Manual smoke test: `npm start` → generate blueprint works
+- [ ] Manual smoke test: `npm test` passes
+- [ ] `npm start` → generate blueprint works
 - [ ] URL research still scrapes correctly
 - [ ] Design reference selector populates and fetches
+- [ ] Build mode works (start session, file listing, preview)
 - [ ] No console errors in browser DevTools
-- [ ] `scripts/validate-blueprint.js` passes on sample
 
 ---
 

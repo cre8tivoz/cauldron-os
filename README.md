@@ -1,7 +1,7 @@
 # Cauldron OS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.240-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.250-blue.svg)](CHANGELOG.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![GitHub](https://img.shields.io/badge/github-witchdaddylabs-181717.svg)](https://github.com/witchdaddylabs)
 
@@ -11,11 +11,11 @@
 
 </div>
 
-> **Bring the messy idea. Cauldron brings the structure, taste, and next steps.**
+> **Bring the messy idea. Cauldron OS 0.250 brings the structure, taste, and next steps.**
 
-Cauldron OS 0.240 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, and a live HTML + AlpineJS prototype preview.
+Cauldron OS 0.250 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, and a live HTML + AlpineJS prototype preview.
 
-New in **0.240** (Unification Sprint 1): Merged advanced private features including the XML Tool Agent System, 
+New in **0.250** (Sprint 4): Rebranded and polished — 7-stage pipeline with Build mode, sandboxed workspace, and fully rewritten docs. 
 
 It is built for hobbyists, indie builders, designers, enthusiasts, and developers who want better AI output than “make me a nice dashboard”.
 
@@ -103,9 +103,12 @@ A browser-recorded `.webm` walkthrough is also included at [`assets/demo/cauldro
 - Taste guardrails that avoid generic AI UI sludge: default Inter/Roboto, pure black, nested cards, and tired blue gradients
 - Prompts for stronger spacing, typography, component states, and micro-interactions
 
-### For contributors
+### For power users
 
-- Small Express backend and vanilla frontend
+- **XML Tool Agent System** — Multi-turn build agent that writes, edits, and runs code in a sandboxed workspace
+- **Workspace preview** — Live HTML preview of built files via `/workspace-preview/`
+- **7-stage pipeline** — Brain Dump → Interrogate → Design System → Blueprint → Prototype → Build → Export
+- **Build mode** — Sandboxed workspace with file listing and agent-driven project generation
 - Public-safe local records layer using `sql.js`
 - Clear extension points for prompts, design systems, URL research, templates, and exporters
 - MIT licensed and intentionally local-first

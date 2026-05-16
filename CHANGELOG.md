@@ -10,6 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.250.0] — 2026-05-16 — Polish & Release (Sprint 4)
+
+### Added
+- **7-Stage Pipeline UI**: Build stage added between Prototype and Export, making the full pipeline: Brain Dump → Interrogate → Design System → Blueprint → Prototype → Build → Export.
+- **Build Stage Frontend**: Start build workspace, file listing with preview links, workspace iframe preview, handoff to export flow.
+- **Workspace Preview Server**: `/workspace-preview/:sessionId/` middleware for serving built files from sandboxed workspaces.
+
+### Changed
+- **Version bump**: `package.json` → v0.250.0, startup banner → "Cauldron OS v0.250"
+- **Rebranded agent**: System prompt changed from "Private Cauldron" to "Cauldron OS"
+- **Version consistency**: Frontend UI ribbon changed from "v3.0" to "v0.250"
+- **MANIFEST.md**: Complete rewrite documenting actual v0.250 structure
+- **ARCHITECTURE.md**: Full rewrite documenting unified architecture with AlpineJS SPA, 7-stage pipeline, XML agent system, build pipeline
+- **GETTING_STARTED.md**: Fixed repo URL (`witch-daddy-labs` → `witchdaddylabs`)
+- **DESIGN_REFERENCE.md**: Fixed repo URLs throughout
+- **PUSH_GUIDE.md**: Replaced with brief deprecation notice (one-time setup, no longer relevant)
+- **All smoke tests updated**: Model version strings, frontend DOM checks, build API endpoint verification
+
+### Fixed
+- Stale frontend static smoke test (checked for old DOM IDs that no longer exist)
+- Cloud model version string test (gemini-3.1-flash-lite → gemini-3.1-flash-lite-preview)
+
 ## [0.240.0] — 2026-05-16 — Unification Sprint 1
 
 ### Added

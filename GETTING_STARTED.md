@@ -19,7 +19,7 @@ ollama --version # → 0.5+ (if using local models)
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/witch-daddy-labs/cauldron-os.git
+git clone https://github.com/witchdaddylabs/cauldron-os.git
 cd cauldron-os
 
 # 2. Install dependencies

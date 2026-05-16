@@ -95,7 +95,7 @@ We will review for completeness, clarity, and adherence to spec. Once merged, yo
 - **Provide rationale** briefly (e.g., "dark mode preferred; preserves eye comfort in long sessions").
 - **License:** By submitting, you agree to license your DESIGN.md under MIT (compatible with Cauldron OS's license). You retain copyright.
 - **No proprietary assets.** Do not include trademarked logos or proprietary brand assets. Only typography + color + spacing rules.
-- **Test the fetch** — ensure raw GitHub URL resolves correctly: `https://raw.githubusercontent.com/witch-daddy-labs/cauldron-os/main/design-systems/{handle}/DESIGN.md`
+- Test the fetch — ensure raw GitHub URL resolves correctly: `https://raw.githubusercontent.com/witchdaddylabs/cauldron-os/main/design-systems/{handle}/DESIGN.md`
 
 ---
 
@@ -114,4 +114,4 @@ See existing brands for structure:
 
 ## Questions?
 
-Open an issue at https://github.com/witch-daddy-labs/cauldron-os/issues with tag `design-system`.
+Open an issue at https://github.com/witchdaddylabs/cauldron-os/issues with tag `design-system`.
