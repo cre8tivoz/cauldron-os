@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Generated projects
+projects/
+
+# Logs
+*.log
+opencode-handoff.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cauldron-specific
+design-systems/*/
+!design-systems/.gitkeep
+cauldron-os.code-workspace
+
+# Local runtime data (never publish user drafts/history)
+data/
+*.db
+
+# Backups (local only)
+*.backup
+
+# Build artifacts
+dist/
+build/

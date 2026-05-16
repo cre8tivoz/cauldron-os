@@ -1,0 +1,76 @@
+:root {
+  color-scheme: dark;
+
+  /* Cauldron 3 palette: sewer SaaS, witch-grade */
+  --deep-950: #07080d;
+  --deep-900: #0a0c12;
+  --deep-850: #10131b;
+  --charcoal-900: #141821;
+  --charcoal-850: #1a1f2b;
+  --charcoal-800: #1f2937;
+  --charcoal-700: #2d3748;
+
+  --bone-50: #fffdf7;
+  --bone-100: #f9f6ee;
+  --bone-150: #f5f0e8;
+  --bone-250: #e7dece;
+
+  --acid-400: #d8ff4f;
+  --acid-500: #c1ff00;
+  --acid-600: #93c900;
+
+  --purple-300: #c4b5fd;
+  --purple-400: #a78bfa;
+  --purple-500: #8b5cf6;
+  --purple-650: #6040b8;
+
+  --pink-300: #f9a8d4;
+  --pink-400: #f472b6;
+  --pink-500: #ec4899;
+
+  --text-strong: #f8faf4;
+  --text: #e7ece2;
+  --text-muted: #a9b1a9;
+  --text-faint: #707a78;
+  --text-dark: #15171b;
+
+  --danger: #fb7185;
+  --warning: #fbbf24;
+  --success: #86efac;
+  --info: #67e8f9;
+
+  --font-display: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  --font-body: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius-none: 0;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --control-min: 44px;
+  --topbar: 76px;
+  --statusbar: 42px;
+
+  --border-subtle: rgba(255, 255, 255, 0.095);
+  --border-bright: rgba(193, 255, 0, 0.35);
+  --border-purple: rgba(139, 92, 246, 0.36);
+  --border-pink: rgba(244, 114, 182, 0.34);
+
+  --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-pop: 0 28px 90px rgba(0, 0, 0, 0.58), 0 0 60px rgba(193, 255, 0, 0.06);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-snap: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
