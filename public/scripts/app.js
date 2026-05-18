@@ -58,6 +58,11 @@ function cauldronApp() {
 
     answers: {},
 
+    // Pipeline Activity Log
+    pipelineLog: [],
+    pipelineView: 'preview',
+    pipelineComplete: null,
+
     get activeIndex() {
       return this.stages.findIndex(stage => stage.id === this.activeStage);
     },
@@ -475,10 +480,18 @@ This is a premium production, not a starter template. Follow these rules strictl
     async generateBlueprint() {
       if (!this.ensureApiKey('Generate blueprint + prototype', 'blueprint')) return;
 
-      await this.withBusy('Generating blueprint + prototype...', async () => {
+      // Reset pipeline log
+      this.pipelineLog = [];
+      this.pipelineComplete = null;
+      this.pipelineView = 'log';
+      this.busy = true;
+      this.status = 'Generating blueprint + prototype...';
+
+      try {
         const prompt = this.buildGenerationPrompt();
-        const data = await this.api('/api/generate', {
+        const res = await fetch('/api/generate', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...this.modelPayload('blueprint', { prompt }),
             designReference: this.form.designReference || 'none',
@@ -488,16 +501,98 @@ This is a premium production, not a starter template. Follow these rules strictl
           }),
         });
 
-        this.blueprint = data.blueprint || '';
-        this.prototypeHtml = this.extractHtml(this.blueprint);
-        this.generatedAt = new Date().toISOString();
-        this.status = `Blueprint generated with ${data.modelUsed || this.form.cloudModel || this.form.provider}.`;
-        this.toast('Blueprint brewed', this.prototypeHtml ? 'Prototype HTML extracted and loaded.' : 'Blueprint ready. No HTML block found yet.');
-        this.setStage(this.prototypeHtml ? 'prototype' : 'blueprint');
-        this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let blueprint = '';
+        let modelUsed = '';
+        let providerUsed = '';
 
-        if (this.form.autoSaveDraft) await this.saveDraft(false);
-      });
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const event = JSON.parse(line);
+
+              if (event.type === 'progress') {
+                this.addPipelineEntry(event);
+              } else if (event.type === 'error') {
+                this.addPipelineEntry({
+                  type: 'progress',
+                  step: event.step || 0,
+                  total: 4,
+                  label: event.label || event.message || 'Error',
+                  status: 'error',
+                  message: event.message,
+                });
+              } else if (event.type === 'blueprint') {
+                blueprint = event.data.blueprint || '';
+                modelUsed = event.data.modelUsed || '';
+                providerUsed = event.data.providerUsed || '';
+                this.pipelineComplete = {
+                  duration: event.duration,
+                  steps: event.steps,
+                };
+              }
+            } catch (e) {
+              // Not JSON — skip
+            }
+          }
+        }
+
+        if (blueprint) {
+          this.blueprint = blueprint;
+          this.prototypeHtml = this.extractHtml(blueprint);
+          this.generatedAt = new Date().toISOString();
+          this.status = `Blueprint generated with ${modelUsed || this.form.cloudModel || this.form.provider}.`;
+          this.toast('Blueprint brewed', this.prototypeHtml ? 'Prototype HTML extracted and loaded.' : 'Blueprint ready. No HTML block found yet.');
+          this.setStage(this.prototypeHtml ? 'prototype' : 'blueprint');
+          this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';
+          this.pipelineView = 'preview';
+
+          if (this.form.autoSaveDraft) await this.saveDraft(false);
+        }
+      } catch (err) {
+        console.error(err);
+        this.status = `Failed: ${err.message}`;
+        this.toast('Something went sideways', err.message, 'error');
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    addPipelineEntry(event) {
+      const time = new Date().toLocaleTimeString('en-AU', { hour12: false });
+      const icons = { active: '🔄', complete: '✅', error: '❌', warn: '⚠️' };
+      const entry = {
+        step: event.step,
+        total: event.total,
+        label: event.label,
+        status: event.status,
+        duration: event.duration,
+        time,
+        icon: icons[event.status] || '○',
+        message: event.message || null,
+      };
+      // If active entry for step exists, update it (don't duplicate)
+      const existing = this.pipelineLog.findIndex(e => e.step === event.step && e.status !== 'active');
+      if (event.status === 'active') {
+        // Remove previous same-step entry
+        const prev = this.pipelineLog.findIndex(e => e.step === event.step);
+        if (prev >= 0) this.pipelineLog.splice(prev, 1);
+      }
+      this.pipelineLog.push(entry);
+    },
+
+    switchPipelineView(view) {
+      this.pipelineView = view;
     },
 
     extractHtml(markdown) {

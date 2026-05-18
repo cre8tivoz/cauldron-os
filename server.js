@@ -1502,11 +1502,33 @@ app.post('/api/clarify', async (req, res) => {
   }
 });
 
-// POST /api/generate — Routes to local Ollama or cloud models
+// POST /api/generate — Routes to local Ollama or cloud models (NDJSON streaming)
 app.post('/api/generate', async (req, res) => {
+  const STAGES = [
+    { label: 'Researching design references...' },
+    { label: 'Generating Blueprint...' },
+    { label: 'Assembling output...' },
+    { label: 'Rendering preview...' },
+  ];
+
+  function emitProgress(step, total, label, status, duration) {
+    res.write(JSON.stringify({ type: 'progress', step, total, label, status, duration }) + '\n');
+  }
+
+  const startTime = Date.now();
+  let modelUsed = '';
+  let providerUsed = '';
+
   try {
     const { prompt, model, projectType = 'app', apiKey = '', designReference = 'none', researchData = null, cloudModel = '', researchUrl = '', templateId = '' } = req.body;
-    
+
+    res.setHeader('Content-Type', 'application/x-ndjson');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // ── Stage 1: Research ──
+    const t1 = Date.now();
+    emitProgress(1, 4, STAGES[0].label, 'active');
     await ensureDesignSystem(designReference);
     let systemPrompt = getSystemPrompt(projectType, designReference);
 
@@ -1517,7 +1539,7 @@ app.post('/api/generate', async (req, res) => {
         systemPrompt += `\n\n${formatTemplateForPrompt(template)}`;
       }
     }
-    
+
     // Inject dedicated research URL
     if (researchUrl) {
       systemPrompt += `\n\n## User-provided research URL\n${researchUrl}\nUse this as a visual/reference target when relevant.`;
@@ -1527,22 +1549,31 @@ app.post('/api/generate', async (req, res) => {
     if (researchData && researchData.formatted) {
       systemPrompt += `\n\n${researchData.formatted}\n\nUse these design signals to match the visual language and structure.`;
     }
-    
+
+    emitProgress(1, 4, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
+
     if (!prompt) {
-      return res.status(400).json({ error: 'Prompt required' });
+      emitProgress(2, 4, 'Validation', 'error');
+      res.write(JSON.stringify({ type: 'error', step: 2, label: 'Validation', message: 'Prompt required' }) + '\n');
+      return res.end();
     }
-    
+
+    // ── Stage 2: Generation ──
+    emitProgress(2, 4, STAGES[1].label, 'active');
+    const t2 = Date.now();
+    let blueprint = '';
+
     // Cloud models
     if (['openai', 'gemini'].includes(model)) {
       if (!apiKey) {
-        return res.status(400).json({
-          error: 'Missing API key',
-          details: `No API key was provided for ${model}. Add it in Cloud Cauldron and try again.`
-        });
+        emitProgress(2, 4, STAGES[1].label, 'error');
+        res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: `No API key was provided for ${model}. Add it in Cloud Cauldron and try again.` }) + '\n');
+        return res.end();
       }
-      
-      const modelUsed = getCloudModelName(model, projectType, cloudModel);
-      const blueprint = await callCloudModel({
+
+      modelUsed = getCloudModelName(model, projectType, cloudModel);
+      providerUsed = model;
+      blueprint = await callCloudModel({
         provider: model,
         apiKey,
         prompt,
@@ -1550,7 +1581,7 @@ app.post('/api/generate', async (req, res) => {
         projectType,
         requestedModel: cloudModel,
       });
-      
+
       db.createSession({
         sessionId: req.headers['x-session-id'] || db.generateSessionId(),
         brainDump: prompt,
@@ -1560,43 +1591,66 @@ app.post('/api/generate', async (req, res) => {
         modelUsed,
         draftId: null,
       });
-      return res.json({ success: true, blueprint, canHandoff: true, modelUsed, providerUsed: model });
-    }
-    
-    // Local models → Ollama
-    const ollamaModel = model;
-    const blueprint = await callOllamaModel({
-      model: ollamaModel,
-      prompt,
-      systemPrompt,
-      numPredict: BLUEPRINT_NUM_PREDICT,
-      temperature: 0.55,
-    });
-    
-    db.createSession({
-      sessionId: req.headers['x-session-id'] || db.generateSessionId(),
-      brainDump: prompt,
-      urlResearch: researchData || null,
-      designReference,
-      generationMode: 'local',
-      modelUsed: ollamaModel,
-      draftId: null,
-    });
-    res.json({ success: true, blueprint, canHandoff: true, modelUsed: ollamaModel, providerUsed: 'ollama' });
-    
-  } catch (err) {
-    console.error('Generate error:', err);
-    
-    if (err.name === 'AbortError') {
-      return res.status(504).json({
-        error: 'Generation timed out',
-        details: ['openai', 'gemini'].includes(model)
-          ? `Cloud model did not respond within ${CLOUD_TIMEOUT_MS / 1000}s.`
-          : `Ollama did not respond within ${OLLAMA_TIMEOUT_MS / 1000}s. Try a shorter prompt or a smaller model output.`
+    } else {
+      // Local models → Ollama
+      const ollamaModel = model;
+      modelUsed = ollamaModel;
+      providerUsed = 'ollama';
+      blueprint = await callOllamaModel({
+        model: ollamaModel,
+        prompt,
+        systemPrompt,
+        numPredict: BLUEPRINT_NUM_PREDICT,
+        temperature: 0.55,
+      });
+
+      db.createSession({
+        sessionId: req.headers['x-session-id'] || db.generateSessionId(),
+        brainDump: prompt,
+        urlResearch: researchData || null,
+        designReference,
+        generationMode: 'local',
+        modelUsed: ollamaModel,
+        draftId: null,
       });
     }
-    
-    res.status(500).json({ error: 'Generation failed', details: err.message });
+
+    emitProgress(2, 4, STAGES[1].label, 'complete', +(Date.now() - t2).toFixed(0) / 1000);
+
+    // ── Stage 3: Assembly ──
+    const t3 = Date.now();
+    emitProgress(3, 4, STAGES[2].label, 'active');
+    // Assembly is synchronous post-processing; blueprint already assembled above
+    emitProgress(3, 4, STAGES[2].label, 'complete', +(Date.now() - t3).toFixed(0) / 1000);
+
+    // ── Stage 4: Rendering ──
+    const t4 = Date.now();
+    emitProgress(4, 4, STAGES[3].label, 'active');
+    const totalDuration = +(Date.now() - startTime).toFixed(0) / 1000;
+    emitProgress(4, 4, STAGES[3].label, 'complete', +(Date.now() - t4).toFixed(0) / 1000);
+
+    // ── Final blueprint event ──
+    res.write(JSON.stringify({
+      type: 'blueprint',
+      data: { success: true, blueprint, canHandoff: true, modelUsed, providerUsed },
+      duration: totalDuration,
+      steps: 4,
+    }) + '\n');
+    res.end();
+
+  } catch (err) {
+    console.error('Generate error:', err);
+
+    if (err.name === 'AbortError') {
+      const msg = ['openai', 'gemini'].includes(req.body.model)
+        ? `Cloud model did not respond within ${CLOUD_TIMEOUT_MS / 1000}s.`
+        : `Ollama did not respond within ${OLLAMA_TIMEOUT_MS / 1000}s. Try a shorter prompt or a smaller model output.`;
+      res.write(JSON.stringify({ type: 'error', step: 2, label: 'Generating Blueprint...', message: msg }) + '\n');
+      return res.end();
+    }
+
+    res.write(JSON.stringify({ type: 'error', step: 0, label: 'Generation', message: err.message }) + '\n');
+    res.end();
   }
 });
 
