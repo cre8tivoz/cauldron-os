@@ -455,8 +455,19 @@
               </div>
             </div>
 
+            <div x-show="blueprint" style="margin-top: 16px;">
+              <label for="blueprintEditor" style="display:block;margin-bottom:6px;font-weight:600;color:var(--acid-400);">Blueprint Markdown (editable)</label>
+              <textarea
+                id="blueprintEditor"
+                x-model="blueprint"
+                style="width:100%;min-height:300px;font-family:var(--font-code);font-size:13px;line-height:1.6;padding:12px;background:rgba(13,13,15,0.8);color:var(--text);border:1px solid rgba(183,148,246,0.25);border-radius:4px;resize:vertical;"
+                placeholder="Blueprint will appear here after generation..."
+              ></textarea>
+            </div>
+
             <div class="button-row">
-              <button class="btn btn-primary" type="button" @click="generateBlueprint" :disabled="busy">Generate blueprint + prototype</button>
+              <button class="btn btn-primary" type="button" @click="generateBlueprint" :disabled="busy">Generate Blueprint</button>
+              <button class="btn btn-accent" type="button" @click="generatePrototype" :disabled="busy || !blueprint.trim()" x-show="blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;">Generate Prototype from this Blueprint</button>
               <button class="btn btn-ghost" type="button" @click="saveDraft" :disabled="!blueprint || busy">Save draft</button>
             </div>
           </section>
@@ -464,6 +475,10 @@
           <section class="stage-card" x-show="activeStage === 'prototype'" x-transition.opacity>
             <h3>Prototype.</h3>
             <p class="stage-intro">The prototype should prove the visual direction and interaction model before the build stage gets the keys to the machinery.</p>
+            <div class="callout" x-show="!prototypeHtml" style="margin-top:12px;">
+              <strong>No prototype yet.</strong>
+              <span>Go to the <a href="#" @click.prevent="setStage('blueprint')" style="color:var(--acid-400);">Blueprint stage</a> and click \"Generate Prototype from this Blueprint\" after reviewing the blueprint.</span>
+            </div>
             <div class="button-row">
               <button class="btn btn-purple" type="button" @click="previewMode = 'prototype'">View prototype</button>
               <button class="btn btn-ghost" type="button" @click="previewMode = 'blueprint'">View blueprint</button>

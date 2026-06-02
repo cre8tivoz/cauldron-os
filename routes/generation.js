@@ -11,7 +11,7 @@ function registerGenerationRoutes(app, deps) {
   const {
     db, TEMPLATES, DESIGN_SYSTEMS, workspace, designSystemCache,
     getSystemPrompt, getTemplate, formatTemplateForPrompt, ensureDesignSystem,
-    CLARIFY_SYSTEM_PROMPT, CLARIFY_NUM_PREDICT, BLUEPRINT_NUM_PREDICT,
+    CLARIFY_SYSTEM_PROMPT, PROTOTYPE_SYSTEM_PROMPT, CLARIFY_NUM_PREDICT, BLUEPRINT_NUM_PREDICT,
     OLLAMA_BASE_URL, OLLAMA_TAGS_URL, CLOUD_TIMEOUT_MS,
     activeBuildControllers, buildSessions,
     safeProjectName, getProjectPath, getProjectsDir, buildResumePrompt, buildOpencodeArgs,
@@ -309,6 +309,123 @@ function registerGenerationRoutes(app, deps) {
     } catch (err) {
       console.error('Refine error:', err);
       res.status(500).json({ error: 'Refinement failed', details: err.message });
+    }
+  });
+
+  app.post('/api/generate-prototype', async (req, res) => {
+    const { PROTOTYPE_SYSTEM_PROMPT } = deps;
+
+    const STAGES = [
+      { label: 'Analyzing blueprint...' },
+      { label: 'Generating prototype...' },
+    ];
+
+    function emitProgress(step, total, label, status, duration) {
+      res.write(JSON.stringify({ type: 'progress', step, total, label, status, duration }) + '\n');
+    }
+
+    const startTime = Date.now();
+
+    try {
+      const { blueprint, designReference = 'none', templateId = '', model, cloudModel = '', apiKey = '', projectType = 'site' } = req.body;
+
+      if (!blueprint || !blueprint.trim()) {
+        return res.status(400).json({ error: 'Blueprint required', details: 'Generate a blueprint first before creating a prototype.' });
+      }
+
+      res.setHeader('Content-Type', 'application/x-ndjson');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      // Stage 1: Research
+      const t1 = Date.now();
+      emitProgress(1, 2, STAGES[0].label, 'active');
+      const designSystemContent = await ensureDesignSystem(designReference);
+      let systemPrompt = PROTOTYPE_SYSTEM_PROMPT.replace('{blueprint text goes here}', blueprint);
+
+      if (designSystemContent && designSystemContent.trim()) {
+        const truncated = designSystemContent.length > 16000
+          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
+          : designSystemContent;
+        systemPrompt += '\n\n## Target Design System Content\n' + truncated + '\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.';
+      }
+
+      if (templateId) {
+        const template = getTemplate(templateId);
+        if (template) {
+          systemPrompt += '\n\n' + formatTemplateForPrompt(template);
+        }
+      }
+
+      emitProgress(1, 2, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
+
+      // Stage 2: Generate
+      const t2 = Date.now();
+      emitProgress(2, 2, STAGES[1].label, 'active');
+      let prototypeHtml = '';
+
+      const prototypePrompt = '## Blueprint\n' + blueprint + '\n\nConvert this blueprint into a complete, polished HTML prototype. Output ONLY the HTML inside a ```html fenced code block.';
+
+      if (['openai', 'gemini'].includes(model)) {
+        if (!apiKey) {
+          emitProgress(2, 2, STAGES[1].label, 'error');
+          res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No API key was provided for ' + model + '.' }) + '\n');
+          return res.end();
+        }
+
+        const raw = await callCloudModel({
+          provider: model,
+          apiKey,
+          prompt: prototypePrompt,
+          systemPrompt,
+          projectType,
+          requestedModel: cloudModel,
+        });
+
+        const htmlMatch = raw.match(/```html\s*([\s\S]*?)```/i);
+        prototypeHtml = htmlMatch ? htmlMatch[1].trim() : '';
+      } else {
+        const raw = await callOllamaModel({
+          model,
+          prompt: prototypePrompt,
+          systemPrompt,
+          numPredict: BLUEPRINT_NUM_PREDICT,
+          temperature: 0.55,
+        });
+
+        const htmlMatch = raw.match(/```html\s*([\s\S]*?)```/i);
+        prototypeHtml = htmlMatch ? htmlMatch[1].trim() : '';
+      }
+
+      if (!prototypeHtml) {
+        emitProgress(2, 2, STAGES[1].label, 'error');
+        res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No HTML prototype was generated. Try again or adjust the blueprint.' }) + '\n');
+        return res.end();
+      }
+
+      emitProgress(2, 2, STAGES[1].label, 'complete', +(Date.now() - t2).toFixed(0) / 1000);
+
+      const totalDuration = +(Date.now() - startTime).toFixed(0) / 1000;
+
+      res.write(JSON.stringify({
+        type: 'prototype',
+        data: { html: prototypeHtml, success: true },
+        duration: totalDuration,
+      }) + '\n');
+      res.end();
+    } catch (err) {
+      console.error('Generate prototype error:', err);
+
+      if (err.name === 'AbortError') {
+        const msg = ['openai', 'gemini'].includes(req.body.model)
+          ? 'Cloud model did not respond within timeout.'
+          : 'Ollama did not respond within timeout.';
+        res.write(JSON.stringify({ type: 'error', step: 2, label: 'Generating Prototype...', message: msg }) + '\n');
+        return res.end();
+      }
+
+      res.write(JSON.stringify({ type: 'error', step: 0, label: 'Prototype Generation', message: err.message }) + '\n');
+      res.end();
     }
   });
 

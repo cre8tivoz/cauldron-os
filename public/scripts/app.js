@@ -549,12 +549,103 @@ This is a premium production, not a starter template. Follow these rules strictl
 
         if (blueprint) {
           this.blueprint = blueprint;
-          this.prototypeHtml = this.extractHtml(blueprint);
           this.generatedAt = new Date().toISOString();
           this.status = `Blueprint generated with ${modelUsed || this.form.cloudModel || this.form.provider}.`;
-          this.toast('Blueprint brewed', this.prototypeHtml ? 'Prototype HTML extracted and loaded.' : 'Blueprint ready. No HTML block found yet.');
-          this.setStage(this.prototypeHtml ? 'prototype' : 'blueprint');
-          this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';
+          this.toast('Blueprint brewed', 'Blueprint ready. Review and edit, then generate the prototype.');
+          this.setStage('blueprint');
+          this.previewMode = 'blueprint';
+          this.pipelineView = 'preview';
+
+          if (this.form.autoSaveDraft) await this.saveDraft(false);
+        }
+      } catch (err) {
+        console.error(err);
+        this.status = `Failed: ${err.message}`;
+        this.toast('Something went sideways', err.message, 'error');
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    async generatePrototype() {
+      if (!this.blueprint.trim()) {
+        this.toast('No blueprint', 'Generate a blueprint first.', 'error');
+        return;
+      }
+
+      this.pipelineLog = [];
+      this.pipelineComplete = null;
+      this.pipelineView = 'log';
+      this.busy = true;
+      this.status = 'Generating prototype from blueprint...';
+
+      try {
+        const res = await fetch('/api/generate-prototype', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            blueprint: this.blueprint,
+            designReference: this.form.designReference || 'none',
+            templateId: this.form.templateId,
+            model: this.stageModels.blueprint?.provider || this.form.provider,
+            cloudModel: this.stageModels.blueprint?.cloudModel || this.form.cloudModel,
+            apiKey: this.form.apiKey,
+            projectType: this.form.projectType,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.details || errData.error || 'Prototype generation failed');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const event = JSON.parse(line);
+
+              if (event.type === 'progress') {
+                this.addPipelineEntry(event);
+              } else if (event.type === 'error') {
+                this.addPipelineEntry({
+                  type: 'progress',
+                  step: event.step || 0,
+                  total: 2,
+                  label: event.label || event.message || 'Error',
+                  status: 'error',
+                  message: event.message,
+                });
+              } else if (event.type === 'prototype') {
+                this.prototypeHtml = event.data.html || '';
+                this.pipelineComplete = {
+                  duration: event.duration,
+                  steps: 2,
+                };
+              }
+            } catch (e) {
+              // Not JSON — skip
+            }
+          }
+        }
+
+        if (this.prototypeHtml) {
+          this.generatedAt = new Date().toISOString();
+          this.status = 'Prototype generated from blueprint.';
+          this.toast('Prototype ready', 'Prototype HTML generated from your blueprint.');
+          this.setStage('prototype');
+          this.previewMode = 'prototype';
           this.pipelineView = 'preview';
 
           if (this.form.autoSaveDraft) await this.saveDraft(false);

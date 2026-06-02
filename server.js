@@ -320,6 +320,22 @@ Return JSON only:
 
 Ask no more than 8 questions. Focus on: users, workflows, scope, constraints, success criteria.`;
 
+const PROTOTYPE_SYSTEM_PROMPT = `You are a senior front-end developer with impeccable taste.
+Your job is to convert a product blueprint into a polished, working HTML prototype.
+
+## Instructions
+- Read the blueprint below carefully — this is your source of truth
+- Produce a complete, self-contained HTML page with embedded CSS
+- Use AlpineJS (via CDN) for any interactivity
+- Follow the selected design reference for visual styling
+- Output only the HTML inside a \`\`\`html fenced code block
+- Do NOT produce another planning document — only the prototype HTML
+- Respect the blueprint's structure: sections, components, features, flow
+
+## Blueprint
+{blueprint text goes here}
+`;
+
 function getSystemPrompt(projectType = 'app', designReference = '') {
   let base = projectType === 'site' ? SITE_SYSTEM_PROMPT : APP_SYSTEM_PROMPT;
 
@@ -733,6 +749,7 @@ const deps = {
   formatTemplateForPrompt,
   ensureDesignSystem,
   CLARIFY_SYSTEM_PROMPT,
+  PROTOTYPE_SYSTEM_PROMPT,
   CLARIFY_NUM_PREDICT,
   BLUEPRINT_NUM_PREDICT,
   OLLAMA_BASE_URL,

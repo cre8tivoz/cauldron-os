@@ -22,76 +22,78 @@ Grok's old refactor doc was mostly structural line-count bullshit. This plan cov
 | server.js reduced 2298 → 686 lines | Verified |
 | Design system injection fix (ensureDesignSystem return value now used) | Done + committed |
 | QW-1: Refero UUID audit (all 14 checked against live API) | Done + committed |
-| QW-2: Replace orphan styles + write rich prompt guidance | Done + committed |
+| QW-2: Replace orphan styles + write rich prompt guidance for each style | Done + committed |
 | QW-3: Update getSystemPrompt() to use promptGuidance | Done + committed |
-| All 5 smoke tests passing | Verified |
+| QW-4: Trim regular design system list (10 distinct entries kept) | Done + committed |
+| QW-5: Handoff smoke test (9 tests + bug fix) | Done + committed |
+| All 6 smoke test suites passing | Verified |
 
 ---
 
-## Quick Wins (Remaining)
+## Remaining: Refero Deep Search
 
-### QW-4: Trim Regular Design System List
-**Problem:** 11 regular design systems (none, cursor, vercel, lovable, raycast, linear, stripe, notion, apple, figma, supabase, webflow, opencode) — some are redundant and produce similar outputs.
+**Problem:** Users pick from a hardcoded list of 14 Refero styles. Better: let them describe what they want (or paste a URL) and search the Refero API for matching styles.
 
-**Steps:**
-1. Review the 11 names + their fetched DESIGN.md content
-2. Flag near-duplicates (Cursor/Linear/Webflow all similar dark-mode SaaS)
-3. Keep 6-8 strong distinct ones, remove the rest
-4. Update DESIGN_SYSTEMS in server.js
-
-**Definition of Done:** 6-8 distinct regular design systems, each producing visibly different output.
-
-### QW-5: Handoff Smoke Test
-**Problem:** Grok claimed handoff was "fundamentally broken" but we haven't verified.
-
-**Steps:**
-1. Hit POST /api/handoff with test blueprint
-2. Verify files created on disk (blueprint.md, prototype.html, .opencode/config.md)
-3. Check draft record created in DB
-4. Document any breakage
-
-**Definition of Done:** Handoff verified working or specific bugs documented.
-
----
-
-## Medium-Term Feature: Refero Deep Search
-
-**API findings (2026-06-02):**
+**API Research (2026-06-02):**
 - `https://styles.refero.design/api/styles` returns paginated JSON with 20 unique styles
-- Each entry has: id (UUID), siteName, url, screenshotUrl, colorScheme, colors[], fonts[], northStar, managementSignals
+- Each entry: id (UUID), siteName, url, screenshotUrl, colorScheme, colors[], fonts[], northStar
 - Pagination via `cursor` and `nextCursor` params
-- `q=` parameter accepted but doesn't appear to filter results
-- Screenshot images available at `https://images.refero.design/...`
+- `q=` parameter accepted but doesn't filter (returns same results)
+- Screenshot images at `https://images.refero.design/...`
 
-**Feature design:**
-1. **Backend:** New endpoint `GET /api/refero-search?q=<query>` that:
-   - Proxies to Refero API
-   - Returns matching style entries with UUID, name, screenshot URL, color data
-   - Caches results for responsiveness
-2. **Frontend:** Search input in design system selector that:
-   - Shows results as selectable cards (name + color swatches + preview thumbnail)
-   - Selected style flows into existing design reference injection
-   - If no results, falls back to the hardcoded list
+### Frontend: Search UI in Design System Selector
 
-**Pre-requisites:** QW-1 (done) — we know the API works and has useful data.
+Replace the current static dropdown with a hybrid component:
 
-**Estimated effort:** 3-5 hours (simple proxy endpoint + frontend search component)
+1. **Search input** — text field at top of design system picker
+2. **Results display** — cards showing: name, URL, color swatches, screenshot thumbnail
+3. **Selection** — clicking a result sets it as the active design reference (same as picking from dropdown)
+4. **Fallback** — if no search results or user clears the search, show the hardcoded list as before
+
+### Backend: Refero Search Proxy
+
+New endpoint in `routes/models-design.js`:
+
+- `GET /api/refero-search?q=<query>` — proxies to Refero API and returns matching styles
+- Optional caching layer (in-memory, TTL ~5min) so repeated searches don't hammer the Refero API
+
+### Implementation Notes
+
+- The search is a proxy lookup, not AI-powered. The Refero API has ~20 total styles, so results are limited.
+- Screenshot URLs can be used directly (they're public CDN URLs).
+- Color swatches can be rendered from the `colors[]` array in the API response.
+- Design system config already carries `__refero: true` and `uuid` — selected search result just needs to map to the same format.
+
+### Estimated Effort
+
+- **Backend:** 30-45 min (simple proxy endpoint)
+- **Frontend:** 2-3 hours (search input + card results + integration with existing design system selector)
+- **Total:** ~3-4 hours
 
 ---
 
-## Success Criteria (Quick Wins Complete)
+## What's Next After Deep Search
 
-- Refero style list is 14 current, working API styles with rich prompt guidance ✓
-- Each active Refero style produces visibly different output
-- Regular design system list trimmed to distinct, strong options
-- Handoff verified working
-- All smoke tests still passing ✓
+The biggest remaining product issue (per the old workflow restoration section of Grok's doc) is:
+
+### Potential Future: Split Blueprint / Prototype Generation
+
+**Problem:** Single "Generate blueprint + prototype" button means the user never sees or edits the blueprint before it becomes a website. Outputs feel same-y because the model has to do everything in one shot.
+
+**Approach:**
+1. "Generate Blueprint" produces markdown-planning-document only
+2. Blueprint displayed as editable text
+3. "Generate Prototype from this Blueprint" button appears after blueprint exists
+4. Prototype step reads current (possibly edited) blueprint + design reference
+5. Results in more diverse, user-directed output
+
+**Status:** Scoped but not started. This is a larger feature touching both frontend (UI flow) and backend (new endpoint or split logic).
 
 ---
 
 ## Out of Scope (For Now)
 
-- Splitting blueprint/prototype generation (bigger feature, separate plan)
 - Log area CSS cleanup (frontend polish, low priority)
 - Model selection UX improvements (nice-to-have, low priority)
 - 3-panel layout revival (Billy: explicitly off the table)
+- Performance optimization (not currently a bottleneck)
