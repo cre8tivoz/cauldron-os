@@ -28,6 +28,23 @@ const { findNextAction } = require('./lib/xml-parser');
 const workspace = require('./lib/workspace');
 const { runTool, toolsSystemPrompt } = require('./lib/tools');
 const { generateWithTools, buildSystemPrompt } = require('./lib/agent-loop');
+const {
+  CLOUD_MODELS,
+  getCloudModelName,
+  extractJsonObject,
+  normaliseClarifyResult,
+  normaliseOpenAICompatibleChatUrl,
+  modelRequiresDefaultTemperature,
+  buildChatPayload,
+  inferProviderFromModel,
+  callOllamaModel,
+  callCloudModel,
+} = require('./lib/model-client');
+const {
+  scrapeURLFast,
+  scrapeRenderedURL,
+  formatResearchForPrompt,
+} = require('./lib/research');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -278,80 +295,6 @@ function getSystemPrompt(projectType = 'app', designReference = '') {
   return base;
 }
 
-const CLOUD_MODELS = {
-  gemini: {
-    defaultModel: 'gemini-3.1-flash-lite-preview',
-    models: ['gemini-3.1-flash-lite-preview', 'gemini-3.1-pro-preview'],
-    labels: {
-      'gemini-3.1-flash-lite-preview': 'Gemini Flash 3.1 Lite Preview',
-      'gemini-3.1-pro-preview': 'Gemini Pro 3.1 Preview',
-    },
-  },
-  openai: {
-    defaultModel: 'gpt-5.4',
-    models: ['gpt-5.4'],
-    labels: {
-      'gpt-5.4': 'GPT-5.4',
-    },
-  },
-};
-
-function getCloudModelName(provider, _projectType = 'app', requestedModel = '') {
-  const config = CLOUD_MODELS[provider];
-  if (!config) throw new Error(`Unsupported cloud provider: ${provider}`);
-  if (requestedModel && config.models.includes(requestedModel)) return requestedModel;
-  return config.defaultModel;
-}
-
-function extractJsonObject(text = '') {
-  const trimmed = String(text).trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {}
-
-  const first = trimmed.indexOf('{');
-  const last = trimmed.lastIndexOf('}');
-  if (first !== -1 && last !== -1 && last > first) {
-    return JSON.parse(trimmed.slice(first, last + 1));
-  }
-
-  throw new Error('Model did not return a JSON object');
-}
-
-function normaliseClarifyResult(raw) {
-  const fallback = {
-    questions: [],
-    assumptions: [],
-    redFlags: [],
-    suggestedScope: [],
-  };
-
-  const result = { ...fallback, ...(raw || {}) };
-  result.questions = Array.isArray(result.questions)
-    ? result.questions.slice(0, 8).map((q, index) => {
-        const id = String(q?.id || `question-${index + 1}`)
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '') || `question-${index + 1}`;
-        return {
-          id,
-          label: String(q?.label || q?.question || '').trim(),
-          why: String(q?.why || '').trim(),
-        };
-      }).filter(q => q.label)
-    : [];
-
-  result.assumptions = Array.isArray(result.assumptions) ? result.assumptions.slice(0, 4).map(String) : [];
-  result.redFlags = Array.isArray(result.redFlags) ? result.redFlags.slice(0, 4).map(String) : [];
-  result.suggestedScope = Array.isArray(result.suggestedScope) ? result.suggestedScope.slice(0, 5).map(String) : [];
-
-  if (result.questions.length === 0) {
-    throw new Error('Model returned no clarifying questions');
-  }
-
-  return result;
-}
-
 // ─── 2. DESIGN REFERENCE FETCHER ────────────────────────────────────────────
 function fetchDesignSystem(repo, callback) {
   const url = `${DESIGN_SYSTEM_SOURCE}/${repo}/DESIGN.md`;
@@ -384,130 +327,6 @@ function ensureDesignSystem(system) {
       resolve(content);
     });
   });
-}
-
-// ─── 3. URL RESEARCH SCRAPER (Grendel) ───────────────────────────────────────
-function scrapeURL(targetUrl, callback) {
-  try {
-    new URL(targetUrl);
-  } catch {
-    return callback(new Error('Invalid URL'), null);
-  }
-
-  const protocol = targetUrl.startsWith('https') ? https : http;
-  
-  protocol.get(targetUrl, (res) => {
-    let raw = '';
-    res.on('data', chunk => raw += chunk);
-    res.on('end', async () => {
-      try {
-        const findings = await analyseHTML(raw, targetUrl);
-        callback(null, findings);
-      } catch (err) {
-        callback(err, null);
-      }
-    });
-  }).on('error', callback);
-}
-
-async function analyseHTML(html, baseUrl) {
-  const findings = {
-    url: baseUrl,
-    fonts: [],
-    colors: {},
-    cssVars: {},
-    structureNotes: []
-  };
-
-  const fontLinks = html.match(/fonts\.googleapis\.com[^"'>]*/g) || [];
-  findings.fonts = fontLinks.map(link => {
-    const match = link.match(/family=([^:&]+)/);
-    return match ? match[1] : null;
-  }).filter(Boolean);
-
-  const customProps = html.match(/--[\w-]+\s*:\s*[^;]+/g) || [];
-  findings.cssVars = {};
-  customProps.forEach(prop => {
-    const [name, value] = prop.split(':').map(s => s.trim());
-    if (name && value) findings.cssVars[name] = value;
-  });
-
-  const colors = html.match(/#[0-9A-Fa-f]{3,6}|rgb\([^)]+\)|hsl\([^)]+\)/g) || [];
-  findings.colors = [...new Set(colors)].slice(0, 20);
-
-  if (html.includes('class="container"') || html.includes('class="wrapper"')) {
-    findings.structureNotes.push('Uses container/wrapper layout');
-  }
-  if (html.includes('flex') || html.includes('grid')) {
-    findings.structureNotes.push('Uses modern CSS layout (flex/grid)');
-  }
-  if (html.includes('border-radius')) {
-    findings.structureNotes.push('Rounded corners present');
-  }
-  if (html.includes('box-shadow')) {
-    findings.structureNotes.push('Applies drop shadows');
-  }
-
-  return findings;
-}
-
-function formatResearchForPrompt(findings) {
-  if (!findings) return '';
-  
-  const summary = [];
-  summary.push(`## Research Findings from ${findings.url}`);
-  
-  if (findings.fonts.length) {
-    summary.push(`\n**Typography:** ${findings.fonts.join(', ')}`);
-  }
-  
-  if (Object.keys(findings.cssVars).length) {
-    summary.push('\n**CSS Variables:**');
-    Object.entries(findings.cssVars).forEach(([k, v]) => {
-      summary.push(`  - ${k}: ${v}`);
-    });
-  }
-  
-  if (findings.colors.length) {
-    summary.push(`\n**Color Palette:** ${findings.colors.join(', ')}`);
-  }
-  
-  if (findings.structureNotes.length) {
-    summary.push(`\n**Layout Patterns:** ${findings.structureNotes.join('; ')}`);
-  }
-  
-  return summary.join('\n');
-}
-
-// ─── Helper Functions for Build/Pipeline Routes ──────────────────────────────
-
-function normaliseOpenAICompatibleChatUrl(baseUrl = '') {
-  const raw = String(baseUrl || '').trim() || OPENAI_BASE_URL;
-  if (raw.endsWith('/chat/completions')) return raw;
-  return raw.replace(/\/$/, '').replace(/\/v1$/, '/v1') + '/chat/completions';
-}
-
-function modelRequiresDefaultTemperature(model = '') {
-  const id = String(model || '').toLowerCase();
-  return id.startsWith('gpt-5') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4');
-}
-
-function buildChatPayload({ model, messages, temperature, stream = false }) {
-  const payload = { model, messages };
-  if (stream) payload.stream = true;
-  if (!modelRequiresDefaultTemperature(model)) payload.temperature = temperature;
-  return payload;
-}
-
-function inferProviderFromModel(model = '') {
-  const id = String(model || '').toLowerCase();
-  if (id.startsWith('gemini-')) return 'gemini';
-  if (id.startsWith('gpt-') || id.startsWith('o') || id.startsWith('chatgpt-')) return 'openai';
-  if (id.startsWith('claude-') || id.startsWith('anthropic.')) return 'anthropic';
-  if (id.startsWith('bedrock-') || id.includes('.claude-')) return 'bedrock';
-  if (id.startsWith('nvidia/') || id.startsWith('nv-')) return 'nim';
-  if (id.startsWith('glm-') || id.startsWith('qwen') || id.startsWith('kimi') || id.startsWith('deepseek')) return 'openai';
-  return 'openai';
 }
 
 function safeProjectName(name) {
@@ -738,215 +557,6 @@ function buildOpencodeArgs(prompt, projectPath) {
 
 function commandPreview(command, args) {
   return [command, ...args.map(arg => /\s/.test(arg) ? JSON.stringify(arg) : arg)].join(' ');
-}
-
-// ─── 3. URL RESEARCH SCRAPER (Grendel) ───────────────────────────────────────
-function validateHttpUrl(targetUrl) {
-  const parsed = new URL(targetUrl);
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('Only http/https URLs are supported');
-  return parsed;
-}
-
-function scrapeURL(targetUrl, callback) {
-  // Quick URL validation
-  let parsed;
-  try {
-    parsed = validateHttpUrl(targetUrl);
-  } catch {
-    return callback(new Error('Invalid URL'), null);
-  }
-
-  const protocol = parsed.protocol === 'https:' ? https : http;
-  
-  protocol.get(targetUrl, (res) => {
-    let raw = '';
-    res.on('data', chunk => raw += chunk);
-    res.on('end', async () => {
-      try {
-        const findings = await analyseHTML(raw, targetUrl);
-        callback(null, findings);
-      } catch (err) {
-        callback(err, null);
-      }
-    });
-  }).on('error', callback);
-}
-
-async function analyseHTML(html, baseUrl) {
-  // Very lightweight extraction — no heavy DOM libs needed
-  const findings = {
-    mode: 'fast',
-    url: baseUrl,
-    fonts: [],
-    colors: {},
-    cssVars: {},
-    structureNotes: []
-  };
-
-  // Extract fonts from Google Fonts or inline style links
-  const fontLinks = html.match(/fonts\.googleapis\.com[^"'>]*/g) || [];
-  findings.fonts = fontLinks.map(link => {
-    const match = link.match(/family=([^:&]+)/);
-    return match ? match[1] : null;
-  }).filter(Boolean);
-
-  // Extract CSS custom properties (--*)
-  const customProps = html.match(/--[\w-]+\s*:\s*[^;]+/g) || [];
-  findings.cssVars = {};
-  customProps.forEach(prop => {
-    const [name, value] = prop.split(':').map(s => s.trim());
-    if (name && value) findings.cssVars[name] = value;
-  });
-
-  // Color extraction (hex/rgb/hsl)
-  const colors = html.match(/#[0-9A-Fa-f]{3,6}|rgb\([^)]+\)|hsl\([^)]+\)/g) || [];
-  findings.colors = [...new Set(colors)].slice(0, 20); // dedupe, top 20
-
-  // Structure hints
-  if (html.includes('class="container"') || html.includes('class="wrapper"')) {
-    findings.structureNotes.push('Uses container/wrapper layout');
-  }
-  if (html.includes('flex') || html.includes('grid')) {
-    findings.structureNotes.push('Uses modern CSS layout (flex/grid)');
-  }
-  if (html.includes('border-radius')) {
-    findings.structureNotes.push('Rounded corners present');
-  }
-  if (html.includes('box-shadow')) {
-    findings.structureNotes.push('Applies drop shadows');
-  }
-
-  return findings;
-}
-
-function rgbToHex(value) {
-  const match = String(value || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-  if (!match) return value;
-  return `#${[match[1], match[2], match[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('')}`;
-}
-
-function researchAssetPaths(targetUrl) {
-  const hash = crypto.createHash('sha1').update(`${targetUrl}-${Date.now()}`).digest('hex').slice(0, 16);
-  const dir = path.join(db.paths.DATA_DIR, 'research', 'screenshots');
-  fs.mkdirSync(dir, { recursive: true });
-  return {
-    screenshotPath: path.join(dir, `${hash}.png`),
-    screenshotUrl: `/research-assets/screenshots/${hash}.png`,
-  };
-}
-
-async function scrapeRenderedURL(targetUrl) {
-  validateHttpUrl(targetUrl);
-  const { screenshotPath, screenshotUrl } = researchAssetPaths(targetUrl);
-  const browser = await chromium.launch({ headless: true });
-  try {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 1200 }, deviceScaleFactor: 1 });
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
-    await page.screenshot({ path: screenshotPath, fullPage: false });
-
-    const rendered = await page.evaluate(() => {
-      const visible = Array.from(document.querySelectorAll('body *')).filter(el => {
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
-      }).slice(0, 160);
-      const pick = (property) => [...new Set(visible.map(el => window.getComputedStyle(el)[property]).filter(Boolean))].slice(0, 30);
-      const rootStyle = window.getComputedStyle(document.documentElement);
-      const cssVars = {};
-      for (const name of rootStyle) {
-        if (name.startsWith('--')) cssVars[name] = rootStyle.getPropertyValue(name).trim();
-      }
-      const structureNotes = [];
-      const bodyText = document.body?.innerText || '';
-      if (document.querySelector('header, nav')) structureNotes.push('Rendered header/navigation present');
-      if (document.querySelector('main')) structureNotes.push('Uses semantic main content area');
-      if (visible.some(el => ['grid', 'inline-grid'].includes(window.getComputedStyle(el).display))) structureNotes.push('Rendered grid layout detected');
-      if (visible.some(el => window.getComputedStyle(el).display.includes('flex'))) structureNotes.push('Rendered flex layout detected');
-      if (visible.some(el => window.getComputedStyle(el).boxShadow !== 'none')) structureNotes.push('Rendered shadows present');
-      if (visible.some(el => parseFloat(window.getComputedStyle(el).borderRadius) > 0)) structureNotes.push('Rendered rounded corners present');
-      return {
-        title: document.title || '',
-        fonts: pick('fontFamily'),
-        textColors: pick('color'),
-        backgroundColors: pick('backgroundColor').filter(color => !['rgba(0, 0, 0, 0)', 'transparent'].includes(color)),
-        borderColors: pick('borderColor'),
-        radii: pick('borderRadius'),
-        shadows: pick('boxShadow').filter(value => value !== 'none'),
-        fontSizes: pick('fontSize'),
-        cssVars,
-        structureNotes,
-        htmlStructure: Array.from(document.body?.children || []).slice(0, 16).map(el => el.tagName.toLowerCase() + (el.id ? `#${el.id}` : '') + (el.className ? `.${String(el.className).trim().split(/\s+/).slice(0, 3).join('.')}` : '')),
-        textSample: bodyText.slice(0, 500),
-      };
-    });
-
-    const colors = [...new Set([
-      ...rendered.textColors,
-      ...rendered.backgroundColors,
-      ...rendered.borderColors,
-      ...Object.values(rendered.cssVars).filter(value => /^#|rgb|hsl/i.test(value)),
-    ].map(rgbToHex))].slice(0, 32);
-
-    return {
-      mode: 'deep',
-      url: targetUrl,
-      title: rendered.title,
-      fonts: rendered.fonts,
-      colors,
-      cssVars: rendered.cssVars,
-      structureNotes: rendered.structureNotes,
-      htmlStructure: rendered.htmlStructure,
-      textSample: rendered.textSample,
-      screenshotPath,
-      screenshotUrl,
-      viewport: { width: 1440, height: 1200 },
-      computedStyles: {
-        fonts: rendered.fonts,
-        colors,
-        radii: rendered.radii,
-        shadows: rendered.shadows,
-        fontSizes: rendered.fontSizes,
-      },
-    };
-  } finally {
-    await browser.close();
-  }
-}
-
-function formatResearchForPrompt(findings) {
-  if (!findings) return '';
-  
-  const summary = [];
-  summary.push(`## Research Findings from ${findings.url}`);
-  
-  if (findings.fonts && findings.fonts.length) {
-    summary.push(`\n**Typography:** ${findings.fonts.join(', ')}`);
-  }
-  
-  if (findings.cssVars && Object.keys(findings.cssVars).length) {
-    summary.push('\n**CSS Variables:**');
-    Object.entries(findings.cssVars).forEach(([k, v]) => {
-      summary.push(`  - ${k}: ${v}`);
-    });
-  }
-  
-  if (findings.colors && findings.colors.length) {
-    summary.push(`\n**Color Palette:** ${findings.colors.join(', ')}`);
-  }
-  
-  if (findings.structureNotes && findings.structureNotes.length) {
-    summary.push(`\n**Layout Patterns:** ${findings.structureNotes.join('; ')}`);
-  }
-
-  if (findings.mode === 'deep') {
-    if (findings.screenshotUrl) summary.push(`\n**Screenshot:** ${findings.screenshotUrl}`);
-    if (findings.computedStyles?.radii?.length) summary.push(`\n**Rendered Radii:** ${findings.computedStyles.radii.slice(0, 8).join(', ')}`);
-    if (findings.computedStyles?.shadows?.length) summary.push(`\n**Rendered Shadows:** ${findings.computedStyles.shadows.slice(0, 4).join(' | ')}`);
-    if (findings.htmlStructure?.length) summary.push(`\n**Rendered Structure:** ${findings.htmlStructure.join(' → ')}`);
-  }
-  
-  return summary.join('\n');
 }
 
 // ─── Cloud Agent Build Helper ─────────────────────────────────────────────────
@@ -1452,13 +1062,13 @@ app.post('/api/research-url', async (req, res) => {
     }
   }
   
-  scrapeURL(url, (err, findings) => {
-    if (err) {
+  try {
+      const findings = await scrapeURLFast(url);
+      return persistAndRespond(findings);
+    } catch (err) {
       console.error('Research failed:', err);
       return res.status(500).json({ error: `Research failed: ${err.message}` });
     }
-    persistAndRespond(findings);
-  });
 });
 
 // POST /api/clarify — Ask project-manager questions before blueprint generation
@@ -1653,84 +1263,6 @@ app.post('/api/generate', async (req, res) => {
     res.end();
   }
 });
-
-async function callOllamaModel({ model, prompt, systemPrompt, numPredict = 8192, temperature = 0.55 }) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
-  try {
-    const ollamaRes = await fetch(OLLAMA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model,
-        prompt,
-        system: systemPrompt,
-        stream: false,
-        options: {
-          num_predict: numPredict,
-          temperature,
-          top_p: 0.9,
-        },
-      }),
-    }).catch(() => {
-      throw new Error(`Cannot reach Ollama at ${OLLAMA_URL}. Is Ollama running?`);
-    });
-
-    if (!ollamaRes.ok) {
-      const text = await ollamaRes.text();
-      throw new Error(`Ollama ${ollamaRes.status}: ${text}`);
-    }
-
-    const data = await ollamaRes.json();
-    return data.response || data.message || '';
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function callCloudModel({ provider, apiKey, prompt, systemPrompt, projectType, requestedModel = '', baseUrl = '' }) {
-  const url = provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
-  const model = getCloudModelName(provider, projectType, requestedModel);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
-  
-  try {
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt },
-    ];
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      signal: controller.signal,
-      body: JSON.stringify(buildChatPayload({
-        model,
-        messages,
-        temperature: provider === 'gemini' ? 0.5 : 0.55,
-      })),
-    });
-    
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`${provider} ${response.status}: ${text}`);
-    }
-    
-    const data = await response.json();
-    const blueprint = data?.choices?.[0]?.message?.content;
-    
-    if (!blueprint) {
-      throw new Error(`${provider} returned no blueprint content`);
-    }
-    
-    return blueprint;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
 
 // POST /api/refine — Refine an existing blueprint
 app.post('/api/refine', async (req, res) => {
