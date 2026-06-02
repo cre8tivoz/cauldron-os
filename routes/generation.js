@@ -132,8 +132,16 @@ function registerGenerationRoutes(app, deps) {
       // ── Stage 1: Research ──
       const t1 = Date.now();
       emitProgress(1, 4, STAGES[0].label, 'active');
-      await ensureDesignSystem(designReference);
+      const designSystemContent = await ensureDesignSystem(designReference);
       let systemPrompt = getSystemPrompt(projectType, designReference);
+
+      // Inject actual design system content if fetched
+      if (designSystemContent && designSystemContent.trim()) {
+        const truncated = designSystemContent.length > 16000
+          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
+          : designSystemContent;
+        systemPrompt += `\n\n## Target Design System Content\n${truncated}\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.`;
+      }
 
       // Inject template guidance if specified
       if (templateId) {
@@ -261,8 +269,15 @@ function registerGenerationRoutes(app, deps) {
     try {
       const { currentBlueprint, refinementPrompt, model, projectType = 'app', apiKey = '', designReference = 'none', cloudModel = '' } = req.body;
     
-      await ensureDesignSystem(designReference);
+      const designSystemContent = await ensureDesignSystem(designReference);
       let systemPrompt = getSystemPrompt(projectType, designReference);
+
+      if (designSystemContent && designSystemContent.trim()) {
+        const truncated = designSystemContent.length > 16000
+          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
+          : designSystemContent;
+        systemPrompt += `\n\n## Target Design System Content\n${truncated}\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.`;
+      }
     
       const prompt = `Here is the current blueprint:
 
