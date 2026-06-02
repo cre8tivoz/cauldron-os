@@ -1,8 +1,19 @@
 # Cauldron OS — Clean Execution Plan (No Bullshit Version)
 
-**Date created:** 2026-06-01  
-**Location:** Correct codebase (`/apps-codebases/cauldron-os`)  
+**Date created:** 2026-06-01
+**Location:** Correct codebase (`/apps-codebases/cauldron-os`)
 **Purpose:** Real, verifiable completion of the refactor. No aspirational claims. Only work that is actually done, tested, and verified.
+
+## Current Status (2026-06-02)
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 0: Baseline | DONE | All 5 smoke tests passing on committed HEAD |
+| Phase 1: lib/model-client.js + lib/research.js | DONE + COMMITTED | Model calling layer + URL research extracted. Removed duplicate scraper. |
+| Phase 2: Route extraction | DONE + COMMITTED | 14 route files in routes/ with barrel. server.js 669 lines (from 2,298). |
+| Phase 3: Service extraction | SKIPPED | Routes already delegate to lib/. Not worth breakage risk. |
+| Phase E: Final thin server | SKIPPED | Same rationale — structure is clean enough. |
+| Phase F: Verification | DONE | All 5 smoke tests passing after Phase 2. |
 
 ---
 
