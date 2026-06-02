@@ -3,8 +3,12 @@
  * Route handlers for models design.
  */
 
-
 const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+
+// ─── Refero Deep Search cache ────────────────────────────────────────────────
+const REFERO_API_URL = 'https://styles.refero.design/api/styles';
+const REFERO_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+let referoCache = { timestamp: 0, data: [] };
 
 function registerModelsDesignRoutes(app, deps) {
   const {
@@ -80,6 +84,58 @@ function registerModelsDesignRoutes(app, deps) {
       designSystemCache.set(system, content);
       res.json({ cached: false, system, content });
     });
+  });
+
+  /**
+   * GET /api/refero-search?q=<query>
+   * Proxies to the Refero API, caches results for 5 minutes, and returns
+   * matching styles by siteName (case-insensitive substring match).
+   */
+  app.get('/api/refero-search', async (req, res) => {
+    const query = (req.query.q || '').trim();
+    const now = Date.now();
+
+    try {
+      // Fetch from Refero API if cache is stale or empty
+      if (now - referoCache.timestamp > REFERO_CACHE_TTL_MS || referoCache.data.length === 0) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        try {
+          const response = await fetch(REFERO_API_URL, { signal: controller.signal });
+          if (!response.ok) throw new Error(`Refero API returned ${response.status}`);
+          const json = await response.json();
+          const styles = Array.isArray(json.styles) ? json.styles : [];
+          referoCache = { timestamp: now, data: styles };
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      const allStyles = referoCache.data;
+
+      // If no query, return empty results (the hardcoded list is the fallback)
+      if (!query) {
+        return res.json({ results: [] });
+      }
+
+      const lowerQuery = query.toLowerCase();
+      const results = allStyles
+        .filter(s => s.siteName && s.siteName.toLowerCase().includes(lowerQuery))
+        .map(s => ({
+          id: s.id,
+          siteName: s.siteName,
+          screenshotUrl: s.screenshotUrl || null,
+          thumbnailUrl: s.thumbnailUrl || null,
+          colors: Array.isArray(s.colors) ? s.colors.map(c => c.hex || c) : [],
+          colorScheme: s.colorScheme || 'unknown',
+          url: s.url || null,
+        }));
+
+      res.json({ results });
+    } catch (err) {
+      console.error('[Refero Search] Error:', err.message);
+      res.status(502).json({ error: 'Failed to search Refero styles', details: err.message });
+    }
   });
 }
 

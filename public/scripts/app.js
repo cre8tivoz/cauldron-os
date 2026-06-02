@@ -30,6 +30,12 @@ function cauldronApp() {
     handoffResult: null,
     researchResult: null,
     clarifyResult: null,
+    // Refero search state
+    referoQuery: '',
+    referoResults: [],
+    referoSearching: false,
+    referoResultsOpen: false,
+    selectedReferoStyle: null,
     blueprint: '',
     prototypeHtml: '',
     buildSession: null,
@@ -339,6 +345,63 @@ function cauldronApp() {
       } finally {
         this.busy = false;
       }
+    },
+
+    async runResearch() {
+      if (!this.form.referenceUrl.trim()) {
+        this.toast('No URL', 'Give me a reference URL first.', 'error');
+        return;
+      }
+      await this.withBusy('Researching visual DNA...', async () => {
+        const data = await this.api('/api/research-url', {
+          method: 'POST',
+          body: JSON.stringify({
+            url: this.form.referenceUrl.trim(),
+            projectName: this.form.projectName,
+            brainDump: this.form.brainDump,
+            mode: this.form.researchMode,
+          }),
+        });
+        this.researchResult = data;
+        this.status = 'Reference research captured.';
+        this.toast('Research captured', 'Design signals are now feeding the prompt. Delicious theft, legally styled.');
+        this.setStage('system');
+      });
+    },
+
+    async searchRefero() {
+      const query = this.referoQuery.trim();
+      if (!query) {
+        this.referoResults = [];
+        this.referoResultsOpen = false;
+        return;
+      }
+      this.referoSearching = true;
+      this.referoResultsOpen = true;
+      try {
+        const data = await this.api(`/api/refero-search?q=${encodeURIComponent(query)}`);
+        this.referoResults = data.results || [];
+      } catch (err) {
+        console.error('Refero search failed:', err);
+        this.referoResults = [];
+      } finally {
+        this.referoSearching = false;
+      }
+    },
+
+    selectReferoStyle(style) {
+      this.selectedReferoStyle = style;
+      this.form.designReference = style.siteName;
+      this.referoQuery = style.siteName;
+      this.referoResultsOpen = false;
+      this.toast('Refero style selected', `${style.siteName} set as design reference.`);
+    },
+
+    clearReferoSearch() {
+      this.referoQuery = '';
+      this.referoResults = [];
+      this.referoResultsOpen = false;
+      this.selectedReferoStyle = null;
     },
 
     async runResearch() {

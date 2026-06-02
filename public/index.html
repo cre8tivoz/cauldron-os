@@ -92,6 +92,13 @@
 .pipeline-tab:not(.active):hover {
   color: #d9d9dd;
 }
+.stage-model-label {
+  display: block;
+  font-size: 9px;
+  color: #72727d;
+  margin-top: 1px;
+  font-weight: 400;
+}
 .pipeline-spinner {
   display: inline-block;
   width: 10px;
@@ -319,6 +326,7 @@
               >
                 <span x-text="stage.icon"></span>
                 <span x-text="stage.label"></span>
+                <span x-show="stageModels[stage.id]" class="stage-model-label" x-text="getStageModelLabel(stage.id)"></span>
               </button>
             </template>
           </nav>
@@ -394,6 +402,91 @@
                     <option :value="system.id" :selected="system.id === form.designReference" x-text="system.name"></option>
                   </template>
                 </select>
+              </div>
+              <div class="field full" style="position:relative;">
+                <label for="referoSearch">Refero style search</label>
+                <div class="api-key-row">
+                  <input id="referoSearch"
+                    x-model="referoQuery"
+                    @input.debounce.300ms="searchRefero"
+                    @focus="referoQuery.trim() && (referoResultsOpen = true)"
+                    @blur="setTimeout(() => referoResultsOpen = false, 200)"
+                    placeholder="Search Refero styles by name..."
+                    autocomplete="off"
+                  />
+                  <button class="btn btn-ghost" type="button" @click="clearReferoSearch" x-show="referoQuery" aria-label="Clear search">&times;</button>
+                </div>
+                <small>Search <a href="https://refero.design" target="_blank" rel="noopener">Refero</a> for style inspiration. Results are cached for 5 minutes.</small>
+
+                <!-- Refero search results dropdown -->
+                <div
+                  class="refero-dropdown"
+                  x-show="referoResultsOpen && referoResults.length > 0"
+                  x-transition
+                  x-cloak
+                  style="position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-card,#1a1a24);border:1px solid rgba(183,148,246,0.3);border-radius:4px;max-height:320px;overflow-y:auto;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"
+                >
+                  <template x-for="style in referoResults" :key="style.id">
+                    <div
+                      class="refero-result-card"
+                      @mousedown.prevent="selectReferoStyle(style)"
+                      style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;"
+                    >
+                      <img
+                        x-show="style.thumbnailUrl"
+                        :src="style.thumbnailUrl"
+                        :alt="style.siteName + ' thumbnail'"
+                        style="width:48px;height:36px;border-radius:3px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,0.05);"
+                        loading="lazy"
+                      />
+                      <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" x-text="style.siteName"></div>
+                        <div style="display:flex;gap:4px;margin-top:4px;">
+                          <template x-for="(color, idx) in style.colors.slice(0, 2)" :key="idx">
+                            <span
+                              :style="'display:inline-block;width:16px;height:16px;border-radius:2px;background:' + color + ';border:1px solid rgba(255,255,255,0.1);'"
+                              :title="color"
+                            ></span>
+                          </template>
+                          <span x-show="style.colors.length > 2" style="font-size:10px;color:var(--text-muted);line-height:16px;">+<span x-text="style.colors.length - 2"></span></span>
+                        </div>
+                      </div>
+                      <span style="font-size:10px;color:var(--text-muted);flex-shrink:0;" x-text="style.colorScheme"></span>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Searching indicator -->
+                <div
+                  x-show="referoSearching"
+                  style="position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-card,#1a1a24);border:1px solid rgba(183,148,246,0.3);border-radius:4px;padding:12px;margin-top:4px;text-align:center;color:var(--text-muted);font-size:12px;"
+                >
+                  Searching Refero...
+                </div>
+
+                <!-- No results -->
+                <div
+                  x-show="referoResultsOpen && !referoSearching && referoQuery.trim() && referoResults.length === 0"
+                  style="position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-card,#1a1a24);border:1px solid rgba(183,148,246,0.3);border-radius:4px;padding:12px;margin-top:4px;text-align:center;color:var(--text-muted);font-size:12px;"
+                >
+                  No Refero styles match "<span x-text="referoQuery"></span>"
+                </div>
+
+                <!-- Selected style indicator -->
+                <div x-show="selectedReferoStyle" style="display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 10px;background:rgba(183,148,246,0.08);border:1px solid rgba(183,148,246,0.2);border-radius:4px;">
+                  <span style="font-size:10px;font-weight:600;color:var(--purple-400);text-transform:uppercase;letter-spacing:0.05em;">Active:</span>
+                  <img
+                    x-show="selectedReferoStyle.thumbnailUrl"
+                    :src="selectedReferoStyle.thumbnailUrl"
+                    :alt="selectedReferoStyle.siteName"
+                    style="width:32px;height:24px;border-radius:2px;object-fit:cover;"
+                  />
+                  <span style="font-weight:600;" x-text="selectedReferoStyle.siteName"></span>
+                  <template x-for="(color, idx) in (selectedReferoStyle.colors || []).slice(0, 3)" :key="idx">
+                    <span :style="'display:inline-block;width:14px;height:14px;border-radius:2px;background:' + color + ';border:1px solid rgba(255,255,255,0.15);'" :title="color"></span>
+                  </template>
+                  <button class="btn btn-ghost" type="button" @click="clearReferoSearch" style="margin-left:auto;font-size:11px;padding:2px 8px;">Clear</button>
+                </div>
               </div>
               <div class="field">
                 <label for="templateId">Component target</label>
