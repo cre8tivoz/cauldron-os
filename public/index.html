@@ -479,6 +479,7 @@
               <strong>No prototype yet.</strong>
               <span>Go to the <a href="#" @click.prevent="setStage('blueprint')" style="color:var(--acid-400);">Blueprint stage</a> and click \"Generate Prototype from this Blueprint\" after reviewing the blueprint.</span>
             </div>
+            <button class="btn btn-accent" type="button" @click="generatePrototype" :disabled="busy || !blueprint.trim()" x-show="!prototypeHtml && blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;margin-top:12px;">Generate Prototype from Blueprint</button>
             <div class="button-row">
               <button class="btn btn-purple" type="button" @click="previewMode = 'prototype'">View prototype</button>
               <button class="btn btn-ghost" type="button" @click="previewMode = 'blueprint'">View blueprint</button>

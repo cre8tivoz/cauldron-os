@@ -430,7 +430,7 @@ function registerGenerationRoutes(app, deps) {
   });
 
   app.post('/api/handoff', (req, res) => {
-    const { projectName, blueprint, sessionId, designReference } = req.body;
+    const { projectName, blueprint, sessionId, designReference, prototypeHtml } = req.body;
 
     if (!projectName || (!blueprint && !sessionId)) {
       return res.status(400).json({ error: 'projectName and either blueprint or sessionId required' });
@@ -483,17 +483,23 @@ function registerGenerationRoutes(app, deps) {
         fs.writeFileSync(blueprintPath, useBlueprint, 'utf-8');
       }
 
-      // Extract HTML prototype from fenced block
-      const htmlBlockMatch = (useBlueprint || '').match(/```html\s*([\s\S]*?)\s*```/i);
-      if (htmlBlockMatch && htmlBlockMatch[1]) {
-        let prototypeHtml = htmlBlockMatch[1].trim();
-        const hasAlpine = /alpinejs|x-data|x-show|x-for|@click|x-on:/i.test(prototypeHtml);
-        const hasAlpineCdn = /cdn\.jsdelivr\.net\/npm\/alpinejs|unpkg\.com\/alpinejs/i.test(prototypeHtml);
-        const alpineScript = hasAlpine && !hasAlpineCdn
-          ? '\n        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>'
-          : '';
-        const fullPrototype = `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    * { box-sizing: border-box; }\n    body { margin: 0; min-height: 100vh; }\n  </style>${alpineScript}\n</head>\n<body>\n${prototypeHtml}\n</body>\n</html>`;
+      // Write prototype from explicit parameter, or fall back to extraction from blueprint
+      if (prototypeHtml && prototypeHtml.trim()) {
+        const fullPrototype = `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n</head>\n<body>\n${prototypeHtml}\n</body>\n</html>`;
         fs.writeFileSync(path.join(projectPath, 'prototype.html'), fullPrototype, 'utf-8');
+      } else {
+        // existing extraction logic from blueprint HTML fenced blocks
+        const htmlBlockMatch = (useBlueprint || '').match(/```html\s*([\s\S]*?)\s*```/i);
+        if (htmlBlockMatch && htmlBlockMatch[1]) {
+          let prototypeHtml = htmlBlockMatch[1].trim();
+          const hasAlpine = /alpinejs|x-data|x-show|x-for|@click|x-on:/i.test(prototypeHtml);
+          const hasAlpineCdn = /cdn\.jsdelivr\.net\/npm\/alpinejs|unpkg\.com\/alpinejs/i.test(prototypeHtml);
+          const alpineScript = hasAlpine && !hasAlpineCdn
+            ? '\n        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>'
+            : '';
+          const fullPrototype = `<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    * { box-sizing: border-box; }\n    body { margin: 0; min-height: 100vh; }\n  </style>${alpineScript}\n</head>\n<body>\n${prototypeHtml}\n</body>\n</html>`;
+          fs.writeFileSync(path.join(projectPath, 'prototype.html'), fullPrototype, 'utf-8');
+        }
       }
 
       // Save OpenCode task stub

@@ -26,6 +26,7 @@ Grok's old refactor doc was mostly structural line-count bullshit. This plan cov
 | QW-3: Update getSystemPrompt() to use promptGuidance | Done + committed |
 | QW-4: Trim regular design system list (10 distinct entries kept) | Done + committed |
 | QW-5: Handoff smoke test (9 tests + bug fix) | Done + committed |
+| Blueprint/Prototype split (backend endpoint + editable UI) | Done + committed |
 | All 6 smoke test suites passing | Verified |
 
 ---

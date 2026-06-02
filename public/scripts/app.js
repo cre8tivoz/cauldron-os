@@ -725,6 +725,7 @@ This is a premium production, not a starter template. Follow these rules strictl
           body: JSON.stringify({
             projectName: this.form.projectName || 'cauldron-project',
             blueprint: this.blueprint,
+            prototypeHtml: this.prototypeHtml,
           }),
         });
         this.handoffResult = data;
@@ -743,8 +744,8 @@ This is a premium production, not a starter template. Follow these rules strictl
         const data = await this.api('/api/build/start', {
           method: 'POST',
           body: JSON.stringify({
-            prompt: this.form.brainDump,
-            model: this.form.cloudModel || 'gemini-3.1-flash-lite',
+            prompt: this.blueprint,
+            model: this.stageModels.blueprint?.provider || this.form.provider,
             sessionId: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
             designReference: this.form.designReference || 'none',
             templateId: this.form.templateId,
@@ -781,6 +782,7 @@ This is a premium production, not a starter template. Follow these rules strictl
             projectName: this.form.projectName || 'cauldron-project',
             sessionId: this.buildSession.sessionId,
             blueprint: this.blueprint,
+            prototypeHtml: this.prototypeHtml,
           }),
         });
         this.handoffResult = data;
