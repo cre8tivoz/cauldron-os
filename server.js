@@ -52,21 +52,121 @@ const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai
 const REFERO_BASE = 'https://styles.refero.design/style';
 
 // ─── Refero Styles Index ──────────────────────────────────────────────────
+// Cleaned 2026-06-02: replaced orphaned UUIDs with current Refero API catalog.
+// Each entry has promptGuidance for rich injection when no DESIGN.md is available.
 const REFERO_STYLES = {
-  'refero-antimetal':  { name: 'Antimetal (Electric Storm Blueprint)',   uuid: '9f9a4a4f-1a27-47ca-a65b-68b9850a84e4' },
-  'refero-good-glyphs':{ name: 'Good Glyphs (Neon Playbill)',            uuid: '41220ec0-ca0d-4697-a2fc-7a9a50d52e7c' },
-  'refero-linear':     { name: 'Linear (Midnight Command Center)',       uuid: '90ce5883-bb24-4466-93f7-801cd617b0d1' },
-  'refero-cursor':     { name: 'Cursor (Warm Ivory Studio)',             uuid: '4e3b4717-84c8-4599-baaf-a343c3d619b6' },
-  'refero-anthropic':  { name: 'Anthropic (Research Journal)',           uuid: 'd469cba4-c448-4a43-a033-883f8bfcdc42' },
-  'refero-raycast':    { name: 'Raycast (Obsidian Terminal)',            uuid: '3b6a17f0-3bdf-418c-a95e-0b89e5a8b2f8' },
-  'refero-superhuman': { name: 'Superhuman (Cinematic Cockpit)',         uuid: '418b374a-be64-44f0-b17e-1d45308c7e62' },
-  'refero-hyperstudio':{ name: 'Hyperstudio (Amber Monochrome)',         uuid: '8eb9c53e-d69c-497a-b640-610856cf3a0' },
-  'refero-generalint': { name: 'General Intelligence (Night Sky)',       uuid: '34baa524-5d5b-4165-bbab-d01f05e6d6b9' },
-  'refero-mercury':    { name: 'Mercury (Mountain Top Command)',         uuid: '3172cd4d-118a-4a16-a259-6b634d32322e' },
-  'refero-elevenlabs': { name: 'ElevenLabs (Architect Blueprint)',       uuid: '031056ff-7af1-46db-8daa-115f731c5d26' },
-  'refero-monopo':     { name: 'Monopo Saigon (Gradient Depths)',        uuid: '3e52dd36-6ab1-48c6-bc40-47ef6d33abc2' },
-  'refero-minimal':    { name: 'Minimalissimo (White Gallery)',          uuid: '35ff063b-1fcc-48a2-83b3-56da01e23880' },
-  'refero-stripe':     { name: 'Stripe (Architectural White)',           uuid: '48e5de76-05d5-4c4e-a269-c7c245b291ec' },
+  'refero-linear': {
+    name: 'Linear (Midnight Command Center)',
+    uuid: '90ce5883-bb24-4466-93f7-801cd617b0d1',
+    scheme: 'dark',
+    colors: ['#08090a', '#0f1011', '#161718'],
+    fonts: ['Inter Variable', 'Berkeley Mono'],
+    promptGuidance: 'Pitch-black SaaS aesthetic with precise typography and monospace code accents. Sidebar-driven tooling layout. Dark grays layered for depth. Use monospace for data and code, Inter for UI. Minimal chrome, maximum data density. Professional developer tool feel.'
+  },
+  'refero-mercury': {
+    name: 'Mercury (Mountain Top Command)',
+    uuid: '3172cd4d-118a-4a16-a259-6b634d32322e',
+    scheme: 'dark',
+    colors: ['#5266eb', '#cdddff', '#171721'],
+    fonts: ['arcadiaDisplay', 'arcadia'],
+    promptGuidance: 'Dark backdrop with distinctive Cornflower Blue (#5266eb) as the signature accent. High-contrast hierarchy with ghost-blue highlights on deep navy surfaces. Custom arcadia typeface family gives it a refined, editorial feel. Banking/finance quality polish — trustworthy and premium.'
+  },
+  'refero-github': {
+    name: 'GitHub (Developer Warmth)',
+    uuid: 'c3ceca5c-d329-4559-b947-016172941ba2',
+    scheme: 'dark',
+    colors: ['#0d1117', '#000000', '#151a22'],
+    fonts: ['Mona Sans', 'Mona Sans VF', 'Mona Sans Mono'],
+    promptGuidance: 'Warm dark canvas (#0d1117) with GitHub\'s signature developer-friendly aesthetic. Mona Sans for UI with dedicated monospace variant for code. Repository-and-navigation oriented layout. Approachable dark mode that feels like a workspace, not a cinema. Community and collaboration cues.'
+  },
+  'refero-slash': {
+    name: 'Slash (Editorial Noir)',
+    uuid: '7c38e84b-aea0-4c8f-b3e9-60b994ee6c6b',
+    scheme: 'dark',
+    colors: ['#000000', '#030304', '#08080a'],
+    fonts: ['Inter', 'Ivy Presto'],
+    promptGuidance: 'Pure black canvas with editorial serif accent (Ivy Presto) for headings. Inter for body. Extremely minimalist — almost no chrome or borders. Content-forward design that lets typography do the heavy lifting. Feels like a premium magazine in dark mode. High-contrast, elegant, restrained.'
+  },
+  'refero-superhuman': {
+    name: 'Superhuman (Warm Parchment)',
+    uuid: '418b374a-be64-44f0-b17e-1d45308c7e62',
+    scheme: 'both',
+    colors: ['#f2f0eb', '#292827', '#ffffff'],
+    fonts: ['Super Sans VF'],
+    promptGuidance: 'Warm parchment off-white (#f2f0eb) canvas with deep ink (#292827) text — email/correspondence inspired. Custom Super Sans VF gives controlled warmth. Works in both light (parchment) and dark (ink) modes. Feels like writing on quality paper. Intimate, productive, human-scale interface. Keyboard-first interaction cues.'
+  },
+  'refero-apple': {
+    name: 'Apple (Quiet Premium)',
+    uuid: 'c9cabb96-32fa-4896-837a-f2497ce1c856',
+    scheme: 'light',
+    colors: ['#1d1d1f', '#707070', '#474747'],
+    fonts: ['SF Pro Display', 'SF Pro Text'],
+    promptGuidance: 'Quiet light aesthetic with Apple\'s signature SF Pro type system. Generous whitespace, rounded corners, subtle shadows. Product-focused layout with hero imagery. The quintessential premium brand experience — minimal, expensive-feeling, everything in its right place. Neutral grays with no aggressive colors.'
+  },
+  'refero-travelperk': {
+    name: 'Travelperk (Electric Lime)',
+    uuid: '75c06591-34d2-493a-bd49-70551b5e4a53',
+    scheme: 'light',
+    colors: ['#beff50', '#14140f', '#000000'],
+    fonts: ['OTSono'],
+    promptGuidance: 'Bold lime green (#beff50) signature color against near-black (#14140f) text — energetic and unmistakable. Custom OTSono font gives distinctive character. Playful but professional. High-energy B2B SaaS that refuses to be boring. Great for fintech, travel, or any brand that wants to stand out with confidence.'
+  },
+  'refero-arva': {
+    name: 'Arva (Teal Serif)',
+    uuid: '15846be3-8df8-42e4-a05c-d9395dcec369',
+    scheme: 'light',
+    colors: ['#07503f', '#b2cee7', '#fceace'],
+    fonts: ['Inter', 'RecklessLight', 'Reckless'],
+    promptGuidance: 'Deep teal (#07503f) as the anchor color paired with a refined serif (Reckless) for warmth. Light airy background with warm cream accents. Nature-and-craft aesthetic — feels like a design-forward brand in the sustainability or wellness space. Calm, grounded, artisanal without being rustic.'
+  },
+  'refero-posthog': {
+    name: 'PostHog (Clean Developer)',
+    uuid: '56cd3725-3ff0-459e-894d-5da58d1fc549',
+    scheme: 'light',
+    colors: ['#ffffff', '#eeefe9', '#e5e7e0'],
+    fonts: ['IBM Plex Sans Variable', 'ui-monospace'],
+    promptGuidance: 'Crisp white canvas with subtle warm-gray surfaces. IBM Plex family for a developer-friendly but polished feel. Monospace for data and metrics. Clean, functional, transparent. Open-source tooling aesthetic — honest, unstyled, proud of being utilitarian. Great for analytics, dev tools, or data products.'
+  },
+  'refero-monopo': {
+    name: 'Monopo Saigon (Gradient Depths)',
+    uuid: '3e52dd36-6ab1-48c6-bc40-47ef6d33abc2',
+    scheme: 'dark',
+    colors: ['#000000', '#ffffff', '#181818'],
+    fonts: ['Roobert', 'Raleway'],
+    promptGuidance: 'Pure black canvas with shifting gradient overlays creating depth. Frosted glass effects and layered transparency. Roobert for bold headings, Raleway for body. Agency/studio portfolio feel — theatrical, immersive, showcase-first. Dark and atmospheric with moments of bright contrast. Motion-forward aesthetic.'
+  },
+  'refero-huly': {
+    name: 'Huly (Deep Workspace)',
+    uuid: 'd018e81d-6bb6-4445-86d7-39fd6be7e74d',
+    scheme: 'dark',
+    colors: ['#090a0c', '#111111', '#303236'],
+    fonts: ['Esbuild', 'Inter'],
+    promptGuidance: 'Deep charcoal workspace with Esbuild (custom geometric) for headings and Inter for body. Project-management inspired sidebar-and-canvas layout. Dense information display with clean separation. Feels like a professional creative tool — Figma/Notion territory. Multi-panel, keyboard-shortcut-ready, power-user oriented.'
+  },
+  'refero-amplemarket': {
+    name: 'Amplemarket (Crisp Monochrome)',
+    uuid: 'db451eca-8de6-43a9-a5d5-35271befdffd',
+    scheme: 'light',
+    colors: ['#111111', '#ffffff', '#272625'],
+    fonts: ['Labil Grotesk Variable'],
+    promptGuidance: 'Stark black-on-white with Labil Grotesk — a controlled, neutral grotesk. No decorative colors, no gradients. Pure information hierarchy through typography weight and spacing alone. Sales/enterprise tool aesthetic. Sharp, fast, no-nonsense. The design disappears so the data speaks.'
+  },
+  'refero-oryzo': {
+    name: 'ORYZO AI (Warm Earth)',
+    uuid: '1f204e95-454a-437e-845b-c1b169d35607',
+    scheme: 'dark',
+    colors: ['#100904', '#ffedd7', '#40372e'],
+    fonts: ['halyard-display-variable', 'Arial'],
+    promptGuidance: 'Warm dark canvas with brown-earth undertones (#100904) rather than cool navy. Cream/warm-white text (#ffedd7) for a softer, less clinical read. Halyard Display for headlines. AI/productivity tool with a human touch. Approachable dark mode — feels like a well-lit room at night rather than a cave.'
+  },
+  'refero-authkit': {
+    name: 'Authkit (Midnight Auth)',
+    uuid: 'e80231a2-e4d6-406a-a2c9-2e6109679690',
+    scheme: 'dark',
+    colors: ['#05060f', '#ffffff', '#2f343'],
+    fonts: ['Untitled Sans', 'aeonikPro', 'dotDigital'],
+    promptGuidance: 'Near-black navy canvas (#05060f) with pure white text — maximum contrast. Untitled Sans and aeonikPro for a modern, slightly geometric feel. Clean, trustworthy, security-conscious aesthetic. Authentication/identity product territory — needs to feel safe and solid. Minimal motion, maximum clarity.'
+  },
 };
 
 // Cache for design system references (avoid re-fetching)
@@ -88,7 +188,7 @@ const DESIGN_SYSTEMS = {
   webflow: { name: 'Webflow (Visual Builder Polish)', repo: 'webflow', path: 'DESIGN.md' },
   opencode: { name: 'OpenCode (Terminal-native Builder)', repo: 'opencode.ai', path: 'DESIGN.md' },
   ...Object.fromEntries(
-    Object.entries(REFERO_STYLES).map(([id, val]) => [id, { name: val.name, __refero: true, uuid: val.uuid }])
+    Object.entries(REFERO_STYLES).map(([id, val]) => [id, { name: val.name, __refero: true, uuid: val.uuid, promptGuidance: val.promptGuidance, colors: val.colors, fonts: val.fonts, scheme: val.scheme }])
   ),
 };
 
@@ -227,7 +327,12 @@ function getSystemPrompt(projectType = 'app', designReference = '') {
   let base = projectType === 'site' ? SITE_SYSTEM_PROMPT : APP_SYSTEM_PROMPT;
 
   if (designReference && designReference !== 'none') {
-    base += `\n\n## Active Design Reference: ${DESIGN_SYSTEMS[designReference]?.name || designReference}\nUse the selected design system as the primary visual language.`;
+    const ds = DESIGN_SYSTEMS[designReference];
+    if (ds?.promptGuidance) {
+      base += `\n\n## Active Design Reference: ${ds.name}\n${ds.promptGuidance}\n\nThis design reference takes priority over generic taste mandates. Follow its visual language, color palette, typography, and general aesthetic.`;
+    } else if (ds) {
+      base += `\n\n## Active Design Reference: ${ds.name}\nUse the selected design system as the primary visual language. This reference takes priority over generic taste mandates.`;
+    }
   }
 
   return base;
