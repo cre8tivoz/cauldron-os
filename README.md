@@ -1,7 +1,7 @@
 # Cauldron OS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.250-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.260-blue.svg)](CHANGELOG.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![GitHub](https://img.shields.io/badge/github-witchdaddylabs-181717.svg)](https://github.com/witchdaddylabs)
 
@@ -11,13 +11,13 @@
 
 </div>
 
-> **Bring the messy idea. Cauldron OS 0.250 brings the structure, taste, and next steps.**
+> **Bring the messy idea. Cauldron OS 0.260 brings the structure, taste, and next steps.**
 
-Cauldron OS 0.250 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, and a live HTML + AlpineJS prototype preview.
+Cauldron OS 0.260 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, and a live HTML + AlpineJS prototype preview.
 
-New in **0.250** (Sprint 4): Rebranded and polished — 7-stage pipeline with Build mode, sandboxed workspace, and fully rewritten docs. 
+New in **0.260** (Sprint 5): Blueprint/Prototype split, route extraction refactor, Refero deep search integration, comprehensive smoke tests, and pipeline activity logging.
 
-It is built for hobbyists, indie builders, designers, enthusiasts, and developers who want better AI output than “make me a nice dashboard”.
+It is built for hobbyists, indie builders, designers, enthusiasts, and developers who want better AI output than "make me a nice dashboard".
 
 ---
 
@@ -40,41 +40,41 @@ You will need Node.js 18+. For local AI generation, install Ollama and pull at l
 
 ---
 
-## What Cauldron does
+## What Cauldron does (v0.260 — 7-Stage Pipeline)
 
 1. **You brain-dump the idea**<br>
    Write naturally. Messy is fine. Paste reference URLs if you have them.
 
 2. **Optional: Annoying PM Mode / Interrogate Idea**<br>
-   Cauldron can pop up a short set of annoying project-manager questions before generation. Answer what you can; the Q&A gets folded into the final blueprint prompt so the model has firmer scope, risks, users, and assumptions before it starts pretending to be useful.
+   Cauldron pops up a short set of annoying product-manager questions before generation. Answer what you can; the Q&A gets folded into the final blueprint prompt so the model has firmer scope, risks, users, and assumptions.
 
-3. **Cauldron adds taste and context**<br>
-   It injects design rules, optional brand/design references, and URL research before the model sees your prompt.
+3. **Design System & Taste Engine**<br>
+   Pick a design reference from 22 curated brands (Cursor, Vercel, Raycast, Stripe, Linear, Notion, Figma, etc.) or search Refero's live catalog for style inspiration. Add a reference URL for deep research — Cauldron extracts CSS variables, fonts, colours, and layout patterns via Playwright.
 
 4. **The model creates a blueprint**<br>
    You get product notes, architecture direction, schema ideas, security considerations, and implementation guidance.
 
-5. **You get a live preview**<br>
-   Cauldron asks the model for an HTML + AlpineJS prototype preview so you can see and click through the shape of the idea, not just read about it.
+5. **You get a live prototype preview**<br>
+   Cauldron generates an HTML + AlpineJS prototype so you can see and click through the shape of the idea, not just read about it.
 
-6. **You save, export, or hand it off**<br>
-   Drafts and history are stored locally. You can export Markdown/JSON or hand the blueprint to a coding agent such as OpenCode.
+6. **Build mode**<br>
+   Sandboxed workspace with file listing, live preview, and XML tool agent. Iterate on the generated prototype directly in the browser.
+
+7. **Export and handoff**<br>
+   Drafts and history are stored locally. Export Markdown/JSON, download the prototype HTML, or hand the blueprint to a coding agent like OpenCode.
 
 ---
 
 ## Screenshots
 
-**Walkthrough demo** — Rude Boy Coffee Co rewards app generated from a Brain Dump plus the live cloner/reference URL research flow.<br>
-![Rude Boy Coffee walkthrough](assets/demo/cauldron-rude-boy-coffee-walkthrough.gif)
-
-**Full three-panel interface** — Brain Dump, Blueprint Output, HTML + AlpineJS Preview using a Rude Boy Coffee Co rewards-app prompt.<br>
+**Main UI** — Two-panel layout: Brain Dump + pipeline controls on the left, live output on the right.<br>
 ![Main UI](assets/screenshots/01-main-ui.png)
 
-**Design Reference selector** — fuse brand DNA from Cursor, Vercel, Lovable, Raycast, Linear, Stripe, Notion, Apple, Figma, Supabase, Resend, Webflow, or OpenCode.<br>
-![Design Reference Dropdown](assets/screenshots/02-design-dropdown.png)
+**Design System & Taste Engine** — Pick a design reference from 22 curated brands, search Refero for style inspiration, or research a custom URL.<br>
+![Design Reference & Taste Engine](assets/screenshots/02-design-dropdown.png)
 
-**Generated prototype preview** — cropped HTML + AlpineJS output with typography and palette inspired by the supplied reference site.<br>
-![Generated Rude Boy Coffee rewards preview](assets/screenshots/04-rude-boy-preview.png)
+**Walkthrough demo** — Rude Boy Coffee Co rewards app generated from a Brain Dump plus the live cloner/reference URL research flow.<br>
+![Rude Boy Coffee walkthrough](assets/demo/cauldron-rude-boy-coffee-walkthrough.gif)
 
 A browser-recorded `.webm` walkthrough is also included at [`assets/demo/cauldron-rude-boy-coffee-walkthrough.webm`](assets/demo/cauldron-rude-boy-coffee-walkthrough.webm).
 
@@ -92,14 +92,15 @@ A browser-recorded `.webm` walkthrough is also included at [`assets/demo/cauldro
 - Save/load drafts locally with searchable history
 - Export blueprints as Markdown or JSON
 - Save and download blueprints with one click
-- **One-Click Downloads**: Download the generated raw HTML + AlpineJS `prototype.html` directly to your machine
+- **One-Click Downloads**: Download the generated raw HTML + AlpineJS `prototype.html` directly to your machine (v0.260: separate prototype from blueprint for clearer handoff)
 - Create project folders with blueprint + OpenCode stub for your preferred coding tool
 
 ### For design-conscious builders
 
 - Expanded Design Reference dropdown for Cursor, Vercel, Lovable, Raycast, Linear, Stripe, Notion, Apple, Figma, Supabase, Resend, Webflow, and OpenCode-style visual direction
+- **Refero Style Search** — Search the live Refero design directory for inspiration (results cached for 5 minutes)
 - Dedicated one-URL cloner target field plus Brain Dump URL detection
-- URL research mode that extracts CSS variables, fonts, colours, and layout hints from reference sites
+- **Deep URL research mode** — Uses Playwright to extract CSS variables, fonts, colours, and layout hints from reference sites
 - Taste guardrails that avoid generic AI UI sludge: default Inter/Roboto, pure black, nested cards, and tired blue gradients
 - Prompts for stronger spacing, typography, component states, and micro-interactions
 
@@ -107,6 +108,7 @@ A browser-recorded `.webm` walkthrough is also included at [`assets/demo/cauldro
 
 - **XML Tool Agent System** — Multi-turn build agent that writes, edits, and runs code in a sandboxed workspace
 - **Workspace preview** — Live HTML preview of built files via `/workspace-preview/`
+- **Pipeline Activity Log** — Real-time NDJSON streaming showing each stage's progress (v0.260)
 - **7-stage pipeline** — Brain Dump → Interrogate → Design System → Blueprint → Prototype → Build → Export
 - **Build mode** — Sandboxed workspace with file listing and agent-driven project generation
 - Public-safe local records layer using `sql.js`
@@ -161,7 +163,7 @@ Google routing now follows the currently available 3.1 choices. Flash Lite is th
 
 ## The Master Brain layer
 
-Cauldron’s prompt builder adds three design-aware upgrades before generation:
+Cauldron's prompt builder adds three design-aware upgrades before generation:
 
 | Module | What it does |
 |--------|--------------|
@@ -169,7 +171,7 @@ Cauldron’s prompt builder adds three design-aware upgrades before generation:
 | Design Reference Selector | Pulls brand DNA from `awesome-design-md` style references |
 | URL Research Sweep | Scrapes the dedicated reference URL or first Brain Dump URL for CSS variables, fonts, colours, and layout patterns |
 
-This means the model gets more than “build me an app”. It gets taste, constraints, references, and context.
+This means the model gets more than "build me an app". It gets taste, constraints, references, and context.
 
 ---
 
@@ -178,6 +180,8 @@ This means the model gets more than “build me an app”. It gets taste, constr
 ```text
 cauldron-os/
 ├── server.js               # Express backend, model proxy, prompt builder, research scraper
+├── routes/                 # Route barrel (build, drafts, generation, history, models, etc.)
+├── lib/                    # Core modules (model-client, research, agent-loop, workspace)
 ├── db/                     # Local sql.js records backend
 ├── public/
 │   └── index.html          # Frontend cockpit with HTML + AlpineJS preview
@@ -240,8 +244,6 @@ Near-term public roadmap candidates:
 - Blueprint gallery
 - Basic scaffold generator
 
-The private Witch Daddy Labs build has more experimental automation, build-status, and coding-agent orchestration. Public Cauldron will get the stable, broadly useful pieces as they mature.
-
 ---
 
 ## Acknowledgments & Inspirations
@@ -250,6 +252,7 @@ The private Witch Daddy Labs build has more experimental automation, build-statu
 - [taste-skill](https://github.com/Leonxlnx/taste-skill) by Leonxlnx — high-agency frontend taste patterns
 - [ai-website-cloner-template](https://github.com/JCodesMore/ai-website-cloner-template) by JCodesMore — reconnaissance inspiration for URL research
 - [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) — DESIGN.md concept and design-system references
+- [Refero.design](https://refero.design) — design style discovery API
 
 ---
 

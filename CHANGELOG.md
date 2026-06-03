@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.260.0] — 2026-06-03 — Refactor & Polish (Sprint 5)
+
+### Added
+- **Blueprint/Prototype Split**: Separate `generate-prototype` endpoint, editable blueprint UI, and refined handoff flow. Build now uses blueprint output for better consistency.
+- **Route Extraction Refactor** (Phase 1+2): All routes extracted from monolithic `server.js` into `routes/` barrel (build, drafts, generation, history, models-design, projects, proxy, research-history, spa-catchall, status, templates, workspace-preview). `server.js` slimmed from ~2,200 LOC to focused composition root.
+- **Pipeline Activity Log**: NDJSON streaming throughout generation pipeline — real-time status updates pushed to frontend for visibility into each stage.
+- **Refero Deep Search**: Full Refero catalog API integration with 5-minute cache for design-style discovery. Replaced orphan styles with current API catalog entries.
+- **Comprehensive Smoke Tests**: New `handoff-smoke.js` covering end-to-end handoff/export flow, build-workspace file operations, and template generation.
+- **Design System Injection Fix**: Live fetch from design reference URLs — content now properly injected into system prompt.
+- **Model Label Polish**: Better model labels displayed in provider/model navigation panel.
+
+### Changed
+- **Version bump**: `package.json` → v0.260.0, startup banner → "Cauldron OS v0.260 (Refactor & Polish Sprint 5)"
+- **Design Systems Trimmed**: Refero catalog cleaned up — orphan entries removed, replaced with working API results.
+- **Frontend UI**: Updated version badge from v0.250 to v0.260 across all surfaces
+
+### Fixed
+- Design system injection: fetch content now properly injected into system prompt during generation
+- Handoff/export flow post-split: prototype HTML correctly saved, build uses blueprint output, UI button states consistent
+
 ## [0.250.0] — 2026-05-16 — Polish & Release (Sprint 4)
 
 ### Added
