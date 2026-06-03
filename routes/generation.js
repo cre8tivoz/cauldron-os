@@ -4,7 +4,7 @@
  * - POST /api/research-url: URL research persistence and prompt formatting.
  * - POST /api/clarify: Annoying PM Mode question generation.
  * - POST /api/generate: blueprint generation stream.
- * - POST /api/generate-prototype: prototype generation SSE stream.
+ * - POST /api/generate-prototype: prototype generation and critique-regeneration SSE stream.
  * - POST /api/refine: blueprint refinement.
  * - POST /api/handoff: project package export; currently writes files but does not launch a CLI.
  */
@@ -334,7 +334,18 @@ function registerGenerationRoutes(app, deps) {
     const startTime = Date.now();
 
     try {
-      const { blueprint, designReference = 'none', templateId = '', model, cloudModel = '', apiKey = '', projectType = 'site' } = req.body;
+      const {
+        blueprint,
+        designReference = 'none',
+        templateId = '',
+        model,
+        cloudModel = '',
+        apiKey = '',
+        projectType = 'site',
+        critique = '',
+        previousPrototypeHtml = '',
+        iterationIndex = 0,
+      } = req.body;
 
       if (!blueprint || !blueprint.trim()) {
         return res.status(400).json({ error: 'Blueprint required', details: 'Generate a blueprint first before creating a prototype.' });
@@ -364,6 +375,12 @@ function registerGenerationRoutes(app, deps) {
         }
       }
 
+      const critiqueText = String(critique || '').trim();
+      const previousHtml = String(previousPrototypeHtml || '').trim();
+      if (critiqueText) {
+        systemPrompt += '\n\n## Critique Review Mode\nYou are revising an existing prototype. Preserve working interactions and the selected design language, but directly address the requested critique. Return the full updated prototype, not a patch.';
+      }
+
       emitProgress(1, 2, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
 
       // Stage 2: Generate
@@ -371,7 +388,15 @@ function registerGenerationRoutes(app, deps) {
       emitProgress(2, 2, STAGES[1].label, 'active');
       let prototypeHtml = '';
 
-      const prototypePrompt = '## Blueprint\n' + blueprint + '\n\nConvert this blueprint into a complete, polished HTML prototype. Output ONLY the HTML inside a ```html fenced code block.';
+      const prototypePrompt = [
+        '## Blueprint',
+        blueprint,
+        previousHtml ? `## Previous Prototype HTML\n${previousHtml}` : '',
+        critiqueText ? `## Requested Critique / Change\n${critiqueText}` : '',
+        critiqueText
+          ? 'Regenerate the complete prototype incorporating the requested change. Output ONLY the HTML inside a ```html fenced code block.'
+          : 'Convert this blueprint into a complete, polished HTML prototype. Output ONLY the HTML inside a ```html fenced code block.',
+      ].filter(Boolean).join('\n\n');
 
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) {
@@ -416,7 +441,12 @@ function registerGenerationRoutes(app, deps) {
 
       res.write(JSON.stringify({
         type: 'prototype',
-        data: { html: prototypeHtml, success: true },
+        data: {
+          html: prototypeHtml,
+          success: true,
+          critique: critiqueText,
+          iterationIndex: Number(iterationIndex) || 0,
+        },
         duration: totalDuration,
       }) + '\n');
       res.end();

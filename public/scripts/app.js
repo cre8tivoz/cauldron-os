@@ -38,6 +38,15 @@ function cauldronApp() {
     selectedReferoStyle: null,
     blueprint: '',
     prototypeHtml: '',
+    critiqueText: '',
+    prototypeIterations: [],
+    activePrototypeVersion: 0,
+    critiqueQuickActions: [
+      { label: 'Make it bolder', prompt: 'Make the visual hierarchy bolder and more confident without changing the product structure.' },
+      { label: 'Tighter spacing', prompt: 'Tighten spacing, reduce visual looseness, and make the layout feel more deliberate.' },
+      { label: 'Warmer palette', prompt: 'Make the palette warmer and more inviting while preserving contrast and accessibility.' },
+      { label: 'More accessible', prompt: 'Improve accessibility, contrast, focus states, labels, and keyboard-friendly interactions.' },
+    ],
     buildSession: null,
     buildFiles: [],
     workspacePreviewUrl: '',
@@ -126,6 +135,10 @@ function cauldronApp() {
 
     get selectedBuildAgentAvailable() {
       return this.selectedBuildAgent?.available === true;
+    },
+
+    get visiblePrototypeIterations() {
+      return this.prototypeIterations.slice(-5).reverse();
     },
 
     init() {
@@ -673,7 +686,11 @@ ${this.form.projectType === 'app' ? `
       }
     },
 
-    async generatePrototype() {
+    async generatePrototype(options = {}) {
+      if (options?.target) options = {};
+      const critique = String(options.critique || '').trim();
+      const previousPrototypeHtml = critique ? this.prototypeHtml : '';
+
       if (!this.blueprint.trim()) {
         this.toast('No blueprint', 'Generate a blueprint first.', 'error');
         return;
@@ -683,7 +700,7 @@ ${this.form.projectType === 'app' ? `
       this.pipelineComplete = null;
       this.pipelineView = 'log';
       this.busy = true;
-      this.status = 'Generating prototype from blueprint...';
+      this.status = critique ? 'Regenerating prototype from critique...' : 'Generating prototype from blueprint...';
 
       try {
         const res = await fetch('/api/generate-prototype', {
@@ -697,6 +714,9 @@ ${this.form.projectType === 'app' ? `
             cloudModel: this.stageModels.blueprint?.cloudModel || this.form.cloudModel,
             apiKey: this.form.apiKey,
             projectType: this.form.projectType,
+            critique,
+            previousPrototypeHtml,
+            iterationIndex: this.prototypeIterations.length + 1,
           }),
         });
 
@@ -735,6 +755,11 @@ ${this.form.projectType === 'app' ? `
                 });
               } else if (event.type === 'prototype') {
                 this.prototypeHtml = event.data.html || '';
+                this.recordPrototypeIteration({
+                  critique: event.data.critique || critique || 'Initial prototype',
+                  previousHtml: previousPrototypeHtml,
+                  html: this.prototypeHtml,
+                });
                 this.pipelineComplete = {
                   duration: event.duration,
                   steps: 2,
@@ -748,8 +773,9 @@ ${this.form.projectType === 'app' ? `
 
         if (this.prototypeHtml) {
           this.generatedAt = new Date().toISOString();
-          this.status = 'Prototype generated from blueprint.';
-          this.toast('Prototype ready', 'Prototype HTML generated from your blueprint.');
+          this.status = critique ? 'Prototype regenerated from critique.' : 'Prototype generated from blueprint.';
+          this.toast(critique ? 'Critique applied' : 'Prototype ready', critique ? 'Prototype iteration added.' : 'Prototype HTML generated from your blueprint.');
+          if (critique) this.critiqueText = '';
           this.setStage('prototype');
           this.previewMode = 'prototype';
           this.pipelineView = 'preview';
@@ -763,6 +789,52 @@ ${this.form.projectType === 'app' ? `
       } finally {
         this.busy = false;
       }
+    },
+
+    async submitCritique(text = '') {
+      const critique = String(text || this.critiqueText || '').trim();
+      if (!critique) {
+        this.toast('No critique', 'Describe what should change first.', 'error');
+        return;
+      }
+      if (!this.prototypeHtml.trim()) {
+        this.toast('No prototype', 'Generate a prototype before critiquing it.', 'error');
+        return;
+      }
+      await this.generatePrototype({ critique });
+    },
+
+    recordPrototypeIteration({ critique = '', previousHtml = '', html = '' } = {}) {
+      if (!html) return;
+      const version = this.prototypeIterations.length + 1;
+      const iteration = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${version}`,
+        version,
+        critique,
+        summary: this.prototypeDiffSummary(previousHtml, html),
+        previousHtml,
+        html,
+        createdAt: new Date().toISOString(),
+      };
+      this.prototypeIterations.push(iteration);
+      this.prototypeIterations = this.prototypeIterations.slice(-12);
+      this.activePrototypeVersion = iteration.version;
+    },
+
+    prototypeDiffSummary(previousHtml = '', nextHtml = '') {
+      if (!previousHtml) return 'Baseline snapshot';
+      const delta = nextHtml.length - previousHtml.length;
+      const direction = delta === 0 ? 'same length' : delta > 0 ? `${delta} chars longer` : `${Math.abs(delta)} chars shorter`;
+      return `Updated prototype, ${direction}`;
+    },
+
+    restorePrototypeIteration(iteration) {
+      if (!iteration?.html) return;
+      this.prototypeHtml = iteration.html;
+      this.activePrototypeVersion = iteration.version;
+      this.previewMode = 'prototype';
+      this.pipelineView = 'preview';
+      this.toast('Iteration restored', `Prototype v${iteration.version} is now active.`);
     },
 
     addPipelineEntry(event) {
@@ -812,6 +884,8 @@ ${this.form.projectType === 'app' ? `
           designReference: this.form.designReference || 'none',
           generationMode: 'cauldron-3-blueprint-prototype',
           modelUsed: `${this.form.provider}/${this.form.cloudModel || 'default'}`,
+          prototypeHtml: this.prototypeHtml,
+          prototypeIterations: this.prototypeIterations,
         }),
       });
       this.savedDraftId = data.draftId;
@@ -914,7 +988,11 @@ ${this.form.projectType === 'app' ? `
       this.form.projectName = draft.project_name || this.form.projectName;
       this.form.brainDump = draft.brain_dump || this.form.brainDump;
       this.blueprint = draft.blueprint || '';
-      this.prototypeHtml = this.extractHtml(this.blueprint);
+      this.prototypeHtml = draft.prototype_html || this.extractHtml(this.blueprint);
+      this.prototypeIterations = Array.isArray(draft.prototype_iterations) ? draft.prototype_iterations : [];
+      const latestIteration = this.prototypeIterations[this.prototypeIterations.length - 1];
+      this.activePrototypeVersion = latestIteration?.version || (this.prototypeHtml ? 1 : 0);
+      this.critiqueText = '';
       this.savedDraftId = draft.id;
       this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';
       this.setStage(this.prototypeHtml ? 'prototype' : 'blueprint');

@@ -34,12 +34,30 @@ function registerDraftsRoutes(app, deps) {
 
   app.post('/api/drafts', (req, res) => {
     try {
-      const { projectName, brainDump = '', blueprint, designReference = 'none', generationMode = 'local', modelUsed = null } = req.body;
+      const {
+        projectName,
+        brainDump = '',
+        blueprint,
+        designReference = 'none',
+        generationMode = 'local',
+        modelUsed = null,
+        prototypeHtml = '',
+        prototypeIterations = [],
+      } = req.body;
       if (!projectName || !blueprint) {
         return res.status(400).json({ success: false, error: 'projectName and blueprint are required' });
       }
 
-      const result = db.createDraft({ projectName, brainDump, blueprint, designReference, generationMode, modelUsed });
+      const result = db.createDraft({
+        projectName,
+        brainDump,
+        blueprint,
+        designReference,
+        generationMode,
+        modelUsed,
+        prototypeHtml,
+        prototypeIterations,
+      });
       db.createSession({
         sessionId: req.headers['x-session-id'] || db.generateSessionId(),
         brainDump,
