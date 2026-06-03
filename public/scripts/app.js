@@ -504,11 +504,15 @@ This is a premium production, not a starter template. Follow these rules strictl
 - Skip-to-content link as first focusable element
 
 ## COLOR ROLE MAP
+${this.form.projectType === 'app' ? `
+- Use neutral / brand-appropriate palette. Default to the brand colors the user described in their brain dump.
+- Colour should serve information hierarchy: primary actions, surface backgrounds, text contrast, data viz accents.
+- Avoid forcing any specific palette — match the project's own brand intent.` : `
 - Acid green (#b8ff3b / #c1ff00): CTAs, active states, highlights
 - Purple (#8b5cf6): Structural borders, headers, secondary elements
 - Pink (#f3a6d6 / #f472b6): Delight, personality, completion states
 - Charcoal (#0f0d13 / #15131a): Background canvas
-- Bone (#f4efe4 / #f9f6ee): High-contrast text surfaces
+- Bone (#f4efe4 / #f9f6ee): High-contrast text surfaces`}
 ` : '';
 
       return [
@@ -516,7 +520,9 @@ This is a premium production, not a starter template. Follow these rules strictl
         this.form.brainDump.trim(),
         '',
         '# Product Direction',
-        'Cauldron OS is a focused high-end website/prototype generator. The result should favour premium interactive websites over generic app scaffolding.',
+        this.form.projectType === 'app'
+          ? 'Cauldron OS is generating an interactive web application prototype. Focus on data states, navigation patterns, user flows, and real interactivity. The result should feel like a functioning app, not a marketing page.'
+          : 'Cauldron OS is focused on generating a high-end, Awwwards-adjacent website. The result should favour premium interactive websites over generic app scaffolding.',
         'It should feel like Lovable + Replit + Volt if the baby was aborted, survived in a witches cauldron in a sewer, then became a professional SaaS designer.',
         '',
         tasteBlock,

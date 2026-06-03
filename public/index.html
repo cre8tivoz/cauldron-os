@@ -684,7 +684,7 @@
           </div>
 
           <!-- Pipeline Log Container -->
-          <div class="pipeline-container" :class="pipelineView === 'log' ? 'active' : ''">
+          <div class="pipeline-container" x-show="pipelineView === 'log'" :class="{ active: pipelineView === 'log' }">
             <div class="pipeline-log">
               <template x-for="entry in pipelineLog" :key="entry.step + entry.status">
                 <div class="pipeline-entry">
