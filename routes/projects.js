@@ -1,6 +1,10 @@
 /**
  * routes/projects.js
- * Route handlers for projects.
+ * Public interfaces:
+ * - POST/DELETE /api/projects/:name/status: manual project status overrides.
+ * - POST /api/projects/:name/resume: detached OpenCode resume run.
+ * - POST /api/projects/:name/open-visible: visible terminal OpenCode launch.
+ * - POST /api/projects/import: import local project folders into records.
  */
 
 const { spawn, execFileSync } = require("child_process");

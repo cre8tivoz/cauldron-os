@@ -1,6 +1,8 @@
 /**
  * routes/templates.js
- * Route handlers for templates.
+ * Public interfaces:
+ * - GET /api/templates: scaffold/template metadata.
+ * - GET /api/build-status: aggregate generated-project status.
  */
 
 
