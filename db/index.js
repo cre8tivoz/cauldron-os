@@ -65,6 +65,8 @@ function runMigrations() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  ensureColumn('drafts', 'prototype_html', 'TEXT DEFAULT \'\'');
+  ensureColumn('drafts', 'prototype_iterations_json', 'TEXT DEFAULT \'[]\'');
 
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -108,6 +110,20 @@ function runMigrations() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+}
+
+function hasColumn(tableName, columnName) {
+  const db = requireDb();
+  const rows = db.exec(`PRAGMA table_info(${tableName})`);
+  if (!rows[0]) return false;
+  const nameIndex = rows[0].columns.indexOf('name');
+  return rows[0].values.some(row => row[nameIndex] === columnName);
+}
+
+function ensureColumn(tableName, columnName, definition) {
+  const db = requireDb();
+  if (hasColumn(tableName, columnName)) return;
+  db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
 }
 
 function save() {
@@ -181,12 +197,35 @@ function upsertResearchRecord({ url, source = 'url-sweep', projectName = '', bra
   return getResearchById(id);
 }
 
-function createDraft({ projectName, brainDump = '', blueprint, designReference = 'none', generationMode = 'local', modelUsed = null }) {
+function normalisePrototypeIterations(iterations = []) {
+  if (!Array.isArray(iterations)) return [];
+  return iterations.slice(-12).map((iteration, index) => ({
+    id: String(iteration.id || `iteration-${index + 1}`),
+    version: Number(iteration.version) || index + 1,
+    critique: String(iteration.critique || ''),
+    summary: String(iteration.summary || ''),
+    html: String(iteration.html || ''),
+    previousHtml: String(iteration.previousHtml || ''),
+    createdAt: iteration.createdAt || new Date().toISOString(),
+  }));
+}
+
+function createDraft({
+  projectName,
+  brainDump = '',
+  blueprint,
+  designReference = 'none',
+  generationMode = 'local',
+  modelUsed = null,
+  prototypeHtml = '',
+  prototypeIterations = [],
+}) {
   if (!projectName || !blueprint) throw new Error('projectName and blueprint are required');
   const db = requireDb();
   const filename = generateFilename(projectName);
   const markdownPath = path.join(DRAFTS_DIR, `${filename}.md`);
   const metaPath = path.join(META_DIR, `${filename}.json`);
+  const normalisedIterations = normalisePrototypeIterations(prototypeIterations);
 
   fs.writeFileSync(markdownPath, blueprint, 'utf8');
   fs.writeFileSync(metaPath, JSON.stringify({
@@ -195,13 +234,28 @@ function createDraft({ projectName, brainDump = '', blueprint, designReference =
     designReference,
     generationMode,
     modelUsed,
+    prototypeHtml,
+    prototypeIterations: normalisedIterations,
     createdAt: new Date().toISOString(),
   }, null, 2), 'utf8');
 
   db.run(`
-    INSERT INTO drafts (project_name, brain_dump, blueprint, design_reference, generation_mode, model_used, file_path, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `, [projectName, brainDump, blueprint, designReference, generationMode, modelUsed, markdownPath]);
+    INSERT INTO drafts (
+      project_name, brain_dump, blueprint, design_reference, generation_mode, model_used,
+      prototype_html, prototype_iterations_json, file_path, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+  `, [
+    projectName,
+    brainDump,
+    blueprint,
+    designReference,
+    generationMode,
+    modelUsed,
+    prototypeHtml || '',
+    JSON.stringify(normalisedIterations),
+    markdownPath,
+  ]);
 
   const id = db.exec('SELECT last_insert_rowid() AS id')[0].values[0][0];
   save();
@@ -253,6 +307,10 @@ function getAllDrafts(limit = 50, offset = 0, searchQuery = '') {
 function hydrateDraftRow(row) {
   if (row?.file_path && fs.existsSync(row.file_path)) {
     row.blueprint = fs.readFileSync(row.file_path, 'utf8');
+  }
+  if (row) {
+    row.prototype_iterations = safeJsonParse(row.prototype_iterations_json, []);
+    delete row.prototype_iterations_json;
   }
   return row;
 }

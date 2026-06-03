@@ -32,6 +32,8 @@ Important state names:
 | `stageModels` | per-stage provider/model routing stored in localStorage |
 | `blueprint` | editable generated markdown |
 | `prototypeHtml` | generated HTML preview |
+| `critiqueText` | current natural-language prototype critique |
+| `prototypeIterations` | latest prototype snapshots and critique history |
 | `buildSession` | active build workspace metadata |
 | `handoffResult` | latest export/handoff response |
 | `pipelineLog` | user-facing activity log |
@@ -47,13 +49,25 @@ Frontend agents should preserve these names unless the branch explicitly migrate
 | `/api/research-url` | POST | `{ url, projectName?, brainDump?, mode? }` | `{ success, findings, formatted, researchId?, reuseCount? }` |
 | `/api/clarify` | POST | `{ prompt, model, projectType?, apiKey?, cloudModel? }` | clarify question payload |
 | `/api/generate` | POST | blueprint generation payload | generated blueprint/session payload |
-| `/api/generate-prototype` | POST SSE | `{ blueprint, model, cloudModel?, apiKey?, ... }` | `token`, `artifact`, `done`, `error` events |
+| `/api/generate-prototype` | POST SSE | `{ blueprint, model, cloudModel?, apiKey?, critique?, previousPrototypeHtml?, iterationIndex?, ... }` | `progress`, `prototype`, `error` events |
 | `/api/refine` | POST | `{ prompt, existingBlueprint, ... }` | refined blueprint payload |
 | `/api/handoff` | POST | `{ projectName, blueprint?, sessionId?, designReference?, prototypeHtml? }` | `{ success, message, projectPath, draftId?, filesCopied? }` |
 
-`/api/handoff` is the current export bridge. It creates a project folder, writes `blueprint.md` when available, writes `prototype.html` when available or extractable, writes `.opencode/config.md`, records an initial project status, and saves a draft record.
+`/api/generate-prototype` can be used for first generation or critique regeneration. When `critique` is provided, callers should also pass `previousPrototypeHtml` so the model can preserve useful interaction structure while applying the requested change.
 
-Known v0.30 gap: the v0.30 plan refers to handoff as living in `routes/projects.js`, but the implemented `/api/handoff` route currently lives in `routes/generation.js`. Phase 2 should consolidate or wrap this route deliberately rather than creating a second incompatible handoff path.
+`/api/handoff` is the current export bridge. It creates a project folder, writes the shared v0.30 handoff package, records an initial project status, and saves a draft record.
+
+### Drafts
+
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/api/drafts` | GET | list saved draft records |
+| `/api/drafts` | POST | save blueprint plus optional prototype review metadata |
+| `/api/drafts/:id` | GET | fetch a full draft including `prototype_html` and `prototype_iterations` |
+| `/api/drafts/:id/export.md` | GET | download blueprint markdown |
+| `/api/drafts/:id` | DELETE | remove a draft |
+
+Draft saves accept optional `prototypeHtml` and `prototypeIterations`. These fields support the Phase 3 critique loop without mixing prototype snapshots into the editable blueprint markdown.
 
 ### Build Workspace
 

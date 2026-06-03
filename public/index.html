@@ -594,7 +594,7 @@
 
             <div class="button-row">
               <button class="btn btn-primary" type="button" @click="generateBlueprint" :disabled="busy">Generate Blueprint</button>
-              <button class="btn btn-accent" type="button" @click="generatePrototype" :disabled="busy || !blueprint.trim()" x-show="blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;">Generate Prototype from this Blueprint</button>
+              <button class="btn btn-accent" type="button" @click="generatePrototype()" :disabled="busy || !blueprint.trim()" x-show="blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;">Generate Prototype from this Blueprint</button>
               <button class="btn btn-ghost" type="button" @click="saveDraft" :disabled="!blueprint || busy">Save draft</button>
             </div>
           </section>
@@ -606,11 +606,46 @@
               <strong>No prototype yet.</strong>
               <span>Go to the <a href="#" @click.prevent="setStage('blueprint')" style="color:var(--acid-400);">Blueprint stage</a> and click \"Generate Prototype from this Blueprint\" after reviewing the blueprint.</span>
             </div>
-            <button class="btn btn-accent" type="button" @click="generatePrototype" :disabled="busy || !blueprint.trim()" x-show="!prototypeHtml && blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;margin-top:12px;">Generate Prototype from Blueprint</button>
+            <button class="btn btn-accent" type="button" @click="generatePrototype()" :disabled="busy || !blueprint.trim()" x-show="!prototypeHtml && blueprint.trim()" style="background:var(--acid-500);color:var(--text-dark);font-weight:700;margin-top:12px;">Generate Prototype from Blueprint</button>
             <div class="button-row">
               <button class="btn btn-purple" type="button" @click="previewMode = 'prototype'">View prototype</button>
               <button class="btn btn-ghost" type="button" @click="previewMode = 'blueprint'">View blueprint</button>
               <button class="btn btn-primary" type="button" @click="setStage('build')">Build this</button>
+            </div>
+
+            <div class="critique-panel" x-show="prototypeHtml" style="margin-top:16px;">
+              <label for="prototypeCritique" style="display:block;margin-bottom:6px;font-weight:600;color:var(--acid-400);">Critique this prototype</label>
+              <textarea
+                id="prototypeCritique"
+                x-model="critiqueText"
+                rows="4"
+                placeholder="Describe what should change: hierarchy, spacing, tone, accessibility, interaction, or visual direction."
+                style="width:100%;font-family:var(--font-body);font-size:14px;line-height:1.5;padding:12px;background:rgba(13,13,15,0.8);color:var(--text);border:1px solid rgba(183,148,246,0.25);border-radius:4px;resize:vertical;"
+              ></textarea>
+              <div class="button-row compact" style="margin-top:10px;">
+                <template x-for="action in critiqueQuickActions" :key="action.label">
+                  <button class="btn btn-ghost" type="button" @click="submitCritique(action.prompt)" :disabled="busy" x-text="action.label"></button>
+                </template>
+              </div>
+              <div class="button-row" style="margin-top:10px;">
+                <button class="btn btn-primary" type="button" @click="submitCritique()" :disabled="busy || !prototypeHtml || !critiqueText.trim()">Apply critique</button>
+                <button class="btn btn-ghost" type="button" @click="critiqueText = ''" :disabled="busy || !critiqueText.trim()">Clear critique</button>
+              </div>
+            </div>
+
+            <div class="stage-route-list" x-show="visiblePrototypeIterations.length" style="margin-top:16px;">
+              <h4>Prototype iterations</h4>
+              <template x-for="iteration in visiblePrototypeIterations" :key="iteration.id">
+                <div class="stage-route-card">
+                  <div class="route-stage">
+                    <span class="kicker" x-text="`v${iteration.version}`"></span>
+                    <span class="route-status" x-text="iteration.version === activePrototypeVersion ? 'Active' : 'Snapshot'"></span>
+                  </div>
+                  <p style="margin:8px 0 0;color:var(--text-muted);font-size:13px;" x-text="iteration.critique"></p>
+                  <p style="margin:6px 0 0;color:var(--text-muted);font-size:12px;" x-text="iteration.summary"></p>
+                  <button class="btn btn-ghost" type="button" style="margin-top:8px;" @click="restorePrototypeIteration(iteration)" :disabled="iteration.version === activePrototypeVersion">Restore</button>
+                </div>
+              </template>
             </div>
           </section>
 
