@@ -1,6 +1,12 @@
 /**
  * routes/generation.js
- * Route handlers for generation.
+ * Public interfaces:
+ * - POST /api/research-url: URL research persistence and prompt formatting.
+ * - POST /api/clarify: Annoying PM Mode question generation.
+ * - POST /api/generate: blueprint generation stream.
+ * - POST /api/generate-prototype: prototype generation SSE stream.
+ * - POST /api/refine: blueprint refinement.
+ * - POST /api/handoff: project package export; currently writes files but does not launch a CLI.
  */
 
 const fs = require("fs");

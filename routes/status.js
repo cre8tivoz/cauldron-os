@@ -1,6 +1,7 @@
 /**
  * routes/status.js
- * Route handlers for status.
+ * Public interfaces:
+ * - GET /api/health: service health response.
  */
 
 

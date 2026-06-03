@@ -1,6 +1,11 @@
 /**
  * routes/models-design.js
- * Route handlers for models design.
+ * Public interfaces:
+ * - GET /api/cloud-models: supported cloud model catalog.
+ * - GET /api/ollama-models: local Ollama model detection.
+ * - GET /api/design-systems: selectable design-system list.
+ * - POST /api/design-reference: fetch/cache design reference markdown.
+ * - GET /api/refero-search: cached Refero style proxy.
  */
 
 const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");

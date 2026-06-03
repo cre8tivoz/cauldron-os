@@ -1,0 +1,42 @@
+# Cauldron OS Cursor Rules
+
+You are working in Cauldron OS, a local-first Node/Express + AlpineJS project pipeline.
+
+## Stack
+
+- Backend is CommonJS Node.js with Express route modules.
+- Frontend is static AlpineJS. Do not add a bundler unless the task explicitly requires one.
+- CSS uses `public/styles/tokens.css` and `public/styles/app.css`.
+- Persistence uses `sql.js` via `db/index.js`.
+- Generated/runtime project output belongs in `projects/` and runtime records in `data/`.
+
+## Required First Reads
+
+1. `AGENTS.md`
+2. `docs/PUBLIC_INTERFACES.md`
+3. `docs/BYOK_CLI_EXECUTION_CONTRACT.md` for build/export work
+4. `docs/chasing-version-0.30.md` for phase intent
+
+## Coding Rules
+
+- Keep changes scoped to the assigned subsystem.
+- Preserve existing route registration and dependency-injection patterns.
+- Do not rewrite `public/scripts/app.js` wholesale; patch the relevant Alpine state/methods.
+- Use existing CSS variables. Avoid broad visual resets.
+- Add or update smoke tests when public routes, generated files, or frontend affordances change.
+- Do not commit secrets, local API keys, generated runtime data, or credential-bearing remote URLs.
+
+## Build-Agent Handoff Rules
+
+- Default behavior should remain safe: generate a handoff package even when no CLI is installed.
+- CLI execution must be opt-in and clearly surfaced to the user.
+- CLI detection should report capabilities, not fail the app when a command is missing.
+- Generated manifests should be machine-readable and stable.
+- Any agent invocation must fall back to the saved handoff package if launch fails.
+
+## Review Checklist
+
+- `npm test` passes or failures are documented.
+- Public interfaces are updated when contracts changed.
+- Frontend copy matches the current product model: blueprint, prototype, deliberate handoff.
+- PR body explains user impact and validation.

@@ -1,6 +1,13 @@
 /**
  * routes/build.js
- * Route handlers for build.
+ * Public interfaces:
+ * - POST /api/build/start: create an isolated build workspace.
+ * - POST /api/build/generate: SSE XML-tool build execution.
+ * - POST /api/build/refine: SSE continuation for an existing workspace.
+ * - POST /api/build/stop: abort active build execution.
+ * - GET /api/build/files/:sessionId: list workspace files.
+ * - GET /api/build/file/:sessionId: read a workspace file by query path.
+ * - GET /api/build/status/:sessionId: inspect build session state.
  */
 
 
