@@ -74,9 +74,7 @@ You will need Node.js 18+. For local AI generation, install Ollama and pull at l
 ![Generated Blueprint](assets/screenshots/02-design-dropdown.png)
 
 **Walkthrough demo** — Full pipeline walkthrough: Brain Dump → Design System → Blueprint generation → Prototype preview. Stitched from screen recordings at 1.5x speed.<br>
-<video src="assets/demo/cauldron-chihuahua-walkthrough.mp4" width="100%" controls loop>
-  <img src="assets/demo/cauldron-chihuahua-walkthrough.gif" alt="Chihuahua walkthrough (GIF fallback)">
-</video>
+![Chihuahua walkthrough](assets/demo/cauldron-chihuahua-walkthrough.gif)
 
 ---
 
