@@ -29,6 +29,10 @@ Important state names:
 | `form.projectType` | `app` or `site` |
 | `form.designReference` | selected design-system id |
 | `form.templateId` | selected scaffold/template id |
+| `systemPanelTab` | active Taste Engine source tab, `local` or `community` |
+| `communityDesignSystems` | curated community DESIGN.md entries available for import |
+| `communityTemplates` | curated community scaffold starter guidance entries |
+| `selectedCommunityTemplate` | active community scaffold guidance layered onto `form.templateId` |
 | `stageModels` | per-stage provider/model routing stored in localStorage |
 | `keyHealth` | Settings API-key connection health status |
 | `blueprint` | editable generated markdown |
@@ -104,10 +108,27 @@ Known v0.30 gap: `/api/build/generate` and `/api/build/refine` are intended SSE 
 | `/api/design-systems` | GET | list selectable design-system ids/names/sources |
 | `/api/design-reference` | POST | fetch/cache a selected local, Refero, or remote design reference |
 | `/api/refero-search` | GET | proxy cached Refero style search |
+| `/api/community` | GET | list curated community DESIGN.md systems and scaffold starters |
+| `/api/community/import` | POST | import a community design system or scaffold starter guidance |
 
 `/api/design-systems` returns `{ systems: [{ id, name, source }] }`. IDs are canonical catalog IDs. `source` may be `open-design`, `refero`, or `remote`.
 
-Imported catalog entries live under `design-systems/<id>/DESIGN.md` and are indexed by `design-systems/catalog.json`. `/api/design-reference` shares the same cache and loader for local files, Refero prompt guidance, and legacy remote fallbacks.
+Local source catalog entries live under `design-systems/<id>/DESIGN.md` and are indexed by `design-systems/catalog.json`. Community imports are runtime data and live under `data/community/design-systems/<id>/DESIGN.md` or `CAULDRON_DATA_DIR/community/design-systems/<id>/DESIGN.md`; they are discovered on server restart and registered immediately after import. `/api/design-reference` shares the same cache and loader for local files, runtime community imports, Refero prompt guidance, and legacy remote fallbacks.
+
+`/api/community` returns:
+
+```json
+{
+  "success": true,
+  "sourceRepo": "witchdaddylabs/cauldron-community",
+  "sourceUrl": "https://github.com/witchdaddylabs/cauldron-community",
+  "submitUrl": "https://github.com/witchdaddylabs/cauldron-community/pulls",
+  "designSystems": [{ "id": "community-neon-command", "name": "Neon Command", "description": "...", "rawUrl": "..." }],
+  "templates": [{ "id": "community-next-dashboard", "name": "...", "baseTemplateId": "nextjs", "promptBias": "..." }]
+}
+```
+
+`POST /api/community/import` accepts `{ type: "design-system", id }` or `{ type: "template", id }`. Design-system imports write markdown to runtime data, add the system to the in-memory catalog, and return `{ success, type, system }`. Template imports return `{ success, type, template }`; callers should set `form.templateId` to `template.baseTemplateId` and include `template.promptBias` in blueprint prompts rather than treating the community id as a new deterministic scaffold writer.
 
 ### Project And Status
 

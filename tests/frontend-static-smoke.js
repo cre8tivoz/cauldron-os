@@ -31,6 +31,11 @@ assert.match(html, /stageModels/, 'Stage model routing should be configured');
 assert.match(html, /Brain dump →/, 'Pipeline subtitle should reference brain dump');
 assert.match(html, /selectedBuildAgentId/, 'Build agent selection state should be wired');
 assert.match(html, /selectedBuildAgentIds/, 'Multi-agent build selection state should be wired');
+assert.match(html, /Design reference sources/, 'Design reference panel should expose source tabs');
+assert.match(html, />Community</, 'Community design reference tab should exist');
+assert.match(html, /Submit your own via PR/, 'Community contribution link should be visible');
+assert.match(html, /importCommunityDesignSystem\(system\)/, 'Community design-system import action should be wired');
+assert.match(html, /useCommunityTemplate\(template\)/, 'Community scaffold action should be wired');
 
 const appJs = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'scripts', 'app.js'), 'utf8');
 assert.match(appJs, /\/api\/build-agents/, 'Build agent detection API should be called');
@@ -48,5 +53,8 @@ assert.match(appJs, /\/api\/blueprint-diff/, 'Blueprint diff API should be calle
 assert.match(appJs, /blueprintVersions/, 'Blueprint versions should be wired');
 assert.match(appJs, /this\.toasts = \[\.\.\.this\.toasts/, 'Toast stack should be capped through reassignment');
 assert.match(appJs, /data\.providers \|\| data/, 'Cloud model response should normalize providers');
+assert.match(appJs, /\/api\/community/, 'Community catalog API should be called');
+assert.match(appJs, /selectedCommunityTemplate/, 'Community scaffold guidance should be stored');
+assert.match(appJs, /Community scaffold guidance/, 'Community scaffold guidance should feed blueprint prompts');
 
 console.log('Frontend static smoke tests passed');
