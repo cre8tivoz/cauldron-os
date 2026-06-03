@@ -10,6 +10,7 @@ const registerResearchHistoryRoutes = require('./research-history');
 const registerTemplatesRoutes = require('./templates');
 const registerProjectsRoutes = require('./projects');
 const registerModelsDesignRoutes = require('./models-design');
+const registerCommunityRoutes = require('./community');
 const registerGenerationRoutes = require('./generation');
 const registerBuildRoutes = require('./build');
 const registerBuildAgentRoutes = require('./build-agents');
@@ -25,6 +26,7 @@ function registerAllRoutes(app, deps) {
   registerTemplatesRoutes(app, deps);
   registerProjectsRoutes(app, deps);
   registerModelsDesignRoutes(app, deps);
+  registerCommunityRoutes(app, deps);
   registerGenerationRoutes(app, deps);
   registerBuildRoutes(app, deps);
   registerBuildAgentRoutes(app, deps);

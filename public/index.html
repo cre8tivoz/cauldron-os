@@ -489,7 +489,12 @@
             <h3>Taste engine.</h3>
             <p class="stage-intro">Pick the starting DNA, scrape a reference, choose the component target. This is where generic template sludge gets stabbed.</p>
 
-            <div class="form-grid">
+            <div class="panel-tabs design-reference-tabs" role="tablist" aria-label="Design reference sources">
+              <button class="btn btn-ghost" type="button" role="tab" :aria-selected="systemPanelTab === 'local'" :class="{ active: systemPanelTab === 'local' }" @click="systemPanelTab = 'local'">Local references</button>
+              <button class="btn btn-ghost" type="button" role="tab" :aria-selected="systemPanelTab === 'community'" :class="{ active: systemPanelTab === 'community' }" @click="systemPanelTab = 'community'">Community</button>
+            </div>
+
+            <div class="form-grid" x-show="systemPanelTab === 'local'">
               <div class="field">
                 <label for="designReference">Design reference</label>
                 <select id="designReference" :value="form.designReference" @change="form.designReference = $event.target.value">
@@ -605,8 +610,77 @@
               </div>
             </div>
 
-            <div class="button-row">
+            <div class="community-panel" x-show="systemPanelTab === 'community'" x-transition.opacity>
+              <div class="callout">
+                <strong>Community catalog:</strong>
+                <span x-text="communityStatus"></span>
+                <a :href="communitySubmitUrl" target="_blank" rel="noopener">Submit your own via PR</a>
+              </div>
+
+              <div class="community-section">
+                <div class="section-heading-row">
+                  <div>
+                    <h4>DESIGN.md systems</h4>
+                    <p>Import curated community references into your local runtime catalog.</p>
+                  </div>
+                  <button class="btn btn-ghost" type="button" @click="loadCommunity" :disabled="communityLoading">Refresh</button>
+                </div>
+
+                <div class="community-grid" x-show="communityDesignSystems.length">
+                  <template x-for="system in communityDesignSystems" :key="system.id">
+                    <article class="community-card">
+                      <div>
+                        <span class="pill purple">DESIGN.md</span>
+                        <h5 x-text="system.name"></h5>
+                        <p x-text="system.description"></p>
+                        <small x-text="system.sourceRepo"></small>
+                      </div>
+                      <button class="btn btn-primary" type="button" @click="importCommunityDesignSystem(system)" :disabled="busy">Import</button>
+                    </article>
+                  </template>
+                </div>
+
+                <div class="callout pink" x-show="!communityLoading && !communityDesignSystems.length">
+                  No community design systems loaded. Refresh the catalog or try again later.
+                </div>
+              </div>
+
+              <div class="community-section">
+                <div class="section-heading-row">
+                  <div>
+                    <h4>Scaffold starters</h4>
+                    <p>Use a community starter as prompt guidance on top of a supported base scaffold.</p>
+                  </div>
+                </div>
+
+                <div class="community-grid" x-show="communityTemplates.length">
+                  <template x-for="template in communityTemplates" :key="template.id">
+                    <article class="community-card">
+                      <div>
+                        <span class="pill acid" x-text="template.baseTemplateId"></span>
+                        <h5 x-text="template.name"></h5>
+                        <p x-text="template.description"></p>
+                        <small x-text="template.recommendedUse"></small>
+                      </div>
+                      <button class="btn btn-purple" type="button" @click="useCommunityTemplate(template)" :disabled="busy">Use scaffold</button>
+                    </article>
+                  </template>
+                </div>
+
+                <div class="callout" x-show="selectedCommunityTemplate" style="margin-top: 10px;">
+                  <strong>Community scaffold active:</strong>
+                  <span x-text="selectedCommunityTemplate?.name"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="button-row" x-show="systemPanelTab === 'local'">
               <button class="btn btn-purple" type="button" @click="runResearch" :disabled="busy">Research URL</button>
+              <button class="btn btn-primary" type="button" @click="setStage('blueprint')">Blueprint next</button>
+            </div>
+
+            <div class="button-row" x-show="systemPanelTab === 'community'">
+              <button class="btn btn-ghost" type="button" @click="systemPanelTab = 'local'">Back to local references</button>
               <button class="btn btn-primary" type="button" @click="setStage('blueprint')">Blueprint next</button>
             </div>
 

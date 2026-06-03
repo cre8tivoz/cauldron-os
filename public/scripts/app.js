@@ -16,6 +16,13 @@ function cauldronApp() {
     toasts: [],
     designSystems: [],
     templates: [],
+    systemPanelTab: 'local',
+    communityDesignSystems: [],
+    communityTemplates: [],
+    communityLoading: false,
+    communityStatus: 'Community catalog not loaded yet.',
+    communitySubmitUrl: 'https://github.com/witchdaddylabs/cauldron-community/pulls',
+    selectedCommunityTemplate: null,
     cloudModels: {},
     recentDrafts: [],
     apiKeyVisible: false,
@@ -229,6 +236,7 @@ function cauldronApp() {
         this.api('/api/design-systems').then(data => { this.designSystems = data.systems || []; }),
         this.api('/api/templates').then(data => { this.templates = data.templates || []; }),
         this.api('/api/cloud-models').then(data => { this.cloudModels = data.providers || data || {}; this.ensureCloudModel(); }),
+        this.loadCommunity(),
         this.loadBuildAgents(),
       ]);
 
@@ -243,6 +251,60 @@ function cauldronApp() {
         this.form.designReference = desiredReference;
         this.form.templateId = desiredTemplate;
         this.ensureCloudModel();
+      });
+    },
+
+    async loadCommunity() {
+      this.communityLoading = true;
+      try {
+        const data = await this.api('/api/community');
+        this.communityDesignSystems = data.designSystems || [];
+        this.communityTemplates = data.templates || [];
+        this.communitySubmitUrl = data.submitUrl || this.communitySubmitUrl;
+        this.communityStatus = `${this.communityDesignSystems.length} design systems and ${this.communityTemplates.length} scaffold starters available.`;
+      } catch (error) {
+        this.communityDesignSystems = [];
+        this.communityTemplates = [];
+        this.communityStatus = `Community catalog unavailable: ${error.message}`;
+      } finally {
+        this.communityLoading = false;
+      }
+    },
+
+    async importCommunityDesignSystem(item) {
+      if (!item?.id) return;
+      await this.withBusy(`Importing ${item.name || item.id}...`, async () => {
+        const data = await this.api('/api/community/import', {
+          method: 'POST',
+          body: JSON.stringify({ type: 'design-system', id: item.id }),
+        });
+        const system = data.system;
+        if (system?.id && !this.designSystems.some(existing => existing.id === system.id)) {
+          this.designSystems = [...this.designSystems, system]
+            .sort((a, b) => a.name.localeCompare(b.name));
+        }
+        if (system?.id) this.form.designReference = system.id;
+        this.systemPanelTab = 'local';
+        this.communityStatus = `${system?.name || item.name} imported from the community catalog.`;
+        this.toast('Community design imported', `${system?.name || item.name} is now the active design reference.`, 'success');
+      });
+    },
+
+    async useCommunityTemplate(item) {
+      if (!item?.id) return;
+      await this.withBusy(`Loading ${item.name || item.id}...`, async () => {
+        const data = await this.api('/api/community/import', {
+          method: 'POST',
+          body: JSON.stringify({ type: 'template', id: item.id }),
+        });
+        const template = data.template;
+        const baseTemplateId = template?.baseTemplateId || template?.scaffold || item.baseTemplateId;
+        if (baseTemplateId && this.templates.some(existing => existing.id === baseTemplateId)) {
+          this.form.templateId = baseTemplateId;
+        }
+        this.selectedCommunityTemplate = template || item;
+        this.communityStatus = `${template?.name || item.name} will guide the ${baseTemplateId || 'selected'} scaffold.`;
+        this.toast('Community scaffold selected', `${template?.name || item.name} guidance will be included in the next blueprint.`, 'success');
       });
     },
 
@@ -786,6 +848,9 @@ ${this.form.projectType === 'app' ? `
         '',
         '# Template Target',
         `Template: ${this.form.templateId}`,
+        this.selectedCommunityTemplate?.promptBias
+          ? `Community scaffold guidance: ${this.selectedCommunityTemplate.name}\n${this.selectedCommunityTemplate.promptBias}`
+          : '',
         providerNotes,
       ].join('\n');
     },
