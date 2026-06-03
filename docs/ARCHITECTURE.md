@@ -88,7 +88,7 @@ stageModels: {
 
 ## 2. Backend Architecture (`server.js`)
 
-Express server on port 3000 (default). Single monolithic file (~2,200 LOC) — intentionally kept unified for simplicity.
+Express server on port 3000 (default). Single file (~790 LOC) — intentionally kept unified for simplicity.
 
 **Imports:**
 ```
