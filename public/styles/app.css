@@ -91,6 +91,7 @@ textarea:focus-visible,
   display: grid;
   grid-template-rows: var(--topbar) minmax(0, 1fr) var(--statusbar);
   height: 100vh;
+  max-height: 920px;
   padding: 12px;
   gap: 12px;
 }
@@ -362,6 +363,10 @@ h1, h2, h3, .display-title {
   overflow: hidden;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+}
+
+.workspace-panel .panel-body {
+  overflow-y: auto;
 }
 
 .workspace-panel {
