@@ -764,7 +764,14 @@
           </section>
 
           <section class="stage-card" x-show="activeStage === 'prototype'" x-transition.opacity>
-            <h3>Prototype.</h3>
+            <div class="stage-title-row">
+              <h3>Prototype.</h3>
+              <div class="quality-badge" x-show="prototypeHtml && prototypeQuality" :class="qualityBadgeClass" :title="qualitySummaryText" aria-label="Prototype quality score">
+                <span>Quality</span>
+                <strong x-text="prototypeQuality?.grade || '—'"></strong>
+                <small x-text="qualitySummaryText"></small>
+              </div>
+            </div>
             <p class="stage-intro">The prototype should prove the visual direction and interaction model before the build stage gets the keys to the machinery.</p>
             <div class="callout" x-show="!prototypeHtml" style="margin-top:12px;">
               <strong>No prototype yet.</strong>
@@ -778,6 +785,22 @@
             </div>
 
             <div class="critique-panel" x-show="prototypeHtml" style="margin-top:16px;">
+              <div class="quality-panel" x-show="prototypeQuality" style="margin-bottom:14px;">
+                <div class="quality-categories" x-show="prototypeQuality?.categories?.length">
+                  <template x-for="category in prototypeQuality.categories" :key="category.id">
+                    <span class="quality-chip" :class="{ weak: category.score < 70 }">
+                      <span x-text="category.label"></span>
+                      <strong x-text="category.score"></strong>
+                    </span>
+                  </template>
+                </div>
+                <div class="callout quality-suggestions" x-show="prototypeQuality?.showSuggestions && qualitySuggestions.length">
+                  <strong>Prototype PM notes before your critique.</strong>
+                  <template x-for="suggestion in qualitySuggestions" :key="suggestion.category">
+                    <p><span x-text="suggestion.category"></span>: <span x-text="suggestion.text"></span></p>
+                  </template>
+                </div>
+              </div>
               <label for="prototypeCritique" style="display:block;margin-bottom:6px;font-weight:600;color:var(--acid-400);">Critique this prototype <span x-show="prototypeIterations.length" style="font-weight:400;color:var(--text-muted);font-size:12px;">(<span x-text="prototypeIterations.filter(i => i.critique !== 'Initial prototype').length"></span>/3 used)</span></label>
               <textarea
                 id="prototypeCritique"

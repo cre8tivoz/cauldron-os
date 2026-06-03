@@ -39,6 +39,7 @@ Important state names:
 | `blueprintVersions` | saved blueprint snapshots for version history |
 | `blueprintDiff` | structured diff rows for the selected blueprint version |
 | `prototypeHtml` | generated HTML preview |
+| `prototypeQuality` | latest deterministic prototype quality score with A/B/C/D grade, category scores, and suggestions |
 | `critiqueText` | current natural-language prototype critique |
 | `prototypeIterations` | latest prototype snapshots and critique history |
 | `buildSession` | active build workspace metadata |
@@ -64,6 +65,10 @@ Frontend agents should preserve these names unless the branch explicitly migrate
 | `/api/handoff` | POST | `{ projectName, blueprint?, sessionId?, designReference?, prototypeHtml? }` | `{ success, message, projectPath, draftId?, filesCopied? }` |
 
 `/api/generate-prototype` can be used for first generation or critique regeneration. When `critique` is provided, callers should also pass `previousPrototypeHtml` so the model can preserve useful interaction structure while applying the requested change.
+
+`prototype` events include `data.quality`, a deterministic local score generated after HTML extraction. The quality payload is `{ score, grade, showSuggestions, categories, suggestions }`; grades are `A`, `B`, `C`, or `D`, and `showSuggestions` is true for `C` or below. Category IDs are `accessibility`, `visualHierarchy`, `spacing`, `colorContrast`, and `semanticHtml`.
+
+Prototype generation progress currently reports three steps: blueprint analysis, prototype generation, and output quality scoring.
 
 `/api/handoff` is the current export bridge. It creates a project folder, writes the shared v0.30 handoff package, records an initial project status, and saves a draft record.
 

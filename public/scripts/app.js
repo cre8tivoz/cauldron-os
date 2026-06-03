@@ -52,6 +52,7 @@ function cauldronApp() {
     blueprintDiff: null,
     blueprintDiffLoading: false,
     prototypeHtml: '',
+    prototypeQuality: null,
     critiqueText: '',
     prototypeIterations: [],
     activePrototypeVersion: 0,
@@ -176,6 +177,19 @@ function cauldronApp() {
 
     get visiblePrototypeIterations() {
       return this.prototypeIterations.slice(-5).reverse();
+    },
+
+    get qualityBadgeClass() {
+      return this.prototypeQuality?.grade ? `grade-${String(this.prototypeQuality.grade).toLowerCase()}` : 'grade-none';
+    },
+
+    get qualitySummaryText() {
+      if (!this.prototypeQuality) return 'Prototype not scored yet.';
+      return `${this.prototypeQuality.score}/100 quality pass`;
+    },
+
+    get qualitySuggestions() {
+      return Array.isArray(this.prototypeQuality?.suggestions) ? this.prototypeQuality.suggestions : [];
     },
 
     get selectedBlueprintVersionEntry() {
@@ -529,6 +543,7 @@ function cauldronApp() {
       this.selectedBlueprintVersion = 0;
       this.blueprintDiff = null;
       this.prototypeHtml = '';
+      this.prototypeQuality = null;
       this.critiqueText = '';
       this.prototypeIterations = [];
       this.activePrototypeVersion = 0;
@@ -1019,21 +1034,23 @@ ${this.form.projectType === 'app' ? `
                 this.addPipelineEntry({
                   type: 'progress',
                   step: event.step || 0,
-                  total: 2,
+                  total: event.total || 3,
                   label: event.label || event.message || 'Error',
                   status: 'error',
                   message: event.message,
                 });
               } else if (event.type === 'prototype') {
                 this.prototypeHtml = event.data.html || '';
+                this.prototypeQuality = event.data.quality || null;
                 this.recordPrototypeIteration({
                   critique: event.data.critique || critique || 'Initial prototype',
                   previousHtml: previousPrototypeHtml,
                   html: this.prototypeHtml,
+                  quality: this.prototypeQuality,
                 });
                 this.pipelineComplete = {
                   duration: event.duration,
-                  steps: 2,
+                  steps: event.steps || 3,
                 };
                 this.finishPipelineProgress(critique ? 'Critique applied' : 'Prototype generated');
               }
@@ -1045,8 +1062,9 @@ ${this.form.projectType === 'app' ? `
 
         if (this.prototypeHtml) {
           this.generatedAt = new Date().toISOString();
-          this.status = critique ? 'Prototype regenerated from critique.' : 'Prototype generated from blueprint.';
-          this.toast(critique ? 'Critique applied' : 'Prototype ready', critique ? 'Prototype iteration added.' : 'Prototype HTML generated from your blueprint.');
+          const qualityText = this.prototypeQuality ? ` Quality ${this.prototypeQuality.grade}.` : '';
+          this.status = (critique ? 'Prototype regenerated from critique.' : 'Prototype generated from blueprint.') + qualityText;
+          this.toast(critique ? 'Critique applied' : 'Prototype ready', (critique ? 'Prototype iteration added.' : 'Prototype HTML generated from your blueprint.') + qualityText);
           if (critique) this.critiqueText = '';
           this.setStage('prototype');
           this.previewMode = 'prototype';
@@ -1087,7 +1105,7 @@ ${this.form.projectType === 'app' ? `
       await this.generatePrototype({ critique, estimatedTokens });
     },
 
-    recordPrototypeIteration({ critique = '', previousHtml = '', html = '' } = {}) {
+    recordPrototypeIteration({ critique = '', previousHtml = '', html = '', quality = null } = {}) {
       if (!html) return;
       const version = this.prototypeIterations.length + 1;
       const iteration = {
@@ -1097,6 +1115,7 @@ ${this.form.projectType === 'app' ? `
         summary: this.prototypeDiffSummary(previousHtml, html),
         previousHtml,
         html,
+        quality,
         createdAt: new Date().toISOString(),
       };
       this.prototypeIterations.push(iteration);
@@ -1114,6 +1133,7 @@ ${this.form.projectType === 'app' ? `
     restorePrototypeIteration(iteration) {
       if (!iteration?.html) return;
       this.prototypeHtml = iteration.html;
+      this.prototypeQuality = iteration.quality || this.prototypeQuality || null;
       this.activePrototypeVersion = iteration.version;
       this.previewMode = 'prototype';
       this.pipelineView = 'preview';
@@ -1419,6 +1439,7 @@ ${this.form.projectType === 'app' ? `
       this.prototypeIterations = Array.isArray(draft.prototype_iterations) ? draft.prototype_iterations : [];
       const latestIteration = this.prototypeIterations[this.prototypeIterations.length - 1];
       this.activePrototypeVersion = latestIteration?.version || (this.prototypeHtml ? 1 : 0);
+      this.prototypeQuality = latestIteration?.quality || null;
       this.critiqueText = '';
       this.savedDraftId = draft.id;
       this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';

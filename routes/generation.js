@@ -13,6 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const { buildLineDiff } = require("../lib/blueprint-diff");
 const { createHandoffPackage } = require("../lib/handoff-package");
+const { scorePrototypeHtml } = require("../lib/quality-scorer");
 const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
 
 function registerGenerationRoutes(app, deps) {
@@ -337,6 +338,7 @@ function registerGenerationRoutes(app, deps) {
     const STAGES = [
       { label: 'Analyzing blueprint...' },
       { label: 'Generating prototype...' },
+      { label: 'Scoring output quality...' },
     ];
 
     function emitProgress(step, total, label, status, duration) {
@@ -369,7 +371,7 @@ function registerGenerationRoutes(app, deps) {
 
       // Stage 1: Research
       const t1 = Date.now();
-      emitProgress(1, 2, STAGES[0].label, 'active');
+      emitProgress(1, 3, STAGES[0].label, 'active');
       const designSystemContent = await ensureDesignSystem(designReference);
       let systemPrompt = PROTOTYPE_SYSTEM_PROMPT.replace('{blueprint text goes here}', blueprint);
 
@@ -393,11 +395,11 @@ function registerGenerationRoutes(app, deps) {
         systemPrompt += '\n\n## Critique Review Mode\nYou are revising an existing prototype. Preserve working interactions and the selected design language, but directly address the requested critique. Return the full updated prototype, not a patch.';
       }
 
-      emitProgress(1, 2, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
+      emitProgress(1, 3, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
 
       // Stage 2: Generate
       const t2 = Date.now();
-      emitProgress(2, 2, STAGES[1].label, 'active');
+      emitProgress(2, 3, STAGES[1].label, 'active');
       let prototypeHtml = '';
 
       const prototypePrompt = [
@@ -412,7 +414,7 @@ function registerGenerationRoutes(app, deps) {
 
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) {
-          emitProgress(2, 2, STAGES[1].label, 'error');
+          emitProgress(2, 3, STAGES[1].label, 'error');
           res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No API key was provided for ' + model + '.' }) + '\n');
           return res.end();
         }
@@ -442,13 +444,17 @@ function registerGenerationRoutes(app, deps) {
       }
 
       if (!prototypeHtml) {
-        emitProgress(2, 2, STAGES[1].label, 'error');
+        emitProgress(2, 3, STAGES[1].label, 'error');
         res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No HTML prototype was generated. Try again or adjust the blueprint.' }) + '\n');
         return res.end();
       }
 
-      emitProgress(2, 2, STAGES[1].label, 'complete', +(Date.now() - t2).toFixed(0) / 1000);
+      emitProgress(2, 3, STAGES[1].label, 'complete', +(Date.now() - t2).toFixed(0) / 1000);
 
+      const t3 = Date.now();
+      emitProgress(3, 3, STAGES[2].label, 'active');
+      const quality = scorePrototypeHtml(prototypeHtml);
+      emitProgress(3, 3, STAGES[2].label, 'complete', +(Date.now() - t3).toFixed(0) / 1000);
       const totalDuration = +(Date.now() - startTime).toFixed(0) / 1000;
 
       res.write(JSON.stringify({
@@ -458,8 +464,10 @@ function registerGenerationRoutes(app, deps) {
           success: true,
           critique: critiqueText,
           iterationIndex: Number(iterationIndex) || 0,
+          quality,
         },
         duration: totalDuration,
+        steps: 3,
       }) + '\n');
       res.end();
     } catch (err) {

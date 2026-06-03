@@ -99,10 +99,17 @@ function createFakeOllamaServer() {
 
     assert.equal(critique.res.status, 200);
     const events = parseNdjson(critique.text);
+    assert.ok(events.some(event => event.type === 'progress' && /Scoring output quality/.test(event.label)), 'quality scoring progress should be emitted');
     const prototypeEvent = events.find(event => event.type === 'prototype');
     assert(prototypeEvent, 'prototype event should be emitted');
+    assert.equal(prototypeEvent.steps, 3);
     assert.match(prototypeEvent.data.html, /Critiqued Prototype/);
     assert.equal(prototypeEvent.data.critique, 'Make the header clearer and the call to action more obvious.');
+    assert.ok(prototypeEvent.data.quality, 'prototype event should include a quality score');
+    assert.match(prototypeEvent.data.quality.grade, /^[ABCD]$/);
+    assert.equal(prototypeEvent.data.quality.categories.length, 5);
+    assert.equal(prototypeEvent.data.quality.showSuggestions, true);
+    assert.ok(prototypeEvent.data.quality.suggestions.length >= 1);
 
     assert.equal(fakeOllama.requests.length, 1);
     assert.match(fakeOllama.requests[0].prompt, /Previous Prototype HTML/);

@@ -476,6 +476,87 @@ h1, h2, h3, .display-title {
   text-transform: uppercase;
 }
 
+.stage-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quality-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.quality-badge strong {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--text-dark);
+  background: var(--acid-500);
+  font-size: 16px;
+}
+
+.quality-badge small {
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+.quality-badge.grade-b strong { background: var(--purple-300); }
+.quality-badge.grade-c strong { background: var(--pink-300); }
+.quality-badge.grade-d strong { background: #ff6b6b; }
+
+.quality-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.quality-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quality-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(193, 255, 0, 0.22);
+  background: rgba(193, 255, 0, 0.055);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.quality-chip strong {
+  color: var(--acid-400);
+}
+
+.quality-chip.weak {
+  border-color: rgba(244, 114, 182, 0.30);
+  background: rgba(244, 114, 182, 0.07);
+}
+
+.quality-chip.weak strong {
+  color: var(--pink-300);
+}
+
+.quality-suggestions p {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .stage-intro {
   margin: 8px 0 14px;
   color: var(--text-muted);
@@ -1174,6 +1255,8 @@ select:focus {
   .brand-mark { align-items: flex-start; }
   .logo-sigil { width: 46px; height: 46px; }
   .brand-title h1 { font-size: 29px; }
+  .stage-title-row { flex-direction: column; align-items: flex-start; }
+  .quality-badge { max-width: 100%; flex-wrap: wrap; }
   .form-grid { grid-template-columns: 1fr; }
   .api-key-row, .key-summary { grid-template-columns: 1fr; }
   .settings-head { flex-direction: column; }

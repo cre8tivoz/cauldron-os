@@ -15,6 +15,8 @@ assert.match(html, /Multi-agent orchestration/, 'Multi-agent build-agent control
 assert.match(html, /agentResults/, 'Multi-agent result list should be rendered');
 assert.match(html, /Create handoff package/, 'Handoff package button should exist');
 assert.match(html, /Critique this prototype/, 'Prototype critique textarea should exist');
+assert.match(html, /Quality/, 'Prototype quality score badge should exist');
+assert.match(html, /Prototype PM notes before your critique/, 'Prototype quality suggestions should appear before user critique');
 assert.match(html, /Prototype iterations/, 'Prototype iteration timeline should exist');
 assert.match(html, /Apply critique/, 'Prototype critique submit button should exist');
 assert.match(html, /Keyboard shortcuts/, 'Keyboard shortcuts should be discoverable');
@@ -43,6 +45,8 @@ assert.match(appJs, /\/api\/build-agents\/run/, 'Build agent run API should be c
 assert.match(appJs, /toggleBuildAgent/, 'Multi-agent toggle handler should be wired');
 assert.match(appJs, /agentIds/, 'Build agent run should send multiple selected agent ids');
 assert.match(appJs, /submitCritique/, 'Critique submit handler should be wired');
+assert.match(appJs, /prototypeQuality/, 'Prototype quality score state should be wired');
+assert.match(appJs, /qualitySuggestions/, 'Prototype quality suggestions should be wired');
 assert.match(appJs, /prototypeIterations/, 'Prototype iteration state should be wired');
 assert.match(appJs, /testApiKey/, 'API key test handler should be wired');
 assert.match(appJs, /handleShortcut/, 'Keyboard shortcut handler should be wired');
