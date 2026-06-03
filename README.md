@@ -67,17 +67,16 @@ You will need Node.js 18+. For local AI generation, install Ollama and pull at l
 
 ## Screenshots
 
-**Main UI** — Two-panel layout: Brain Dump + pipeline controls on the left, live output on the right. Here shown with a "Tiny Tyrants Day Care" Chihuahua landing page prompt.<br>
-![Main UI](assets/screenshots/01-main-ui.png)
+**Brain Dump → Blueprint pipeline** — Stage 04 Blueprint with generation running. OpenAI provider configured, blueprint generating in the right panel.<br>
+![Blueprint generation](assets/screenshots/01-main-ui.png)
 
-**Design System & Taste Engine** — Pick a design reference from 22 curated brands, search Refero for style inspiration, or research a custom URL.<br>
-![Design Reference & Taste Engine](assets/screenshots/02-design-dropdown.png)
+**Generated Blueprint** — Complete blueprint for "Tiny Tyrants Day Care" generated in 66.9s across 4 stages. Editable Markdown in the left panel, log and rendered output on the right.<br>
+![Generated Blueprint](assets/screenshots/02-design-dropdown.png)
 
-**Generated Prototype** — Live HTML + AlpineJS prototype preview with Chihuahua profile cards, a live Tantrum Meter, and the Bauhaus-meets-pampered-pooch aesthetic.<br>
-![Generated Prototype](assets/screenshots/03-prototype-preview.png)
-
-**Walkthrough demo** — Three-stage pipeline walkthrough: Brain Dump → Design System → Generated Prototype for the "Tiny Tyrants Day Care" Chihuahua landing page.<br>
-![Chihuahua walkthrough](assets/demo/cauldron-chihuahua-walkthrough.gif)
+**Walkthrough demo** — Full pipeline walkthrough: Brain Dump → Design System → Blueprint generation → Prototype preview. Stitched from screen recordings at 1.5x speed.<br>
+<video src="assets/demo/cauldron-chihuahua-walkthrough.mp4" width="100%" controls loop>
+  <img src="assets/demo/cauldron-chihuahua-walkthrough.gif" alt="Chihuahua walkthrough (GIF fallback)">
+</video>
 
 ---
 

@@ -677,7 +677,7 @@
 
         <div class="output-frame-wrap">
           <!-- Pipeline Summary Bar -->
-          <div class="pipeline-summary" x-show="pipelineComplete">
+          <div class="pipeline-summary" x-show="pipelineComplete && pipelineView === 'log'">
             <span>✅</span>
             <span>Generated in <span x-text="pipelineComplete?.duration?.toFixed(1)"></span>s · <span x-text="pipelineComplete?.steps"></span> steps</span>
             <span class="summary-link" @click="switchPipelineView('log')">[View Log]</span>
