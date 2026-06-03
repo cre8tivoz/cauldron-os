@@ -1,6 +1,6 @@
 # Public Interfaces
 
-This document defines the stable seams for v0.30 work. If a branch changes one of these contracts, update this file and add or update smoke coverage.
+This document defines the stable seams for v0.40 work. If a branch changes one of these contracts, update this file and add or update smoke coverage.
 
 ## Runtime
 
@@ -70,7 +70,7 @@ Frontend agents should preserve these names unless the branch explicitly migrate
 
 Prototype generation progress currently reports three steps: blueprint analysis, prototype generation, and output quality scoring.
 
-`/api/handoff` is the current export bridge. It creates a project folder, writes the shared v0.30 handoff package, records an initial project status, and saves a draft record.
+`/api/handoff` is the current export bridge. It creates a project folder, writes the shared v0.40 handoff package, records an initial project status, and saves a draft record.
 
 ### Drafts
 
@@ -100,9 +100,9 @@ Draft saves accept optional `blueprintVersions`, `prototypeHtml`, and `prototype
 
 `/api/build-agents/run` accepts the existing single-agent `agentId` field and optional `agentIds` for v0.40 multi-agent orchestration. When `agentIds` contains 2+ ids, the route returns `mode: "multi-agent"`, writes a root `cauldron.project.json`, and creates scoped handoff packages under `agents/<agentId>/`.
 
-The v0.30 BYOK/CLI work should treat this as an existing local-agent path, not assume the build stage is empty.
+The v0.40 BYOK/CLI work should treat this as an existing local-agent path, not assume the build stage is empty.
 
-Known v0.30 gap: `/api/build/generate` and `/api/build/refine` are intended SSE execution routes, but they currently depend on helper names that are not imported or passed into the route module. Verify and repair this path before relying on it for real Build-stage execution.
+Known v0.40 gap: `/api/build/generate` and `/api/build/refine` are intended SSE execution routes, but they currently depend on helper names that are not imported or passed into the route module. Verify and repair this path before relying on it for real Build-stage execution.
 
 ### Models And Design Systems
 

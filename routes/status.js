@@ -19,11 +19,11 @@ function registerStatusRoutes(app, deps) {
     callOllamaModel, callCloudModel, getCloudModelName,
     extractJsonObject, normaliseClarifyResult,
     scrapeURLFast, scrapeRenderedURL, formatResearchForPrompt,
-    inferProviderFromModel,
+    inferProviderFromModel, PACKAGE_VERSION,
   } = deps;
 
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'Cauldron OS v0.30' });
+    res.json({ status: 'ok', service: `Cauldron OS v${PACKAGE_VERSION}` });
   });
 }
 
