@@ -105,7 +105,11 @@ function registerModelsDesignRoutes(app, deps) {
           if (!response.ok) throw new Error(`Refero API returned ${response.status}`);
           const json = await response.json();
           const styles = Array.isArray(json.styles) ? json.styles : [];
-          referoCache = { timestamp: now, data: styles };
+          // Only cache non-empty results — prevents a transient failure from
+          // poisoning the cache for the next 5 minutes
+          if (styles.length > 0) {
+            referoCache = { timestamp: now, data: styles };
+          }
         } finally {
           clearTimeout(timeout);
         }

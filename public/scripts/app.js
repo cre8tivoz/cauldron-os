@@ -51,7 +51,7 @@ function cauldronApp() {
       projectName: '',
       projectType: 'site',
       brainDump: 'A high-end, Awwwards-adjacent interactive website. It should feel like Lovable, Replit, Volt and a sewer witch had a professional SaaS baby. Use acid green, purple, rogue pastel pink, charcoal, bone white, strong accessible typography, and real micro-interactions. The output must be polished enough to inspire a proper OpenCode build handoff.',
-      referenceUrl: 'https://jaques.design',
+      referenceUrl: '',
       researchMode: 'deep',
       provider: 'gemini',
       cloudModel: '',
