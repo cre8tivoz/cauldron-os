@@ -48,5 +48,8 @@ build/
 # Local test files (never publish — screen recordings, personal screenshots, test prompts)
 billy-tests/
 
+# Local planning documents (never publish — internal release plans, specs)
+plans/
+
 # Old screenshot archive (contains personal file paths in generation scripts)
 assets/screenshots/archive/
