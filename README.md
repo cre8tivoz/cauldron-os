@@ -67,16 +67,17 @@ You will need Node.js 18+. For local AI generation, install Ollama and pull at l
 
 ## Screenshots
 
-**Main UI** — Two-panel layout: Brain Dump + pipeline controls on the left, live output on the right.<br>
+**Main UI** — Two-panel layout: Brain Dump + pipeline controls on the left, live output on the right. Here shown with a "Tiny Tyrants Day Care" Chihuahua landing page prompt.<br>
 ![Main UI](assets/screenshots/01-main-ui.png)
 
 **Design System & Taste Engine** — Pick a design reference from 22 curated brands, search Refero for style inspiration, or research a custom URL.<br>
 ![Design Reference & Taste Engine](assets/screenshots/02-design-dropdown.png)
 
-**Walkthrough demo** — Rude Boy Coffee Co rewards app generated from a Brain Dump plus the live cloner/reference URL research flow.<br>
-![Rude Boy Coffee walkthrough](assets/demo/cauldron-rude-boy-coffee-walkthrough.gif)
+**Generated Prototype** — Live HTML + AlpineJS prototype preview with Chihuahua profile cards, a live Tantrum Meter, and the Bauhaus-meets-pampered-pooch aesthetic.<br>
+![Generated Prototype](assets/screenshots/03-prototype-preview.png)
 
-A browser-recorded `.webm` walkthrough is also included at [`assets/demo/cauldron-rude-boy-coffee-walkthrough.webm`](assets/demo/cauldron-rude-boy-coffee-walkthrough.webm).
+**Walkthrough demo** — Three-stage pipeline walkthrough: Brain Dump → Design System → Generated Prototype for the "Tiny Tyrants Day Care" Chihuahua landing page.<br>
+![Chihuahua walkthrough](assets/demo/cauldron-chihuahua-walkthrough.gif)
 
 ---
 
