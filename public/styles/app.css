@@ -91,9 +91,8 @@ textarea:focus-visible,
   display: grid;
   grid-template-rows: var(--topbar) minmax(0, 1fr) var(--statusbar);
   height: 100vh;
-  max-height: 920px;
-  padding: 12px;
-  gap: 12px;
+  padding: 10px;
+  gap: 10px;
 }
 
 .topbar,
@@ -353,8 +352,8 @@ h1, h2, h3, .display-title {
 .app-grid {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(410px, 0.94fr) minmax(520px, 1.22fr);
-  gap: 12px;
+  grid-template-columns: minmax(400px, 0.94fr) minmax(480px, 1.22fr);
+  gap: 10px;
 }
 
 .workspace-panel,
@@ -380,8 +379,8 @@ h1, h2, h3, .display-title {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px 14px;
+  gap: 12px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -400,8 +399,8 @@ h1, h2, h3, .display-title {
 .stage-rail {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 20px 0;
+  gap: 6px;
+  padding: 10px 16px 0;
 }
 
 .stage-tab {
@@ -432,11 +431,11 @@ h1, h2, h3, .display-title {
 .panel-body {
   min-height: 0;
   overflow: auto;
-  padding: 20px;
+  padding: 16px;
 }
 
 .stage-card {
-  padding: 22px;
+  padding: 16px;
   border-color: rgba(255, 255, 255, 0.10);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
@@ -449,10 +448,10 @@ h1, h2, h3, .display-title {
 }
 
 .stage-intro {
-  margin: 10px 0 22px;
+  margin: 8px 0 14px;
   color: var(--text-muted);
   font-size: 18px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .form-grid {
