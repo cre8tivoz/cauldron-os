@@ -1,5 +1,5 @@
 /**
- * Cauldron OS v0.30 — Witch Daddy Labs
+ * Cauldron OS v0.40 — Witch Daddy Labs
  *
  * Thin composition root. All business logic and routes extracted to:
  * - lib/        (model-client, research, agent-loop, tools, workspace, xml-parser)
@@ -771,7 +771,7 @@ registerAllRoutes(app, deps);
   try {
     await db.init();
     app.listen(PORT, () => {
-      console.log(`\n🔥 Cauldron OS v0.30 — Witch Daddy Labs`);
+      console.log(`\n🔥 Cauldron OS v${PACKAGE_VERSION} — Witch Daddy Labs`);
       console.log(`   Merged features from public open-source + private advanced builds`);
       console.log(`   Master Brain upgrades loaded:`);
       console.log(`   • Impeccable Taste (Grendel)`);
@@ -782,6 +782,10 @@ registerAllRoutes(app, deps);
       console.log(`   • Build Pipeline (start / generate / refine / stop)`);
       console.log(`   • Research History & Project Status Records`);
       console.log(`   • Scaffold Templates & OpenCode Handoff`);
+      console.log(`   • Blueprint Version Diffing`);
+      console.log(`   • Multi-Agent Build Handoffs`);
+      console.log(`   • Community Design & Scaffold Catalog`);
+      console.log(`   • Prototype Quality Scoring`);
       console.log(`   Server running at http://localhost:${PORT}`);
       console.log(`   Data directory: ${db.paths.DATA_DIR}\n`);
     });

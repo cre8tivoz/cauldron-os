@@ -6,6 +6,7 @@ const { spawn } = require('node:child_process');
 const http = require('node:http');
 
 const repoRoot = path.resolve(__dirname, '..');
+const { version: packageVersion } = require(path.join(repoRoot, 'package.json'));
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-smoke-'));
 const PORT = 3399;
 const OLLAMA_PORT = 3419;
@@ -82,7 +83,11 @@ function createFakeOllamaServer() {
   try {
     await waitForHealth();
 
-    let r = await request('/api/drafts');
+    let r = await request('/api/health');
+    assert.equal(r.res.status, 200);
+    assert.equal(r.body.service, `Cauldron OS v${packageVersion}`);
+
+    r = await request('/api/drafts');
     assert.equal(r.res.status, 200);
     assert.deepEqual(r.body.drafts, []);
 

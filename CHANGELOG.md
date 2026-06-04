@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.40.0] — 2026-06-04 — Blueprint Review, Multi-Agent Handoffs, Community, and Quality
+
+### Added
+- **Blueprint Version History & Diffing**: Save blueprint snapshots, restore earlier versions, and inspect structured line-level additions/removals before moving into prototype generation.
+- **Multi-Agent Build Orchestration**: Select multiple detected build agents, create scoped handoff packages, and coordinate them through a shared root `cauldron.project.json` manifest.
+- **Community Catalog**: Browse curated community DESIGN.md systems and scaffold starter guidance from the Taste Engine. Imported design systems are stored as local runtime data and become selectable immediately.
+- **Prototype Quality Scoring**: Score generated prototypes across accessibility, visual hierarchy, spacing, color contrast, and semantic HTML. C/D output shows PM-style suggestions before the critique loop.
+- **Release QA Assets**: Captured local-only desktop/mobile screenshots and walkthrough evidence under the ignored `test-images-codex/` directory.
+
+### Changed
+- Version bumped to `0.40.0` across package metadata, runtime health/status copy, the UI version ribbon, README, and current architecture/interface docs.
+- README now documents the actual 7-stage pipeline and the v0.40 feature set.
+- Prototype generation now reports a third progress stage for local quality scoring.
+- The test runner now includes community marketplace and quality scorer smoke coverage.
+
+### Notes
+- Community design-system imports live under `data/community/design-systems/` or `CAULDRON_DATA_DIR`; runtime imports are not source-controlled.
+- Community scaffold starters currently layer prompt guidance onto supported base scaffolds rather than introducing new deterministic scaffold writers.
+- Release tag `v0.40.0` should be created from the merged release commit after Phase 5 review.
+
 ## [0.30.0] — 2026-06-03 — 5-Phase Codex Sprint (v0.30)
 
 ### Added

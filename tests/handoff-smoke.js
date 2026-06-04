@@ -10,7 +10,7 @@
  * 5. Verifies error handling (missing fields, duplicate project names)
  * 6. Handoff with multiple HTML blocks (only first used)
  * 7. Handoff without HTML blocks (no prototype.html created)
- * 8. Verifies v0.30 handoff package files and manifest
+ * 8. Verifies the current handoff package files and manifest
  */
 
 const http = require('http');

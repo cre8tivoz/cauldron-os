@@ -6,6 +6,8 @@ const html = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'index.html
 
 // New unified frontend structure
 assert.match(html, /x-data="cauldronApp/, 'AlpineJS app should be wired');
+assert.match(html, /aria-label="Version 0\.40"/, 'Release version ribbon should be current');
+assert.match(html, />v0\.40</, 'Release version text should be current');
 assert.match(html, /Interrogate brief/, 'Interrogate button should exist');
 assert.match(html, /Blueprint next/, 'Blueprint button should exist');
 assert.match(html, /Build this/, 'Build stage button should exist');
