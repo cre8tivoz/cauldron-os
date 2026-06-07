@@ -8,7 +8,7 @@
  * - GET /api/refero-search: cached Refero style proxy.
  */
 
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+
 
 // ─── Refero Deep Search cache ────────────────────────────────────────────────
 const REFERO_API_URL = 'https://styles.refero.design/api/styles';

@@ -53,3 +53,7 @@ plans/
 
 # Old screenshot archive (contains personal file paths in generation scripts)
 assets/screenshots/archive/
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json

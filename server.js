@@ -9,11 +9,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { spawn, execFileSync } = require('child_process');
-const https = require('https');
-const http = require('http');
-const crypto = require('crypto');
-const { chromium } = require('playwright');
+const { execFileSync } = require('child_process');
 const db = require('./db');
 const { findNextAction } = require('./lib/xml-parser');
 const workspace = require('./lib/workspace');
@@ -760,6 +756,12 @@ const deps = {
   formatResearchForPrompt,
   inferProviderFromModel,
   CLOUD_MODELS,
+  OLLAMA_TIMEOUT_MS,
+  _runCloudAgentBuild,
+  buildSystemPrompt,
+  GEMINI_BASE_URL,
+  normaliseOpenAICompatibleChatUrl,
+  buildChatPayload,
   rootDir: __dirname,
   PACKAGE_VERSION,
 };

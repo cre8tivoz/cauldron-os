@@ -14,7 +14,7 @@ const path = require("path");
 const { buildLineDiff } = require("../lib/blueprint-diff");
 const { createHandoffPackage } = require("../lib/handoff-package");
 const { scorePrototypeHtml } = require("../lib/quality-scorer");
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+
 
 function registerGenerationRoutes(app, deps) {
   const {
@@ -58,7 +58,7 @@ function registerGenerationRoutes(app, deps) {
 
     if (mode === 'deep') {
       try {
-        const findings = await scrapeRenderedURL(url);
+        const findings = await scrapeRenderedURL(url, db.paths.DATA_DIR);
         return persistAndRespond(findings);
       } catch (err) {
         console.error('Deep research failed:', err);

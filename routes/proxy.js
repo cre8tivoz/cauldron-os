@@ -4,8 +4,6 @@
  */
 
 
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
-
 function registerProxyRoutes(app, deps) {
   const {
     db, TEMPLATES, DESIGN_SYSTEMS, workspace, designSystemCache,

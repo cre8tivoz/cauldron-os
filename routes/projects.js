@@ -7,10 +7,9 @@
  * - POST /api/projects/import: import local project folders into records.
  */
 
-const { spawn, execFileSync } = require("child_process");
+const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
 
 function registerProjectsRoutes(app, deps) {
   const {
