@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { stopProcess } = require('./_process-cleanup');
 const http = require('node:http');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -191,7 +192,7 @@ function createFakeOllamaServer() {
     console.error(output);
     throw err;
   } finally {
-    child.kill('SIGTERM');
+    await stopProcess(child);
     fakeOllama.server.close();
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

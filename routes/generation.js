@@ -18,17 +18,15 @@ const { scorePrototypeHtml } = require("../lib/quality-scorer");
 
 function registerGenerationRoutes(app, deps) {
   const {
-    db, TEMPLATES, DESIGN_SYSTEMS, workspace, designSystemCache,
+    db, workspace,
     getSystemPrompt, getTemplate, formatTemplateForPrompt, ensureDesignSystem,
     CLARIFY_SYSTEM_PROMPT, PROTOTYPE_SYSTEM_PROMPT, CLARIFY_NUM_PREDICT, BLUEPRINT_NUM_PREDICT,
-    OLLAMA_BASE_URL, OLLAMA_TAGS_URL, CLOUD_TIMEOUT_MS, OLLAMA_TIMEOUT_MS,
-    activeBuildControllers, buildSessions,
-    safeProjectName, getProjectPath, getProjectsDir, buildResumePrompt, buildOpencodeArgs,
-    commandPreview, listImportableProjects, getBuildStatus,
+    CLOUD_TIMEOUT_MS, OLLAMA_TIMEOUT_MS,
+    safeProjectName, getProjectsDir,
     callOllamaModel, callCloudModel, getCloudModelName,
     extractJsonObject, normaliseClarifyResult,
     scrapeURLFast, scrapeRenderedURL, formatResearchForPrompt,
-    inferProviderFromModel, rootDir, PACKAGE_VERSION,
+    PACKAGE_VERSION,
   } = deps;
 
   app.post('/api/research-url', async (req, res) => {
@@ -333,8 +331,6 @@ function registerGenerationRoutes(app, deps) {
   });
 
   app.post('/api/generate-prototype', async (req, res) => {
-    const { PROTOTYPE_SYSTEM_PROMPT } = deps;
-
     const STAGES = [
       { label: 'Analyzing blueprint...' },
       { label: 'Generating prototype...' },

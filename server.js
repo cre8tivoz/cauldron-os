@@ -21,7 +21,6 @@ const {
   extractJsonObject,
   normaliseClarifyResult,
   normaliseOpenAICompatibleChatUrl,
-  modelRequiresDefaultTemperature,
   buildChatPayload,
   inferProviderFromModel,
   callOllamaModel,
@@ -165,7 +164,7 @@ const REFERO_STYLES = {
     name: 'Authkit (Midnight Auth)',
     uuid: 'e80231a2-e4d6-406a-a2c9-2e6109679690',
     scheme: 'dark',
-    colors: ['#05060f', '#ffffff', '#2f343'],
+    colors: ['#05060f', '#ffffff', '#2f343e'],
     fonts: ['Untitled Sans', 'aeonikPro', 'dotDigital'],
     promptGuidance: 'Near-black navy canvas (#05060f) with pure white text — maximum contrast. Untitled Sans and aeonikPro for a modern, slightly geometric feel. Clean, trustworthy, security-conscious aesthetic. Authentication/identity product territory — needs to feel safe and solid. Minimal motion, maximum clarity.'
   },

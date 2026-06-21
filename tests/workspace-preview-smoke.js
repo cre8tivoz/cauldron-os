@@ -12,6 +12,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-wsp-'));
@@ -117,7 +118,7 @@ async function request(pathname, options = {}) {
     console.error(output);
     throw err;
   } finally {
-    child.kill('SIGTERM');
+    await stopProcess(child);
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 })();

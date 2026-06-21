@@ -4,6 +4,7 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-scaffold-export-'));
@@ -113,7 +114,7 @@ function assertProjectFiles(projectPath, files) {
 
     console.log('Scaffold export smoke tests passed');
   } finally {
-    app.kill('SIGTERM');
+    await stopProcess(app);
     fs.rmSync(tmp, { recursive: true, force: true });
     for (const projectPath of createdProjects) {
       try { fs.rmSync(projectPath, { recursive: true, force: true }); } catch { /* node_modules may need a moment */ }

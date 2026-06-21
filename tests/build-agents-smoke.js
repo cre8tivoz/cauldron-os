@@ -4,6 +4,7 @@ const http = require('http');
 const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
+const { stopProcess } = require('./_process-cleanup');
 
 function waitForServer(url, timeoutMs = 15000) {
   const started = Date.now();
@@ -121,7 +122,7 @@ function waitForServer(url, timeoutMs = 15000) {
 
     console.log('Build agents smoke tests passed');
   } finally {
-    app.kill('SIGTERM');
+    await stopProcess(app);
     fs.rmSync(tmp, { recursive: true, force: true });
     fs.rmSync(path.join(__dirname, '..', 'projects', 'agent-handoff-test'), { recursive: true, force: true });
     fs.rmSync(path.join(__dirname, '..', 'projects', 'multi-agent-handoff-test'), { recursive: true, force: true });

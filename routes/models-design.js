@@ -17,17 +17,9 @@ let referoCache = { timestamp: 0, data: [] };
 
 function registerModelsDesignRoutes(app, deps) {
   const {
-    db, TEMPLATES, DESIGN_SYSTEMS, workspace, designSystemCache,
-    getSystemPrompt, getTemplate, formatTemplateForPrompt, ensureDesignSystem,
-    CLARIFY_SYSTEM_PROMPT, CLARIFY_NUM_PREDICT, BLUEPRINT_NUM_PREDICT,
-    OLLAMA_BASE_URL, OLLAMA_TAGS_URL, CLOUD_TIMEOUT_MS,
-    activeBuildControllers, buildSessions,
-    safeProjectName, getProjectPath, buildResumePrompt, buildOpencodeArgs,
-    commandPreview, listImportableProjects, getBuildStatus,
-    callOllamaModel, callCloudModel, getCloudModelName,
-    extractJsonObject, normaliseClarifyResult,
-    scrapeURLFast, scrapeRenderedURL, formatResearchForPrompt,
-    inferProviderFromModel, CLOUD_MODELS,
+    OLLAMA_BASE_URL, OLLAMA_TAGS_URL,
+    DESIGN_SYSTEMS, designSystemCache, ensureDesignSystem,
+    CLOUD_MODELS,
   } = deps;
 
   app.get('/api/cloud-models', (req, res) => {

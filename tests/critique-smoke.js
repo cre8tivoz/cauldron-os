@@ -4,6 +4,7 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-critique-'));
@@ -149,7 +150,7 @@ function createFakeOllamaServer() {
 
     console.log('Critique loop smoke tests passed');
   } finally {
-    child.kill('SIGTERM');
+    await stopProcess(child);
     fakeOllama.server.close();
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

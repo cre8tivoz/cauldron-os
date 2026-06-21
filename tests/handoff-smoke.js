@@ -18,6 +18,7 @@ const path = require('path');
 const fs = require('fs');
 const assert = require('assert/strict');
 const { spawn } = require('child_process');
+const { stopProcess } = require('./_process-cleanup');
 
 const PORT = 3410;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -29,6 +30,15 @@ process.env.OLLAMA_BASE_URL = 'http://127.0.0.1:3419';
 
 let serverProcess = null;
 let output = '';
+const PROJECT_ROOT = path.join(__dirname, '..', 'projects');
+const TEST_PROJECT_DIRS = ['handoff-test-1', 'handoff-test-multi', 'handoff-test-notext'];
+
+function cleanupTestProjects() {
+  for (const dir of TEST_PROJECT_DIRS) {
+    const p = path.join(PROJECT_ROOT, dir);
+    if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
+  }
+}
 
 function startServer() {
   return new Promise((resolve, reject) => {
@@ -100,6 +110,7 @@ async function run() {
   }
 
   console.log('\nStarting handoff smoke tests...\n');
+  cleanupTestProjects();
   await startServer();
   console.log('  Server started on port', PORT, '\n');
 
@@ -286,15 +297,11 @@ A test project for smoke testing handoff.
   })();
 
   // Cleanup
-  serverProcess.kill();
+  await stopProcess(serverProcess);
   fs.rmSync(DATA_DIR, { recursive: true, force: true });
 
   // Clean up test projects left in project root
-  const projectRoot = path.join(__dirname, '..', 'projects');
-  for (const dir of ['handoff-test-1', 'handoff-test-multi', 'handoff-test-notext']) {
-    const p = path.join(projectRoot, dir);
-    if (fs.existsSync(p)) fs.rmSync(p, { recursive: true, force: true });
-  }
+  cleanupTestProjects();
 
   console.log(`\n${'='.repeat(50)}`);
   console.log(`Results: ${passed} passed, ${failed} failed`);
@@ -303,9 +310,10 @@ A test project for smoke testing handoff.
   process.exit(failed > 0 ? 1 : 0);
 }
 
-run().catch(err => {
+run().catch(async err => {
   console.error('Fatal:', err.message);
-  if (serverProcess) serverProcess.kill();
+  if (serverProcess) await stopProcess(serverProcess);
   try { fs.rmSync(DATA_DIR, { recursive: true, force: true }); } catch {}
+  try { cleanupTestProjects(); } catch {}
   process.exit(1);
 });
