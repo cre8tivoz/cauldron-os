@@ -13,7 +13,7 @@ const path = require("path");
 
 function registerProjectsRoutes(app, deps) {
   const {
-    db, workspace,
+    db,
     safeProjectName, getProjectPath, buildResumePrompt, buildOpencodeArgs,
     commandPreview, listImportableProjects,
   } = deps;

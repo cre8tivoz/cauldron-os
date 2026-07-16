@@ -15,9 +15,7 @@ function registerBuildRoutes(app, deps) {
   const {
     db, workspace,
     activeBuildControllers, buildSessions,
-    safeProjectName, getProjectPath, buildResumePrompt, buildOpencodeArgs,
-    commandPreview, listImportableProjects, getBuildStatus,
-    CLOUD_TIMEOUT_MS,
+    safeProjectName,
     buildSystemPrompt, _runCloudAgentBuild, generateWithTools,
   } = deps;
 

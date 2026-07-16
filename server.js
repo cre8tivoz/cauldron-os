@@ -13,10 +13,11 @@ const { execFileSync } = require('child_process');
 const db = require('./db');
 const { findNextAction } = require('./lib/xml-parser');
 const workspace = require('./lib/workspace');
-const { runTool, toolsSystemPrompt } = require('./lib/tools');
+const { runTool } = require('./lib/tools');
 const { generateWithTools, buildSystemPrompt } = require('./lib/agent-loop');
 const {
   CLOUD_MODELS,
+  GEMINI_BASE_URL,
   getCloudModelName,
   extractJsonObject,
   normaliseClarifyResult,
@@ -49,7 +50,6 @@ const CLOUD_TIMEOUT_MS = 300000;
 const CLARIFY_NUM_PREDICT = Number(process.env.CAULDRON_CLARIFY_NUM_PREDICT || 2048);
 const BLUEPRINT_NUM_PREDICT = Number(process.env.CAULDRON_BLUEPRINT_NUM_PREDICT || 8192);
 const OPENAI_BASE_URL = 'https://api.openai.com/v1/chat/completions';
-const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const REFERO_BASE = 'https://styles.refero.design/style';
 
 // ─── Refero Styles Index ──────────────────────────────────────────────────
