@@ -29,20 +29,25 @@ const strongPrototype = `<!doctype html>
   </body>
 </html>`;
 
-const weakPrototype = '<div><span>Dashboard</span><button></button><div style="color:#777;background:#777">low contrast</div></div>';
+const weakPrototype =
+  '<div><span>Dashboard</span><button></button><div style="color:#777;background:#777">low contrast</div></div>';
 
 const strong = scorePrototypeHtml(strongPrototype);
 assert.equal(strong.grade, 'A');
 assert.ok(strong.score >= 85);
 assert.equal(strong.showSuggestions, false);
 assert.equal(strong.categories.length, 5);
-assert.ok(strong.categories.every(category => category.score >= 70));
+assert.ok(strong.categories.every((category) => category.score >= 70));
 
 const weak = scorePrototypeHtml(weakPrototype);
 assert.ok(['C', 'D'].includes(weak.grade));
 assert.equal(weak.showSuggestions, true);
 assert.ok(weak.suggestions.length >= 3);
-assert.ok(weak.categories.some(category => category.id === 'semanticHtml' && category.score < 60));
-assert.ok(weak.categories.some(category => category.id === 'colorContrast' && category.score < 60));
+assert.ok(
+  weak.categories.some((category) => category.id === 'semanticHtml' && category.score < 60)
+);
+assert.ok(
+  weak.categories.some((category) => category.id === 'colorContrast' && category.score < 60)
+);
 
 console.log('Quality scorer smoke tests passed');

@@ -12,7 +12,7 @@ const PORT = 3422;
 const OLLAMA_PORT = 3423;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -33,12 +33,19 @@ async function request(pathname, options = {}) {
   });
   const text = await res.text();
   let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
   return { res, body, text };
 }
 
 function parseNdjson(text) {
-  return text.split('\n').filter(Boolean).map(line => JSON.parse(line));
+  return text
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
 }
 
 function createFakeOllamaServer() {
@@ -51,18 +58,23 @@ function createFakeOllamaServer() {
     }
 
     let raw = '';
-    req.on('data', chunk => { raw += chunk; });
+    req.on('data', (chunk) => {
+      raw += chunk;
+    });
     req.on('end', () => {
       const body = JSON.parse(raw || '{}');
       requests.push(body);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        response: '```html\n<main><h1>Critiqued Prototype</h1><button>Primary action</button></main>\n```',
-      }));
+      res.end(
+        JSON.stringify({
+          response:
+            '```html\n<main><h1>Critiqued Prototype</h1><button>Primary action</button></main>\n```',
+        })
+      );
     });
   });
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     server.listen(OLLAMA_PORT, '127.0.0.1', () => resolve({ server, requests }));
   });
 }
@@ -81,8 +93,12 @@ function createFakeOllamaServer() {
   });
 
   let output = '';
-  child.stdout.on('data', d => { output += d.toString(); });
-  child.stderr.on('data', d => { output += d.toString(); });
+  child.stdout.on('data', (d) => {
+    output += d.toString();
+  });
+  child.stderr.on('data', (d) => {
+    output += d.toString();
+  });
 
   try {
     await waitForHealth();
@@ -100,12 +116,20 @@ function createFakeOllamaServer() {
 
     assert.equal(critique.res.status, 200);
     const events = parseNdjson(critique.text);
-    assert.ok(events.some(event => event.type === 'progress' && /Scoring output quality/.test(event.label)), 'quality scoring progress should be emitted');
-    const prototypeEvent = events.find(event => event.type === 'prototype');
+    assert.ok(
+      events.some(
+        (event) => event.type === 'progress' && /Scoring output quality/.test(event.label)
+      ),
+      'quality scoring progress should be emitted'
+    );
+    const prototypeEvent = events.find((event) => event.type === 'prototype');
     assert(prototypeEvent, 'prototype event should be emitted');
     assert.equal(prototypeEvent.steps, 3);
     assert.match(prototypeEvent.data.html, /Critiqued Prototype/);
-    assert.equal(prototypeEvent.data.critique, 'Make the header clearer and the call to action more obvious.');
+    assert.equal(
+      prototypeEvent.data.critique,
+      'Make the header clearer and the call to action more obvious.'
+    );
     assert.ok(prototypeEvent.data.quality, 'prototype event should include a quality score');
     assert.match(prototypeEvent.data.quality.grade, /^[ABCD]$/);
     assert.equal(prototypeEvent.data.quality.categories.length, 5);
@@ -128,15 +152,17 @@ function createFakeOllamaServer() {
         generationMode: 'critique-smoke',
         modelUsed: 'qwen3.5:9b',
         prototypeHtml: '<main>Current prototype</main>',
-        prototypeIterations: [{
-          id: 'iteration-1',
-          version: 1,
-          critique: 'Initial prototype',
-          summary: 'Baseline snapshot',
-          html: '<main>Current prototype</main>',
-          previousHtml: '',
-          createdAt: '2026-06-03T00:00:00.000Z',
-        }],
+        prototypeIterations: [
+          {
+            id: 'iteration-1',
+            version: 1,
+            critique: 'Initial prototype',
+            summary: 'Baseline snapshot',
+            html: '<main>Current prototype</main>',
+            previousHtml: '',
+            createdAt: '2026-06-03T00:00:00.000Z',
+          },
+        ],
       }),
     });
     assert.equal(save.res.status, 200);
@@ -154,7 +180,7 @@ function createFakeOllamaServer() {
     fakeOllama.server.close();
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

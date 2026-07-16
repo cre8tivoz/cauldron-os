@@ -32,21 +32,21 @@ The test suite is smoke-test oriented. Add focused smoke coverage when a change 
 
 ## Repository Map
 
-| Path | Purpose | Safe Owners |
-| --- | --- | --- |
-| `server.js` | constants, prompt helpers, route registration, shared dependency object | architecture owner only unless a task explicitly touches constants |
-| `routes/generation.js` | research, clarify, blueprint/prototype generation, `/api/handoff` | generation/backend agent |
-| `routes/build.js` | build workspace start/generate/refine/stop/files/status | build-agent/backend agent |
-| `routes/projects.js` | project status, import, visible OpenCode resume/open flows | handoff/backend agent |
-| `routes/models-design.js` | cloud/Ollama model lists, design-system API, Refero search | design-system agent |
-| `routes/templates.js` | templates and build-status API | scaffold/backend agent |
-| `public/scripts/app.js` | Alpine state machine, API calls, localStorage config, pipeline behavior | frontend agent |
-| `public/index.html` | app shell, stage cards, modals, preview panel | frontend agent |
-| `public/styles/` | visual system and responsive layout | frontend/design agent |
-| `db/index.js` | draft/session/research/project status schema and persistence | data agent |
-| `lib/` | pure utilities and XML tool agent loop | build-agent/backend agent |
-| `docs/` | architecture, execution plans, public contracts | any agent, with care for current version language |
-| `tests/` | smoke tests for public contracts | owner of related feature |
+| Path                      | Purpose                                                                 | Safe Owners                                                        |
+| ------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `server.js`               | constants, prompt helpers, route registration, shared dependency object | architecture owner only unless a task explicitly touches constants |
+| `routes/generation.js`    | research, clarify, blueprint/prototype generation, `/api/handoff`       | generation/backend agent                                           |
+| `routes/build.js`         | build workspace start/generate/refine/stop/files/status                 | build-agent/backend agent                                          |
+| `routes/projects.js`      | project status, import, visible OpenCode resume/open flows              | handoff/backend agent                                              |
+| `routes/models-design.js` | cloud/Ollama model lists, design-system API, Refero search              | design-system agent                                                |
+| `routes/templates.js`     | templates and build-status API                                          | scaffold/backend agent                                             |
+| `public/scripts/app.js`   | Alpine state machine, API calls, localStorage config, pipeline behavior | frontend agent                                                     |
+| `public/index.html`       | app shell, stage cards, modals, preview panel                           | frontend agent                                                     |
+| `public/styles/`          | visual system and responsive layout                                     | frontend/design agent                                              |
+| `db/index.js`             | draft/session/research/project status schema and persistence            | data agent                                                         |
+| `lib/`                    | pure utilities and XML tool agent loop                                  | build-agent/backend agent                                          |
+| `docs/`                   | architecture, execution plans, public contracts                         | any agent, with care for current version language                  |
+| `tests/`                  | smoke tests for public contracts                                        | owner of related feature                                           |
 
 ## Working Rules
 

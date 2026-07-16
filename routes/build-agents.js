@@ -14,9 +14,9 @@ function uniqueAgentIds(agentIds = [], fallbackAgentId = 'handoff') {
   const raw = Array.isArray(agentIds) ? agentIds : [fallbackAgentId];
   const seen = new Set();
   return raw
-    .map(id => String(id || '').trim())
+    .map((id) => String(id || '').trim())
     .filter(Boolean)
-    .filter(id => {
+    .filter((id) => {
       if (seen.has(id)) return false;
       seen.add(id);
       return true;
@@ -28,7 +28,18 @@ function scopedProjectName(projectName, agent) {
   return `${projectName} — ${agent.name || agent.id}`;
 }
 
-function buildRootManifest({ safeName, projectName, cauldronVersion, projectType, templateId, designReference, sessionId, agents, packages }) {
+function buildRootManifest({
+  safeName,
+  projectName,
+  cauldronVersion,
+  projectType,
+  templateId,
+  designReference,
+  sessionId,
+  agents,
+  packages,
+  verification = null,
+}) {
   return {
     schemaVersion: 1,
     projectName: safeName,
@@ -40,15 +51,16 @@ function buildRootManifest({ safeName, projectName, cauldronVersion, projectType
     templateId,
     designReference: designReference || 'none',
     sessionId: sessionId || null,
+    verification,
     orchestration: {
       mode: 'multi-agent',
-      agents: agents.map(agent => ({
+      agents: agents.map((agent) => ({
         id: agent.id,
         name: agent.name,
         available: agent.available,
         scope: getAgentScope(agent.id),
       })),
-      packages: packages.map(pkg => ({
+      packages: packages.map((pkg) => ({
         agentId: pkg.agentId,
         agentName: pkg.agentName,
         mode: pkg.mode,
@@ -62,10 +74,8 @@ function buildRootManifest({ safeName, projectName, cauldronVersion, projectType
 }
 
 function registerBuildAgentRoutes(app, deps) {
-  const {
-    db, workspace, ensureDesignSystem, safeProjectName, getProjectsDir,
-    PACKAGE_VERSION,
-  } = deps;
+  const { db, workspace, ensureDesignSystem, safeProjectName, getProjectsDir, PACKAGE_VERSION } =
+    deps;
 
   app.get('/api/build-agents', (req, res) => {
     res.json({ success: true, agents: detectBuildAgents() });
@@ -84,17 +94,23 @@ function registerBuildAgentRoutes(app, deps) {
       dryRun = false,
       bootstrap = false,
       agentIds = [],
+      verification = null,
+      includeDesignPackage = false,
     } = req.body || {};
 
     if (!projectName || (!blueprint && !sessionId)) {
-      return res.status(400).json({ success: false, error: 'projectName and either blueprint or sessionId required' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'projectName and either blueprint or sessionId required' });
     }
 
     const safeName = safeProjectName(projectName);
     const projectPath = path.join(getProjectsDir(), safeName);
 
     if (fs.existsSync(projectPath)) {
-      return res.status(409).json({ success: false, error: `Project "${safeName}" already exists` });
+      return res
+        .status(409)
+        .json({ success: false, error: `Project "${safeName}" already exists` });
     }
 
     try {
@@ -105,10 +121,17 @@ function registerBuildAgentRoutes(app, deps) {
       if (isMultiAgent) {
         fs.mkdirSync(path.join(projectPath, 'agents'), { recursive: true });
         const detectedAgents = detectBuildAgents();
-        const selectedAgents = selectedAgentIds.map(id => (
-          detectedAgents.find(agent => agent.id === id)
-          || { id, name: id, available: false, command: null, launch: 'run-prompt', notes: `${id} not detected` }
-        ));
+        const selectedAgents = selectedAgentIds.map(
+          (id) =>
+            detectedAgents.find((agent) => agent.id === id) || {
+              id,
+              name: id,
+              available: false,
+              command: null,
+              launch: 'run-prompt',
+              notes: `${id} not detected`,
+            }
+        );
         const orchestration = { mode: 'multi-agent', agents: selectedAgents };
         const agentResults = [];
 
@@ -132,9 +155,15 @@ function registerBuildAgentRoutes(app, deps) {
             agentScope: getAgentScope(agent.id),
             orchestration,
             bootstrap: Boolean(bootstrap),
+            verification,
+            includeDesignPackage,
           });
 
-          const launch = launchBuildAgent({ agentId: agent.id, projectPath: agentProjectPath, dryRun });
+          const launch = launchBuildAgent({
+            agentId: agent.id,
+            projectPath: agentProjectPath,
+            dryRun,
+          });
           handoff.manifest.agent = {
             ...handoff.manifest.agent,
             mode: launch.mode,
@@ -142,7 +171,11 @@ function registerBuildAgentRoutes(app, deps) {
             command: launch.command,
             scope: getAgentScope(agent.id),
           };
-          fs.writeFileSync(handoff.manifestPath, JSON.stringify(handoff.manifest, null, 2) + '\n', 'utf8');
+          fs.writeFileSync(
+            handoff.manifestPath,
+            JSON.stringify(handoff.manifest, null, 2) + '\n',
+            'utf8'
+          );
 
           agentResults.push({
             success: true,
@@ -175,12 +208,17 @@ function registerBuildAgentRoutes(app, deps) {
           sessionId,
           agents: selectedAgents,
           packages: agentResults,
+          verification,
         });
         const manifestPath = path.join(projectPath, 'cauldron.project.json');
         fs.writeFileSync(manifestPath, JSON.stringify(rootManifest, null, 2) + '\n', 'utf8');
 
         try {
-          db.setProjectStatusOverride(safeName, 'needs_review', `Multi-agent handoff created for ${selectedAgents.length} agents`);
+          db.setProjectStatusOverride(
+            safeName,
+            'needs_review',
+            `Multi-agent handoff created for ${selectedAgents.length} agents`
+          );
         } catch (statusErr) {
           console.warn('[Cauldron] Status override warning:', statusErr.message);
         }
@@ -189,11 +227,13 @@ function registerBuildAgentRoutes(app, deps) {
         try {
           const draft = db.createDraft({
             projectName: safeName,
-            brainDump: sessionId ? `Multi-agent build session: ${sessionId}` : `Multi-agent handoff: ${selectedAgents.map(agent => agent.name).join(', ')}`,
+            brainDump: sessionId
+              ? `Multi-agent build session: ${sessionId}`
+              : `Multi-agent handoff: ${selectedAgents.map((agent) => agent.name).join(', ')}`,
             blueprint: blueprint || '',
             designReference: designReference || 'handoff',
             generationMode: 'multi-agent-handoff',
-            modelUsed: selectedAgents.map(agent => agent.name).join(', '),
+            modelUsed: selectedAgents.map((agent) => agent.name).join(', '),
           });
           draftId = draft.id;
         } catch (recordErr) {
@@ -205,13 +245,19 @@ function registerBuildAgentRoutes(app, deps) {
           mode: 'multi-agent',
           agentId: 'multi',
           agentName: 'Multi-agent handoff',
-          fallback: agentResults.some(result => result.fallback),
+          fallback: agentResults.some((result) => result.fallback),
           dryRun: Boolean(dryRun),
           projectPath,
           manifestPath,
           draftId,
           agentResults,
-          agents: selectedAgents.map(agent => ({ id: agent.id, name: agent.name, available: agent.available, scope: getAgentScope(agent.id) })),
+          agents: selectedAgents.map((agent) => ({
+            id: agent.id,
+            name: agent.name,
+            available: agent.available,
+            scope: getAgentScope(agent.id),
+          })),
+          verification,
         });
       }
 
@@ -231,6 +277,8 @@ function registerBuildAgentRoutes(app, deps) {
         workspace,
         agentId,
         bootstrap: shouldBootstrap,
+        verification,
+        includeDesignPackage,
       });
 
       const launch = launchBuildAgent({ agentId, projectPath, dryRun });
@@ -240,11 +288,19 @@ function registerBuildAgentRoutes(app, deps) {
           requestedCli: launch.agent.id,
           command: launch.command,
         };
-        fs.writeFileSync(handoff.manifestPath, JSON.stringify(handoff.manifest, null, 2) + '\n', 'utf8');
+        fs.writeFileSync(
+          handoff.manifestPath,
+          JSON.stringify(handoff.manifest, null, 2) + '\n',
+          'utf8'
+        );
       }
 
       try {
-        db.setProjectStatusOverride(safeName, launch.launched ? 'building' : 'needs_review', launch.launched ? `Launched ${launch.agent.name}` : 'Handoff package created');
+        db.setProjectStatusOverride(
+          safeName,
+          launch.launched ? 'building' : 'needs_review',
+          launch.launched ? `Launched ${launch.agent.name}` : 'Handoff package created'
+        );
       } catch (statusErr) {
         console.warn('[Cauldron] Status override warning:', statusErr.message);
       }
@@ -281,10 +337,13 @@ function registerBuildAgentRoutes(app, deps) {
         files: handoff.files,
         filesCopied: handoff.filesCopied,
         bootstrap: handoff.bootstrap || null,
+        verification: handoff.manifest.verification || null,
       });
     } catch (err) {
       console.error('[Cauldron] Build agent run error:', err);
-      res.status(500).json({ success: false, error: 'Build agent handoff failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Build agent handoff failed', details: err.message });
     }
   });
 }

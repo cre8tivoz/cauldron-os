@@ -48,8 +48,12 @@ function startServer() {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
-    serverProcess.stdout.on('data', d => { output += d.toString(); });
-    serverProcess.stderr.on('data', d => { output += d.toString(); });
+    serverProcess.stdout.on('data', (d) => {
+      output += d.toString();
+    });
+    serverProcess.stderr.on('data', (d) => {
+      output += d.toString();
+    });
 
     let started = false;
     const checkOutput = () => {
@@ -78,10 +82,14 @@ function request(method, path, body = null) {
     };
     const req = http.request(opts, (res) => {
       let data = '';
-      res.on('data', chunk => data += chunk);
+      res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
         let parsed = null;
-        try { parsed = JSON.parse(data); } catch { parsed = data; }
+        try {
+          parsed = JSON.parse(data);
+        } catch {
+          parsed = data;
+        }
         resolve({ status: res.statusCode, body: parsed, raw: data });
       });
     });
@@ -158,11 +166,21 @@ A test project for smoke testing handoff.
     assert(fs.existsSync(projectPath), `Project dir not found: ${projectPath}`);
     assert(fs.existsSync(path.join(projectPath, 'blueprint.md')), 'blueprint.md not found');
     assert(fs.existsSync(path.join(projectPath, 'prototype.html')), 'prototype.html not found');
-    assert(fs.existsSync(path.join(projectPath, 'cauldron.project.json')), 'cauldron.project.json not found');
+    assert(
+      fs.existsSync(path.join(projectPath, 'cauldron.project.json')),
+      'cauldron.project.json not found'
+    );
     assert(fs.existsSync(path.join(projectPath, 'design-system.md')), 'design-system.md not found');
+    assert(
+      fs.existsSync(path.join(projectPath, 'launch-checklist.md')),
+      'launch-checklist.md not found'
+    );
     assert(fs.existsSync(path.join(projectPath, 'README.md')), 'README.md not found');
     assert(fs.existsSync(path.join(projectPath, '.cursorrules')), '.cursorrules not found');
-    assert(fs.existsSync(path.join(projectPath, '.opencode', 'config.md')), '.opencode/config.md not found');
+    assert(
+      fs.existsSync(path.join(projectPath, '.opencode', 'config.md')),
+      '.opencode/config.md not found'
+    );
 
     // Verify blueprint content
     const blueprint = fs.readFileSync(path.join(projectPath, 'blueprint.md'), 'utf8');
@@ -180,39 +198,78 @@ A test project for smoke testing handoff.
     assert(config.includes('handoff-test-1'), 'config.md missing project name');
     assert(config.includes('blueprint.md'), 'config.md missing blueprint reference');
 
-    const manifest = JSON.parse(fs.readFileSync(path.join(projectPath, 'cauldron.project.json'), 'utf8'));
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(projectPath, 'cauldron.project.json'), 'utf8')
+    );
     assert.equal(manifest.schemaVersion, 1, 'manifest schemaVersion should be 1');
     assert.equal(manifest.projectName, 'handoff-test-1', 'manifest missing safe project name');
-    assert.equal(manifest.agent.mode, 'handoff-only', 'manifest should distinguish package-only mode');
+    assert.equal(
+      manifest.agent.mode,
+      'handoff-only',
+      'manifest should distinguish package-only mode'
+    );
     assert.equal(manifest.files.blueprint, 'blueprint.md', 'manifest missing blueprint file');
     assert.equal(manifest.files.prototype, 'prototype.html', 'manifest missing prototype file');
-    assert.equal(manifest.files.designSystem, 'design-system.md', 'manifest missing design-system file');
+    assert.equal(
+      manifest.files.designSystem,
+      'design-system.md',
+      'manifest missing design-system file'
+    );
+    assert.equal(
+      manifest.files.launchChecklist,
+      'launch-checklist.md',
+      'manifest missing launch-checklist file'
+    );
     assert.equal(manifest.files.readme, 'README.md', 'manifest missing README file');
-    assert.equal(manifest.scaffold.templateId, 'html-alpine', 'manifest missing scaffold template id');
-    assert.equal(manifest.scaffold.entrypoint, 'index.html', 'manifest missing scaffold entrypoint');
-    assert(manifest.scaffold.files.some(file => file.path === 'index.html' && file.role === 'entry'), 'manifest missing scaffold index metadata');
+    assert.equal(
+      manifest.scaffold.templateId,
+      'html-alpine',
+      'manifest missing scaffold template id'
+    );
+    assert.equal(
+      manifest.scaffold.entrypoint,
+      'index.html',
+      'manifest missing scaffold entrypoint'
+    );
+    assert(
+      manifest.scaffold.files.some((file) => file.path === 'index.html' && file.role === 'entry'),
+      'manifest missing scaffold index metadata'
+    );
 
     const readme = fs.readFileSync(path.join(projectPath, 'README.md'), 'utf8');
     assert(readme.includes('handoff package'), 'README should describe package creation');
     assert(!readme.includes('launched'), 'README should not imply an agent was launched');
+
+    const checklist = fs.readFileSync(path.join(projectPath, 'launch-checklist.md'), 'utf8');
+    assert(checklist.includes('Run commands'), 'launch checklist should include commands section');
+    assert(checklist.includes('Related files'), 'launch checklist should include linked artifacts');
+    assert(!checklist.includes('sk-'), 'launch checklist should not include secret-looking values');
   })();
 
   // ── Test 3: Verify draft record ──
   await test('Draft record created with correct data', async () => {
     const r = await request('GET', '/api/drafts');
     assert.equal(r.status, 200);
-    assert(Array.isArray(r.body.drafts), `Expected drafts array, got: ${JSON.stringify(r.body).slice(0, 200)}`);
+    assert(
+      Array.isArray(r.body.drafts),
+      `Expected drafts array, got: ${JSON.stringify(r.body).slice(0, 200)}`
+    );
 
-    const draft = r.body.drafts.find(d => d.project_name === 'handoff-test-1');
-    assert(draft, `Draft 'handoff-test-1' not found. Available: ${JSON.stringify(r.body.drafts.map(d => ({name: d.project_name, id: d.id, mode: d.generation_mode})))}`);
+    const draft = r.body.drafts.find((d) => d.project_name === 'handoff-test-1');
+    assert(
+      draft,
+      `Draft 'handoff-test-1' not found. Available: ${JSON.stringify(r.body.drafts.map((d) => ({ name: d.project_name, id: d.id, mode: d.generation_mode })))}`
+    );
     assert(draft.id, 'Draft missing id');
     assert.equal(draft.generation_mode, 'handoff', 'Expected generation_mode=handoff');
 
     // Verify blueprint content by fetching full draft by ID
     const fullR = await request('GET', `/api/drafts/${draft.id}`);
     assert.equal(fullR.status, 200);
-    assert(fullR.body.draft.blueprint && fullR.body.draft.blueprint.includes('My Test Project'),
-      `Full draft missing blueprint content. Got keys: ${Object.keys(fullR.body)}`);
+    assert(
+      fullR.body.draft.blueprint && fullR.body.draft.blueprint.includes('My Test Project'),
+      `Full draft missing blueprint content. Got keys: ${Object.keys(fullR.body)}`
+    );
   })();
 
   // ── Test 4: Duplicate project name returns 409 ──
@@ -224,7 +281,10 @@ A test project for smoke testing handoff.
 
     assert.equal(r.status, 409, `Expected 409 for duplicate, got ${r.status}`);
     assert(r.body.error, 'Expected error message');
-    assert(r.body.error.includes('already exists'), `Expected 'already exists' error, got: ${r.body.error}`);
+    assert(
+      r.body.error.includes('already exists'),
+      `Expected 'already exists' error, got: ${r.body.error}`
+    );
   })();
 
   // ── Test 5: Missing required fields return 400 ──
@@ -310,10 +370,14 @@ A test project for smoke testing handoff.
   process.exit(failed > 0 ? 1 : 0);
 }
 
-run().catch(async err => {
+run().catch(async (err) => {
   console.error('Fatal:', err.message);
   if (serverProcess) await stopProcess(serverProcess);
-  try { fs.rmSync(DATA_DIR, { recursive: true, force: true }); } catch {}
-  try { cleanupTestProjects(); } catch {}
+  try {
+    fs.rmSync(DATA_DIR, { recursive: true, force: true });
+  } catch {}
+  try {
+    cleanupTestProjects();
+  } catch {}
   process.exit(1);
 });

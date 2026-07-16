@@ -3,10 +3,7 @@
  * Route handlers for history.
  */
 
-
-
-
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+const { normaliseLimitOffset, sendMarkdownDownload } = require('./_helpers');
 
 function registerHistoryRoutes(app, deps) {
   const { db } = deps;
@@ -14,10 +11,16 @@ function registerHistoryRoutes(app, deps) {
   app.get('/api/history', (req, res) => {
     try {
       const { limit, offset } = normaliseLimitOffset(req.query);
-      res.json({ success: true, sessions: db.getSessions(limit, offset), total: db.countSessions() });
+      res.json({
+        success: true,
+        sessions: db.getSessions(limit, offset),
+        total: db.countSessions(),
+      });
     } catch (err) {
       console.error('[Cauldron] History error:', err);
-      res.status(500).json({ success: false, error: 'Failed to fetch history', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch history', details: err.message });
     }
   });
 
@@ -38,13 +41,16 @@ function registerHistoryRoutes(app, deps) {
         stats: {
           totalDrafts: db.countDrafts(),
           totalSessions: db.countSessions(),
-          totalResearchHistory: typeof db.countResearchHistory === 'function' ? db.countResearchHistory() : 0,
+          totalResearchHistory:
+            typeof db.countResearchHistory === 'function' ? db.countResearchHistory() : 0,
           recentActivity: db.getSessions(10, 0).length,
         },
       });
     } catch (err) {
       console.error('[Cauldron] Stats error:', err);
-      res.status(500).json({ success: false, error: 'Failed to fetch stats', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch stats', details: err.message });
     }
   });
 }

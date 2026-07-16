@@ -4,9 +4,6 @@
  * - GET /api/health: service health response.
  */
 
-
-
-
 function registerStatusRoutes(app, deps) {
   const { PACKAGE_VERSION } = deps;
 

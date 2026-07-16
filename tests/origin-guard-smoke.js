@@ -10,7 +10,7 @@ const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-origin-guard-smo
 const PORT = 3401;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -37,7 +37,11 @@ async function buildStart(sessionId, headers = {}) {
   });
   const text = await res.text();
   let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
   return { res, body };
 }
 
@@ -53,14 +57,16 @@ async function buildStart(sessionId, headers = {}) {
   });
 
   let output = '';
-  child.stdout.on('data', d => output += d.toString());
-  child.stderr.on('data', d => output += d.toString());
+  child.stdout.on('data', (d) => (output += d.toString()));
+  child.stderr.on('data', (d) => (output += d.toString()));
 
   try {
     await waitForHealth();
 
     // Same-origin request is allowed.
-    let { res, body } = await buildStart('origin-guard-same', { Origin: `http://localhost:${PORT}` });
+    let { res, body } = await buildStart('origin-guard-same', {
+      Origin: `http://localhost:${PORT}`,
+    });
     assert.equal(res.status, 200, 'same-origin request should be allowed');
     assert.equal(body.success, true, 'same-origin request should succeed');
 

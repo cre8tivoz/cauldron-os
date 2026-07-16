@@ -13,7 +13,8 @@ function waitForServer(url, timeoutMs = 15000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -23,9 +24,9 @@ function waitForServer(url, timeoutMs = 15000) {
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-design-systems-'));
   const probe = http.createServer((req, res) => res.end('ok'));
-  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const appPort = probe.address().port + 1;
-  await new Promise(resolve => probe.close(resolve));
+  await new Promise((resolve) => probe.close(resolve));
 
   const app = spawn(process.execPath, ['server.js'], {
     cwd: path.join(__dirname, '..'),
@@ -40,15 +41,18 @@ function waitForServer(url, timeoutMs = 15000) {
     const listData = await listRes.json();
     assert.strictEqual(listRes.status, 200);
     assert.ok(Array.isArray(listData.systems), 'systems response should include systems array');
-    assert.ok(listData.systems.length >= 150, `expected 150+ systems, got ${listData.systems.length}`);
+    assert.ok(
+      listData.systems.length >= 150,
+      `expected 150+ systems, got ${listData.systems.length}`
+    );
 
-    const ids = listData.systems.map(system => system.id);
+    const ids = listData.systems.map((system) => system.id);
     assert.strictEqual(new Set(ids).size, ids.length, 'design-system ids should be unique');
     for (const id of ['cursor', 'lovable', 'webflow', 'vercel']) {
       assert.ok(ids.includes(id), `expected ${id} to remain available`);
     }
 
-    const cursor = listData.systems.find(system => system.id === 'cursor');
+    const cursor = listData.systems.find((system) => system.id === 'cursor');
     assert.ok(cursor.name.includes('Cursor'), 'legacy display name should be preserved for Cursor');
     assert.strictEqual(cursor.source, 'open-design');
 
@@ -58,7 +62,11 @@ function waitForServer(url, timeoutMs = 15000) {
       body: JSON.stringify({ system: 'cursor' }),
     });
     const firstData = await firstRef.json();
-    assert.strictEqual(firstRef.status, 200, firstData.error || 'design-reference should load local catalog content');
+    assert.strictEqual(
+      firstRef.status,
+      200,
+      firstData.error || 'design-reference should load local catalog content'
+    );
     assert.strictEqual(firstData.system, 'cursor');
     assert.strictEqual(firstData.cached, false);
     assert.match(firstData.content, /Cursor/i);
@@ -84,7 +92,7 @@ function waitForServer(url, timeoutMs = 15000) {
   } finally {
     app.kill('SIGTERM');
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

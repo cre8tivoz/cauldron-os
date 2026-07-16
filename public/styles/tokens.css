@@ -39,9 +39,10 @@
   --success: #86efac;
   --info: #67e8f9;
 
-  --font-display: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
-  --font-body: "Barlow", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-code: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+  --font-body: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-code:
+    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --radius-none: 0;
   --radius-sm: 6px;

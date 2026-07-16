@@ -10,14 +10,49 @@
  * - GET /api/build/status/:sessionId: inspect build session state.
  */
 
+const path = require('path');
+const { runVerification } = require('../lib/verification');
 
 function registerBuildRoutes(app, deps) {
   const {
-    db, workspace,
-    activeBuildControllers, buildSessions,
-    safeProjectName,
-    buildSystemPrompt, _runCloudAgentBuild, generateWithTools,
+    db,
+    workspace,
+    activeBuildControllers,
+    buildSessions,
+    getProjectsDir,
+    buildSystemPrompt,
+    _runCloudAgentBuild,
+    generateWithTools,
   } = deps;
+
+  function resolveVerificationTarget({ sessionId = '', projectPath = '' }) {
+    if (sessionId) {
+      const sanitized = String(sessionId).replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!sanitized) {
+        throw new Error('Invalid sessionId');
+      }
+      return {
+        targetDir: workspace.workspaceDir(sanitized),
+        targetType: 'workspace',
+        sessionId: sanitized,
+      };
+    }
+
+    if (projectPath) {
+      const root = path.resolve(getProjectsDir());
+      const resolved = path.resolve(projectPath);
+      if (!resolved.startsWith(root)) {
+        throw new Error('Invalid projectPath');
+      }
+      return {
+        targetDir: resolved,
+        targetType: 'project',
+        sessionId: '',
+      };
+    }
+
+    throw new Error('sessionId or projectPath required');
+  }
 
   app.post('/api/build/start', async (req, res) => {
     try {
@@ -47,7 +82,16 @@ function registerBuildRoutes(app, deps) {
   });
 
   app.post('/api/build/generate', async (req, res) => {
-    const { prompt, model, sessionId, systemPrompt, apiKey, cloudModel } = req.body;
+    const {
+      prompt,
+      model,
+      sessionId,
+      systemPrompt,
+      apiKey,
+      cloudModel,
+      verify = false,
+      templateId = '',
+    } = req.body;
     const sid = sessionId;
 
     if (!sid) {
@@ -57,7 +101,7 @@ function registerBuildRoutes(app, deps) {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
 
@@ -68,11 +112,13 @@ function registerBuildRoutes(app, deps) {
 
     try {
       await workspace.ensureWorkspace(sid);
-      const sysPrompt = systemPrompt || await buildSystemPrompt({ sessionId: sid });
+      const sysPrompt = systemPrompt || (await buildSystemPrompt({ sessionId: sid }));
 
       const sendEvent = (event, data) => {
         if (!controller.signal.aborted) {
-          try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch (e) {}
+          try {
+            res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+          } catch (e) {}
         }
       };
 
@@ -86,29 +132,55 @@ function registerBuildRoutes(app, deps) {
           return res.end();
         }
         const result = await _runCloudAgentBuild({
-          prompt, model, apiKey, systemPrompt: sysPrompt, sessionId: sid,
+          prompt,
+          model,
+          apiKey,
+          systemPrompt: sysPrompt,
+          sessionId: sid,
           onToken: (text) => sendEvent('token', { text }),
-          signal: controller.signal, cloudModel,
+          signal: controller.signal,
+          cloudModel,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
         finalMessages = result.messages || [];
         for (const action of finalActions) {
           sendEvent('action', { tool: action.name, path: action.args?.path, status: 'start' });
-          sendEvent('result', { tool: action.name, path: action.args?.path, status: 'complete', output: action.result });
-          if (action.args && action.args.path && ['write_file', 'edit_file', 'delete_file'].includes(action.name)) {
+          sendEvent('result', {
+            tool: action.name,
+            path: action.args?.path,
+            status: 'complete',
+            output: action.result,
+          });
+          if (
+            action.args &&
+            action.args.path &&
+            ['write_file', 'edit_file', 'delete_file'].includes(action.name)
+          ) {
             sendEvent('filechange', { path: action.args.path });
           }
         }
       } else {
         const agentGen = generateWithTools({
-          prompt, model, systemPrompt: sysPrompt, sessionId: sid,
-          onStream: (chunk) => { if (chunk && chunk.token) sendEvent('token', { text: chunk.token }); },
+          prompt,
+          model,
+          systemPrompt: sysPrompt,
+          sessionId: sid,
+          onStream: (chunk) => {
+            if (chunk && chunk.token) sendEvent('token', { text: chunk.token });
+          },
           onAction: ({ action, args, result }) => {
             sendEvent('action', { tool: action, path: args?.path, status: 'start' });
-            sendEvent('result', { tool: action, path: args?.path, status: 'complete', output: result });
+            sendEvent('result', {
+              tool: action,
+              path: args?.path,
+              status: 'complete',
+              output: result,
+            });
           },
-          onFileChange: ({ action, path }) => { sendEvent('filechange', { path }); },
+          onFileChange: ({ action, path }) => {
+            sendEvent('filechange', { path });
+          },
         });
         for await (const chunk of agentGen) {
           if (controller.signal.aborted) break;
@@ -122,11 +194,16 @@ function registerBuildRoutes(app, deps) {
 
       if (!controller.signal.aborted) {
         const duration = Date.now() - startTime;
-        buildSessions.set(sid, {
+        const nextSession = {
           ...(buildSessions.get(sid) || {}),
-          sessionId: sid, status: 'completed', completedAt: new Date().toISOString(),
-          files: finalFiles, actions: finalActions, duration,
-        });
+          sessionId: sid,
+          status: 'completed',
+          completedAt: new Date().toISOString(),
+          files: finalFiles,
+          actions: finalActions,
+          duration,
+        };
+        buildSessions.set(sid, nextSession);
 
         let draftId = null;
         try {
@@ -134,12 +211,35 @@ function registerBuildRoutes(app, deps) {
             projectName: `build-${sid.slice(0, 8)}`,
             brainDump: prompt,
             blueprint: JSON.stringify({ files: finalFiles, actions: finalActions }),
-            designReference: 'build', generationMode: 'build', modelUsed: model,
+            designReference: 'build',
+            generationMode: 'build',
+            modelUsed: model,
           });
           draftId = draftRecord.id;
-        } catch (e) { console.warn('[Build] Draft save warning:', e.message); }
+        } catch (error) {
+          console.warn('[Build] Draft save warning:', error.message);
+        }
 
-        sendEvent('done', { files: finalFiles, actions: finalActions, duration, draftId });
+        let verification = null;
+        if (verify) {
+          verification = await runVerification({
+            targetDir: workspace.workspaceDir(sid),
+            options: { targetType: 'workspace', templateId },
+          });
+          buildSessions.set(sid, {
+            ...nextSession,
+            verification,
+          });
+          sendEvent('verification', verification);
+        }
+
+        sendEvent('done', {
+          files: finalFiles,
+          actions: finalActions,
+          duration,
+          draftId,
+          verification,
+        });
       }
       res.end();
     } catch (err) {
@@ -147,14 +247,23 @@ function registerBuildRoutes(app, deps) {
       try {
         res.write(`event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`);
         res.end();
-      } catch (e) {}
+      } catch {}
     } finally {
       activeBuildControllers.delete(sid);
     }
   });
 
   app.post('/api/build/refine', async (req, res) => {
-    const { prompt, sessionId, systemPrompt, model, apiKey, cloudModel } = req.body;
+    const {
+      prompt,
+      sessionId,
+      systemPrompt,
+      model,
+      apiKey,
+      cloudModel,
+      verify = false,
+      templateId = '',
+    } = req.body;
     const sid = sessionId;
 
     if (!sid) {
@@ -164,7 +273,7 @@ function registerBuildRoutes(app, deps) {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
 
@@ -175,11 +284,13 @@ function registerBuildRoutes(app, deps) {
 
     try {
       await workspace.ensureWorkspace(sid);
-      const sysPrompt = systemPrompt || await buildSystemPrompt({ sessionId: sid });
+      const sysPrompt = systemPrompt || (await buildSystemPrompt({ sessionId: sid }));
 
       const sendEvent = (event, data) => {
         if (!controller.signal.aborted) {
-          try { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); } catch (e) {}
+          try {
+            res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+          } catch (e) {}
         }
       };
 
@@ -193,29 +304,55 @@ function registerBuildRoutes(app, deps) {
           return res.end();
         }
         const result = await _runCloudAgentBuild({
-          prompt, model, apiKey, systemPrompt: sysPrompt, sessionId: sid,
+          prompt,
+          model,
+          apiKey,
+          systemPrompt: sysPrompt,
+          sessionId: sid,
           onToken: (text) => sendEvent('token', { text }),
-          signal: controller.signal, cloudModel,
+          signal: controller.signal,
+          cloudModel,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
         finalMessages = result.messages || [];
         for (const action of finalActions) {
           sendEvent('action', { tool: action.name, path: action.args?.path, status: 'start' });
-          sendEvent('result', { tool: action.name, path: action.args?.path, status: 'complete', output: action.result });
-          if (action.args && action.args.path && ['write_file', 'edit_file', 'delete_file'].includes(action.name)) {
+          sendEvent('result', {
+            tool: action.name,
+            path: action.args?.path,
+            status: 'complete',
+            output: action.result,
+          });
+          if (
+            action.args &&
+            action.args.path &&
+            ['write_file', 'edit_file', 'delete_file'].includes(action.name)
+          ) {
             sendEvent('filechange', { path: action.args.path });
           }
         }
       } else {
         const agentGen = generateWithTools({
-          prompt, model: model || 'llama3.2', systemPrompt: sysPrompt, sessionId: sid,
-          onStream: (chunk) => { if (chunk && chunk.token) sendEvent('token', { text: chunk.token }); },
+          prompt,
+          model: model || 'llama3.2',
+          systemPrompt: sysPrompt,
+          sessionId: sid,
+          onStream: (chunk) => {
+            if (chunk && chunk.token) sendEvent('token', { text: chunk.token });
+          },
           onAction: ({ action, args, result }) => {
             sendEvent('action', { tool: action, path: args?.path, status: 'start' });
-            sendEvent('result', { tool: action, path: args?.path, status: 'complete', output: result });
+            sendEvent('result', {
+              tool: action,
+              path: args?.path,
+              status: 'complete',
+              output: result,
+            });
           },
-          onFileChange: ({ action, path }) => { sendEvent('filechange', { path }); },
+          onFileChange: ({ action, path }) => {
+            sendEvent('filechange', { path });
+          },
         });
         for await (const chunk of agentGen) {
           if (controller.signal.aborted) break;
@@ -232,11 +369,29 @@ function registerBuildRoutes(app, deps) {
         const existingSession = buildSessions.get(sid) || {};
         const mergedFiles = [...new Set([...(existingSession.files || []), ...finalFiles])];
         const mergedActions = [...(existingSession.actions || []), ...finalActions];
-        buildSessions.set(sid, {
-          ...existingSession, status: 'refined', completedAt: new Date().toISOString(),
-          files: mergedFiles, actions: mergedActions, duration: (existingSession.duration || 0) + duration,
-        });
-        sendEvent('done', { files: mergedFiles, actions: mergedActions, duration });
+        const nextSession = {
+          ...existingSession,
+          status: 'refined',
+          completedAt: new Date().toISOString(),
+          files: mergedFiles,
+          actions: mergedActions,
+          duration: (existingSession.duration || 0) + duration,
+        };
+        buildSessions.set(sid, nextSession);
+
+        let verification = null;
+        if (verify) {
+          verification = await runVerification({
+            targetDir: workspace.workspaceDir(sid),
+            options: { targetType: 'workspace', templateId },
+          });
+          buildSessions.set(sid, {
+            ...nextSession,
+            verification,
+          });
+          sendEvent('verification', verification);
+        }
+        sendEvent('done', { files: mergedFiles, actions: mergedActions, duration, verification });
       }
       res.end();
     } catch (err) {
@@ -244,7 +399,7 @@ function registerBuildRoutes(app, deps) {
       try {
         res.write(`event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`);
         res.end();
-      } catch (e) {}
+      } catch {}
     } finally {
       activeBuildControllers.delete(sid);
     }
@@ -287,13 +442,15 @@ function registerBuildRoutes(app, deps) {
     try {
       const { sessionId } = req.params;
       const filePath = req.query.path;
-      if (!filePath) return res.status(400).json({ success: false, error: 'path query parameter required' });
+      if (!filePath)
+        return res.status(400).json({ success: false, error: 'path query parameter required' });
       const sanitized = sessionId.replace(/[^a-zA-Z0-9_-]/g, '');
       if (!sanitized) return res.status(400).json({ success: false, error: 'Invalid sessionId' });
       const content = await workspace.wsReadFile(sanitized, filePath);
       res.json({ success: true, content });
     } catch (err) {
-      if (err.code === 'ENOENT') return res.status(404).json({ success: false, error: 'File not found' });
+      if (err.code === 'ENOENT')
+        return res.status(404).json({ success: false, error: 'File not found' });
       console.error('[Build] Read file error:', err);
       res.status(500).json({ success: false, error: err.message });
     }
@@ -305,21 +462,55 @@ function registerBuildRoutes(app, deps) {
       const sanitized = sessionId.replace(/[^a-zA-Z0-9_-]/g, '');
       if (!sanitized) return res.status(400).json({ success: false, error: 'Invalid sessionId' });
       const files = await workspace.wsListFiles(sanitized);
-      const fileCount = files.filter(f => f.type === 'file').length;
-      const totalSize = files.filter(f => f.type === 'file').reduce((sum, f) => sum + f.size, 0);
+      const fileCount = files.filter((f) => f.type === 'file').length;
+      const totalSize = files.filter((f) => f.type === 'file').reduce((sum, f) => sum + f.size, 0);
       const sessionData = buildSessions.get(sanitized) || {};
       res.json({
         success: true,
         status: {
-          sessionId: sanitized, fileCount, totalSize,
-          lastAction: sessionData.actions ? sessionData.actions[sessionData.actions.length - 1] || null : null,
-          duration: sessionData.duration || null, status: sessionData.status || 'unknown',
-          startedAt: sessionData.startedAt || null, completedAt: sessionData.completedAt || null,
+          sessionId: sanitized,
+          fileCount,
+          totalSize,
+          lastAction: sessionData.actions
+            ? sessionData.actions[sessionData.actions.length - 1] || null
+            : null,
+          duration: sessionData.duration || null,
+          status: sessionData.status || 'unknown',
+          startedAt: sessionData.startedAt || null,
+          completedAt: sessionData.completedAt || null,
+          verification: sessionData.verification || null,
           files,
         },
       });
     } catch (err) {
       console.error('[Build] Status error:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post('/api/build/verify', async (req, res) => {
+    try {
+      const { sessionId = '', projectPath = '', templateId = '' } = req.body || {};
+      const target = resolveVerificationTarget({ sessionId, projectPath });
+      const verification = await runVerification({
+        targetDir: target.targetDir,
+        options: {
+          targetType: target.targetType,
+          templateId,
+        },
+      });
+
+      if (target.sessionId) {
+        buildSessions.set(target.sessionId, {
+          ...(buildSessions.get(target.sessionId) || {}),
+          sessionId: target.sessionId,
+          verification,
+        });
+      }
+
+      res.json({ success: true, verification });
+    } catch (err) {
+      console.error('[Build] Verify error:', err);
       res.status(500).json({ success: false, error: err.message });
     }
   });

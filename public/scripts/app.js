@@ -57,14 +57,33 @@ function cauldronApp() {
     prototypeIterations: [],
     activePrototypeVersion: 0,
     critiqueQuickActions: [
-      { label: 'Make it bolder', prompt: 'Make the visual hierarchy bolder and more confident without changing the product structure.' },
-      { label: 'Tighter spacing', prompt: 'Tighten spacing, reduce visual looseness, and make the layout feel more deliberate.' },
-      { label: 'Warmer palette', prompt: 'Make the palette warmer and more inviting while preserving contrast and accessibility.' },
-      { label: 'More accessible', prompt: 'Improve accessibility, contrast, focus states, labels, and keyboard-friendly interactions.' },
+      {
+        label: 'Make it bolder',
+        prompt:
+          'Make the visual hierarchy bolder and more confident without changing the product structure.',
+      },
+      {
+        label: 'Tighter spacing',
+        prompt:
+          'Tighten spacing, reduce visual looseness, and make the layout feel more deliberate.',
+      },
+      {
+        label: 'Warmer palette',
+        prompt:
+          'Make the palette warmer and more inviting while preserving contrast and accessibility.',
+      },
+      {
+        label: 'More accessible',
+        prompt:
+          'Improve accessibility, contrast, focus states, labels, and keyboard-friendly interactions.',
+      },
     ],
     buildSession: null,
     buildFiles: [],
     workspacePreviewUrl: '',
+    verificationResult: null,
+    verificationBusy: false,
+    verificationStatus: 'Verification has not run yet.',
     buildAgents: [],
     selectedBuildAgentId: 'handoff',
     selectedBuildAgentIds: ['handoff'],
@@ -72,6 +91,7 @@ function cauldronApp() {
     buildAgentDetecting: false,
     buildAgentRunResult: null,
     buildAgentStatus: 'Build agents not checked yet.',
+    exportDesignPackage: false,
     tasteInjectionEnabled: true,
     stageModels: {
       interrogate: { provider: '', cloudModel: '', label: 'Interrogate', stage: 'interrogate' },
@@ -81,7 +101,8 @@ function cauldronApp() {
     form: {
       projectName: '',
       projectType: 'site',
-      brainDump: 'A high-end, Awwwards-adjacent interactive website. It should feel like Lovable, Replit, Volt and a sewer witch had a professional SaaS baby. Use acid green, purple, rogue pastel pink, charcoal, bone white, strong accessible typography, and real micro-interactions. The output must be polished enough to inspire a proper OpenCode build handoff.',
+      brainDump:
+        'A high-end, Awwwards-adjacent interactive website. It should feel like Lovable, Replit, Volt and a sewer witch had a professional SaaS baby. Use acid green, purple, rogue pastel pink, charcoal, bone white, strong accessible typography, and real micro-interactions. The output must be polished enough to inspire a proper OpenCode build handoff.',
       referenceUrl: '',
       researchMode: 'deep',
       provider: 'gemini',
@@ -108,7 +129,7 @@ function cauldronApp() {
     },
 
     get activeIndex() {
-      return this.stages.findIndex(stage => stage.id === this.activeStage);
+      return this.stages.findIndex((stage) => stage.id === this.activeStage);
     },
 
     get activeStageMeta() {
@@ -153,22 +174,22 @@ function cauldronApp() {
     },
 
     get selectedBuildAgent() {
-      return this.buildAgents.find(agent => agent.id === this.selectedBuildAgentId) || null;
+      return this.buildAgents.find((agent) => agent.id === this.selectedBuildAgentId) || null;
     },
 
     get selectedBuildAgents() {
-      const ids = Array.isArray(this.selectedBuildAgentIds) && this.selectedBuildAgentIds.length
-        ? this.selectedBuildAgentIds
-        : [this.selectedBuildAgentId || 'handoff'];
-      return ids
-        .map(id => this.buildAgents.find(agent => agent.id === id))
-        .filter(Boolean);
+      const ids =
+        Array.isArray(this.selectedBuildAgentIds) && this.selectedBuildAgentIds.length
+          ? this.selectedBuildAgentIds
+          : [this.selectedBuildAgentId || 'handoff'];
+      return ids.map((id) => this.buildAgents.find((agent) => agent.id === id)).filter(Boolean);
     },
 
     get selectedBuildAgentSummary() {
       const agents = this.selectedBuildAgents;
-      if (agents.length <= 1) return agents[0]?.name || this.selectedBuildAgent?.name || 'Generate handoff package';
-      return `${agents.length} agents: ${agents.map(agent => agent.name).join(', ')}`;
+      if (agents.length <= 1)
+        return agents[0]?.name || this.selectedBuildAgent?.name || 'Generate handoff package';
+      return `${agents.length} agents: ${agents.map((agent) => agent.name).join(', ')}`;
     },
 
     get selectedBuildAgentAvailable() {
@@ -179,8 +200,22 @@ function cauldronApp() {
       return this.prototypeIterations.slice(-5).reverse();
     },
 
+    get verificationChecks() {
+      return Array.isArray(this.verificationResult?.checks) ? this.verificationResult.checks : [];
+    },
+
+    get verificationBadgeClass() {
+      const overall = this.verificationResult?.overall || 'PENDING';
+      if (overall === 'PASS') return 'verification-badge pass';
+      if (overall === 'PASS_WITH_WARNINGS') return 'verification-badge warn';
+      if (overall === 'BLOCKED') return 'verification-badge blocked';
+      return 'verification-badge';
+    },
+
     get qualityBadgeClass() {
-      return this.prototypeQuality?.grade ? `grade-${String(this.prototypeQuality.grade).toLowerCase()}` : 'grade-none';
+      return this.prototypeQuality?.grade
+        ? `grade-${String(this.prototypeQuality.grade).toLowerCase()}`
+        : 'grade-none';
     },
 
     get qualitySummaryText() {
@@ -189,17 +224,23 @@ function cauldronApp() {
     },
 
     get qualitySuggestions() {
-      return Array.isArray(this.prototypeQuality?.suggestions) ? this.prototypeQuality.suggestions : [];
+      return Array.isArray(this.prototypeQuality?.suggestions)
+        ? this.prototypeQuality.suggestions
+        : [];
     },
 
     get selectedBlueprintVersionEntry() {
-      return this.blueprintVersions.find(version => version.version === Number(this.selectedBlueprintVersion)) || null;
+      return (
+        this.blueprintVersions.find(
+          (version) => version.version === Number(this.selectedBlueprintVersion)
+        ) || null
+      );
     },
 
     get selectedBlueprintPreviousEntry() {
       const selected = Number(this.selectedBlueprintVersion);
       if (!selected || selected <= 1) return null;
-      return this.blueprintVersions.find(version => version.version === selected - 1) || null;
+      return this.blueprintVersions.find((version) => version.version === selected - 1) || null;
     },
 
     get blueprintDiffRows() {
@@ -208,7 +249,8 @@ function cauldronApp() {
 
     get blueprintDiffSummaryText() {
       if (!this.selectedBlueprintVersionEntry) return 'No blueprint versions yet.';
-      if (!this.selectedBlueprintPreviousEntry) return 'Baseline version. Generate or save another blueprint to see a diff.';
+      if (!this.selectedBlueprintPreviousEntry)
+        return 'Baseline version. Generate or save another blueprint to see a diff.';
       const summary = this.blueprintDiff?.summary || {};
       return `+${summary.additions || 0} / -${summary.deletions || 0} across ${summary.nextLines || 0} lines`;
     },
@@ -225,7 +267,8 @@ function cauldronApp() {
     get pipelineEmptyMessage() {
       if (this.busy) return 'Pipeline activity will appear as each stage reports back.';
       if (!this.blueprint) return 'Generate a blueprint to populate the activity log.';
-      if (!this.prototypeHtml) return 'Generate or critique a prototype to see review activity here.';
+      if (!this.prototypeHtml)
+        return 'Generate or critique a prototype to see review activity here.';
       return 'No recent activity. Run a stage to refresh the log.';
     },
 
@@ -247,19 +290,32 @@ function cauldronApp() {
 
     async loadConfig() {
       await Promise.allSettled([
-        this.api('/api/design-systems').then(data => { this.designSystems = data.systems || []; }),
-        this.api('/api/templates').then(data => { this.templates = data.templates || []; }),
-        this.api('/api/cloud-models').then(data => { this.cloudModels = data.providers || data || {}; this.ensureCloudModel(); }),
+        this.api('/api/design-systems').then((data) => {
+          this.designSystems = data.systems || [];
+        }),
+        this.api('/api/templates').then((data) => {
+          this.templates = data.templates || [];
+        }),
+        this.api('/api/cloud-models').then((data) => {
+          this.cloudModels = data.providers || data || {};
+          this.ensureCloudModel();
+        }),
         this.loadCommunity(),
         this.loadBuildAgents(),
       ]);
 
-      const desiredReference = this.designSystems.some(system => system.id === this.form.designReference)
+      const desiredReference = this.designSystems.some(
+        (system) => system.id === this.form.designReference
+      )
         ? this.form.designReference
-        : (this.designSystems[0]?.id || 'none');
-      const desiredTemplate = this.templates.some(template => template.id === this.form.templateId)
+        : this.designSystems[0]?.id || 'none';
+      const desiredTemplate = this.templates.some(
+        (template) => template.id === this.form.templateId
+      )
         ? this.form.templateId
-        : (this.templates.find(template => template.id === 'html-alpine')?.id || this.templates[0]?.id || 'html-alpine');
+        : this.templates.find((template) => template.id === 'html-alpine')?.id ||
+          this.templates[0]?.id ||
+          'html-alpine';
 
       this.$nextTick(() => {
         this.form.designReference = desiredReference;
@@ -293,14 +349,19 @@ function cauldronApp() {
           body: JSON.stringify({ type: 'design-system', id: item.id }),
         });
         const system = data.system;
-        if (system?.id && !this.designSystems.some(existing => existing.id === system.id)) {
-          this.designSystems = [...this.designSystems, system]
-            .sort((a, b) => a.name.localeCompare(b.name));
+        if (system?.id && !this.designSystems.some((existing) => existing.id === system.id)) {
+          this.designSystems = [...this.designSystems, system].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
         }
         if (system?.id) this.form.designReference = system.id;
         this.systemPanelTab = 'local';
         this.communityStatus = `${system?.name || item.name} imported from the community catalog.`;
-        this.toast('Community design imported', `${system?.name || item.name} is now the active design reference.`, 'success');
+        this.toast(
+          'Community design imported',
+          `${system?.name || item.name} is now the active design reference.`,
+          'success'
+        );
       });
     },
 
@@ -312,13 +373,18 @@ function cauldronApp() {
           body: JSON.stringify({ type: 'template', id: item.id }),
         });
         const template = data.template;
-        const baseTemplateId = template?.baseTemplateId || template?.scaffold || item.baseTemplateId;
-        if (baseTemplateId && this.templates.some(existing => existing.id === baseTemplateId)) {
+        const baseTemplateId =
+          template?.baseTemplateId || template?.scaffold || item.baseTemplateId;
+        if (baseTemplateId && this.templates.some((existing) => existing.id === baseTemplateId)) {
           this.form.templateId = baseTemplateId;
         }
         this.selectedCommunityTemplate = template || item;
         this.communityStatus = `${template?.name || item.name} will guide the ${baseTemplateId || 'selected'} scaffold.`;
-        this.toast('Community scaffold selected', `${template?.name || item.name} guidance will be included in the next blueprint.`, 'success');
+        this.toast(
+          'Community scaffold selected',
+          `${template?.name || item.name} guidance will be included in the next blueprint.`,
+          'success'
+        );
       });
     },
 
@@ -350,7 +416,10 @@ function cauldronApp() {
         this.keyStatus = `Saved ${this.form.provider} key locally in this browser.`;
         this.keyHealth = 'unknown';
         this.keyHealthMessage = 'Saved key not tested yet.';
-        this.toast('Key saved', `${this.form.provider} key saved locally. The flow can use it now.`);
+        this.toast(
+          'Key saved',
+          `${this.form.provider} key saved locally. The flow can use it now.`
+        );
         const pendingStage = this.pendingStageAfterKey;
         const pendingAction = this.pendingActionAfterKey;
         this.pendingStageAfterKey = '';
@@ -380,7 +449,11 @@ function cauldronApp() {
         this.keyHealth = saved ? 'unknown' : 'missing';
         this.keyHealthMessage = saved ? 'Loaded key not tested yet.' : 'No saved key available.';
         if (showToast) {
-          this.toast(saved ? 'Key loaded' : 'No saved key', this.keyStatus, saved ? 'info' : 'error');
+          this.toast(
+            saved ? 'Key loaded' : 'No saved key',
+            this.keyStatus,
+            saved ? 'info' : 'error'
+          );
         }
       } catch (error) {
         this.keyStatus = 'Could not read browser key storage.';
@@ -398,7 +471,10 @@ function cauldronApp() {
         this.keyStatus = `Forgot saved ${this.form.provider} key.`;
         this.keyHealth = 'missing';
         this.keyHealthMessage = 'No key saved for this provider.';
-        this.toast('Key forgotten', `${this.form.provider} key removed from local browser storage.`);
+        this.toast(
+          'Key forgotten',
+          `${this.form.provider} key removed from local browser storage.`
+        );
       } catch (error) {
         this.toast('Could not forget key', error.message, 'error');
       }
@@ -411,7 +487,8 @@ function cauldronApp() {
           const parsed = JSON.parse(saved);
           for (const key of Object.keys(this.stageModels)) {
             if (parsed[key]) {
-              this.stageModels[key].provider = parsed[key].provider || this.stageModels[key].provider;
+              this.stageModels[key].provider =
+                parsed[key].provider || this.stageModels[key].provider;
               this.stageModels[key].cloudModel = parsed[key].cloudModel || '';
             }
           }
@@ -434,9 +511,10 @@ function cauldronApp() {
       this.settingsTab = tab;
       this.settingsOpen = true;
       this.$nextTick(() => {
-        const target = tab === 'api'
-          ? document.getElementById('settingsApiKey')
-          : document.querySelector('.settings-panel button');
+        const target =
+          tab === 'api'
+            ? document.getElementById('settingsApiKey')
+            : document.querySelector('.settings-panel button');
         target?.focus?.();
       });
     },
@@ -458,9 +536,11 @@ function cauldronApp() {
       try {
         const data = await this.api('/api/clarify', {
           method: 'POST',
-          body: JSON.stringify(this.modelPayload('interrogate', {
-            prompt: 'Health check only. Reply with the minimum valid clarification payload.',
-          })),
+          body: JSON.stringify(
+            this.modelPayload('interrogate', {
+              prompt: 'Health check only. Reply with the minimum valid clarification payload.',
+            })
+          ),
         });
         const count = Array.isArray(data.questions) ? data.questions.length : 0;
         this.keyHealth = 'ready';
@@ -483,18 +563,35 @@ function cauldronApp() {
         const data = await this.api('/api/build-agents');
         this.buildAgents = data.agents || [];
         this.buildAgentsLoaded = true;
-        if (!this.buildAgents.some(agent => agent.id === this.selectedBuildAgentId)) {
-          this.selectedBuildAgentId = this.buildAgents.find(agent => agent.id === 'handoff')?.id || this.buildAgents[0]?.id || 'handoff';
+        if (!this.buildAgents.some((agent) => agent.id === this.selectedBuildAgentId)) {
+          this.selectedBuildAgentId =
+            this.buildAgents.find((agent) => agent.id === 'handoff')?.id ||
+            this.buildAgents[0]?.id ||
+            'handoff';
         }
-        this.selectedBuildAgentIds = this.selectedBuildAgentIds
-          .filter(id => this.buildAgents.some(agent => agent.id === id && (agent.available || agent.id === 'handoff')));
-        if (!this.selectedBuildAgentIds.length) this.selectedBuildAgentIds = [this.selectedBuildAgentId];
-        const available = this.buildAgents.filter(agent => agent.available && agent.id !== 'handoff').length;
+        this.selectedBuildAgentIds = this.selectedBuildAgentIds.filter((id) =>
+          this.buildAgents.some(
+            (agent) => agent.id === id && (agent.available || agent.id === 'handoff')
+          )
+        );
+        if (!this.selectedBuildAgentIds.length)
+          this.selectedBuildAgentIds = [this.selectedBuildAgentId];
+        const available = this.buildAgents.filter(
+          (agent) => agent.available && agent.id !== 'handoff'
+        ).length;
         this.buildAgentStatus = available
           ? `${available} build agent${available === 1 ? '' : 's'} detected.`
           : 'No launchable build-agent CLIs detected. Handoff package mode is available.';
       } catch (error) {
-        this.buildAgents = [{ id: 'handoff', name: 'Generate handoff package', available: true, command: null, notes: 'Always available' }];
+        this.buildAgents = [
+          {
+            id: 'handoff',
+            name: 'Generate handoff package',
+            available: true,
+            command: null,
+            notes: 'Always available',
+          },
+        ];
         this.selectedBuildAgentId = 'handoff';
         this.selectedBuildAgentIds = ['handoff'];
         this.buildAgentStatus = `Build-agent detection failed: ${error.message}`;
@@ -504,7 +601,8 @@ function cauldronApp() {
     },
 
     ensureApiKey(actionLabel = 'This action', pendingStage = '', pendingAction = '') {
-      const stageCfg = pendingStage && this.stageModels[pendingStage] ? this.stageModels[pendingStage] : null;
+      const stageCfg =
+        pendingStage && this.stageModels[pendingStage] ? this.stageModels[pendingStage] : null;
       const provider = (stageCfg && stageCfg.provider) || this.form.provider;
       if (!['openai', 'gemini'].includes(provider)) return true;
       if (this.resolveKeyForProvider(provider)) return true;
@@ -518,7 +616,11 @@ function cauldronApp() {
     toggleBuildAgent(agentId, checked) {
       const id = String(agentId || '');
       if (!id) return;
-      const next = new Set(this.selectedBuildAgentIds.length ? this.selectedBuildAgentIds : [this.selectedBuildAgentId || 'handoff']);
+      const next = new Set(
+        this.selectedBuildAgentIds.length
+          ? this.selectedBuildAgentIds
+          : [this.selectedBuildAgentId || 'handoff']
+      );
       if (checked) next.add(id);
       else next.delete(id);
       if (!next.size) next.add('handoff');
@@ -550,6 +652,8 @@ function cauldronApp() {
       this.buildSession = null;
       this.buildFiles = [];
       this.workspacePreviewUrl = '';
+      this.verificationResult = null;
+      this.verificationStatus = 'Verification has not run yet.';
       this.pipelineLog = [];
       this.pipelineComplete = null;
       this.pipelineProgress = null;
@@ -559,7 +663,10 @@ function cauldronApp() {
     },
 
     goToTasteEngine() {
-      if (!this.ensureApiKey('Skipping interrogation still leads into cloud blueprinting', 'system')) return;
+      if (
+        !this.ensureApiKey('Skipping interrogation still leads into cloud blueprinting', 'system')
+      )
+        return;
       this.setStage('system');
     },
 
@@ -594,7 +701,11 @@ function cauldronApp() {
         } else if (this.activeStage === 'blueprint') {
           event.preventDefault();
           this.generateBlueprint();
-        } else if (this.activeStage === 'prototype' && this.prototypeHtml && this.critiqueText.trim()) {
+        } else if (
+          this.activeStage === 'prototype' &&
+          this.prototypeHtml &&
+          this.critiqueText.trim()
+        ) {
           event.preventDefault();
           this.submitCritique();
         }
@@ -620,7 +731,7 @@ function cauldronApp() {
     },
 
     bindKeyboardShortcuts() {
-      window.addEventListener('keydown', event => this.handleShortcut(event));
+      window.addEventListener('keydown', (event) => this.handleShortcut(event));
     },
 
     nextStage() {
@@ -678,7 +789,10 @@ function cauldronApp() {
         });
         this.researchResult = data;
         this.status = 'Reference research captured.';
-        this.toast('Research captured', 'Design signals are now feeding the prompt. Delicious theft, legally styled.');
+        this.toast(
+          'Research captured',
+          'Design signals are now feeding the prompt. Delicious theft, legally styled.'
+        );
         this.setStage('system');
       });
     },
@@ -735,7 +849,10 @@ function cauldronApp() {
         });
         this.researchResult = data;
         this.status = 'Reference research captured.';
-        this.toast('Research captured', 'Design signals are now feeding the prompt. Delicious theft, legally styled.');
+        this.toast(
+          'Research captured',
+          'Design signals are now feeding the prompt. Delicious theft, legally styled.'
+        );
         this.setStage('system');
       });
     },
@@ -756,7 +873,10 @@ function cauldronApp() {
           if (!(q.id in this.answers)) this.answers[q.id] = '';
         }
         this.status = 'Questions ready. Answer only what matters.';
-        this.toast('Interrogation ready', `${(data.questions || []).length} questions, not a fucking investor deck.`);
+        this.toast(
+          'Interrogation ready',
+          `${(data.questions || []).length} questions, not a fucking investor deck.`
+        );
         this.setStage('interrogate');
       });
     },
@@ -790,7 +910,11 @@ function cauldronApp() {
       if (!config) return 'Global default';
       const provider = config.provider || this.form.provider;
       const label = provider === 'gemini' ? 'Gemini' : provider === 'openai' ? 'OpenAI' : provider;
-      const suffix = config.cloudModel ? ' / ' + config.cloudModel : (config.provider ? '' : ' (global)');
+      const suffix = config.cloudModel
+        ? ' / ' + config.cloudModel
+        : config.provider
+          ? ''
+          : ' (global)';
       return `${label}${suffix}`;
     },
 
@@ -803,14 +927,16 @@ function cauldronApp() {
 
     buildGenerationPrompt() {
       const answerLines = (this.clarifyResult?.questions || [])
-        .map(q => `- ${q.label}\n  Answer: ${this.answers[q.id] || '(not answered)'}`)
+        .map((q) => `- ${q.label}\n  Answer: ${this.answers[q.id] || '(not answered)'}`)
         .join('\n');
 
-      const providerNotes = this.form.provider === 'openai'
-        ? `OpenAI-compatible route. If a custom base URL is later wired, preserve model/base URL flexibility for OpenCode Go style providers.`
-        : `Provider: ${this.form.provider}.`;
+      const providerNotes =
+        this.form.provider === 'openai'
+          ? `OpenAI-compatible route. If a custom base URL is later wired, preserve model/base URL flexibility for OpenCode Go style providers.`
+          : `Provider: ${this.form.provider}.`;
 
-      const tasteBlock = this.tasteInjectionEnabled ? `
+      const tasteBlock = this.tasteInjectionEnabled
+        ? `
 # Impeccable Taste Mandate — WITCH DADDY LABS STANDARD
 This is a premium production, not a starter template. Follow these rules strictly:
 
@@ -838,16 +964,21 @@ This is a premium production, not a starter template. Follow these rules strictl
 - Skip-to-content link as first focusable element
 
 ## COLOR ROLE MAP
-${this.form.projectType === 'app' ? `
+${
+  this.form.projectType === 'app'
+    ? `
 - Use neutral / brand-appropriate palette. Default to the brand colors the user described in their brain dump.
 - Colour should serve information hierarchy: primary actions, surface backgrounds, text contrast, data viz accents.
-- Avoid forcing any specific palette — match the project's own brand intent.` : `
+- Avoid forcing any specific palette — match the project's own brand intent.`
+    : `
 - Acid green (#b8ff3b / #c1ff00): CTAs, active states, highlights
 - Purple (#8b5cf6): Structural borders, headers, secondary elements
 - Pink (#f3a6d6 / #f472b6): Delight, personality, completion states
 - Charcoal (#0f0d13 / #15131a): Background canvas
-- Bone (#f4efe4 / #f9f6ee): High-contrast text surfaces`}
-` : '';
+- Bone (#f4efe4 / #f9f6ee): High-contrast text surfaces`
+}
+`
+        : '';
 
       return [
         '# Brain Dump',
@@ -941,7 +1072,11 @@ ${this.form.projectType === 'app' ? `
                 });
                 this.status = `Failed: ${event.message || event.label || 'Generation error'}`;
                 this.finishPipelineProgress(event.label || 'Blueprint failed', true);
-                this.toast('Generation failed', event.message || 'The model rejected the request.', 'error');
+                this.toast(
+                  'Generation failed',
+                  event.message || 'The model rejected the request.',
+                  'error'
+                );
               } else if (event.type === 'blueprint') {
                 blueprint = event.data.blueprint || '';
                 modelUsed = event.data.modelUsed || '';
@@ -962,13 +1097,18 @@ ${this.form.projectType === 'app' ? `
           const previousBlueprint = this.blueprint;
           this.blueprint = blueprint;
           this.recordBlueprintVersion(blueprint, {
-            summary: previousBlueprint ? 'Generated blueprint update' : 'Generated baseline blueprint',
+            summary: previousBlueprint
+              ? 'Generated blueprint update'
+              : 'Generated baseline blueprint',
             modelUsed,
             providerUsed,
           });
           this.generatedAt = new Date().toISOString();
           this.status = `Blueprint generated with ${modelUsed || this.form.cloudModel || this.form.provider}.`;
-          this.toast('Blueprint brewed', 'Blueprint ready. Review and edit, then generate the prototype.');
+          this.toast(
+            'Blueprint brewed',
+            'Blueprint ready. Review and edit, then generate the prototype.'
+          );
           this.setStage('blueprint');
           this.previewMode = 'blueprint';
           this.pipelineView = 'preview';
@@ -999,10 +1139,15 @@ ${this.form.projectType === 'app' ? `
       this.pipelineLog = [];
       this.pipelineComplete = null;
       this.pipelineView = 'log';
-      this.startPipelineProgress('prototype', critique ? 'Applying critique' : 'Generating prototype');
+      this.startPipelineProgress(
+        'prototype',
+        critique ? 'Applying critique' : 'Generating prototype'
+      );
       this.busy = true;
       const tokenNote = estimatedTokens ? ` (~${estimatedTokens} tokens)` : '';
-      this.status = critique ? `Regenerating prototype from critique${tokenNote}...` : 'Generating prototype from blueprint...';
+      this.status = critique
+        ? `Regenerating prototype from critique${tokenNote}...`
+        : 'Generating prototype from blueprint...';
 
       try {
         const res = await fetch('/api/generate-prototype', {
@@ -1014,7 +1159,9 @@ ${this.form.projectType === 'app' ? `
             templateId: this.form.templateId,
             model: this.stageModels.blueprint?.provider || this.form.provider,
             cloudModel: this.stageModels.blueprint?.cloudModel || this.form.cloudModel,
-            apiKey: this.resolveKeyForProvider(this.stageModels.blueprint?.provider || this.form.provider),
+            apiKey: this.resolveKeyForProvider(
+              this.stageModels.blueprint?.provider || this.form.provider
+            ),
             projectType: this.form.projectType,
             critique,
             previousPrototypeHtml,
@@ -1057,7 +1204,11 @@ ${this.form.projectType === 'app' ? `
                 });
                 this.status = `Failed: ${event.message || event.label || 'Generation error'}`;
                 this.finishPipelineProgress(event.label || 'Prototype failed', true);
-                this.toast('Generation failed', event.message || 'The model rejected the request.', 'error');
+                this.toast(
+                  'Generation failed',
+                  event.message || 'The model rejected the request.',
+                  'error'
+                );
               } else if (event.type === 'prototype') {
                 this.prototypeHtml = event.data.html || '';
                 this.prototypeQuality = event.data.quality || null;
@@ -1081,9 +1232,19 @@ ${this.form.projectType === 'app' ? `
 
         if (this.prototypeHtml) {
           this.generatedAt = new Date().toISOString();
-          const qualityText = this.prototypeQuality ? ` Quality ${this.prototypeQuality.grade}.` : '';
-          this.status = (critique ? 'Prototype regenerated from critique.' : 'Prototype generated from blueprint.') + qualityText;
-          this.toast(critique ? 'Critique applied' : 'Prototype ready', (critique ? 'Prototype iteration added.' : 'Prototype HTML generated from your blueprint.') + qualityText);
+          const qualityText = this.prototypeQuality
+            ? ` Quality ${this.prototypeQuality.grade}.`
+            : '';
+          this.status =
+            (critique
+              ? 'Prototype regenerated from critique.'
+              : 'Prototype generated from blueprint.') + qualityText;
+          this.toast(
+            critique ? 'Critique applied' : 'Prototype ready',
+            (critique
+              ? 'Prototype iteration added.'
+              : 'Prototype HTML generated from your blueprint.') + qualityText
+          );
           if (critique) this.critiqueText = '';
           this.setStage('prototype');
           this.previewMode = 'prototype';
@@ -1111,9 +1272,15 @@ ${this.form.projectType === 'app' ? `
         this.toast('No prototype', 'Generate a prototype before critiquing it.', 'error');
         return;
       }
-      const iterationCount = this.prototypeIterations.filter(i => i.critique !== 'Initial prototype').length;
+      const iterationCount = this.prototypeIterations.filter(
+        (i) => i.critique !== 'Initial prototype'
+      ).length;
       if (iterationCount >= 3) {
-        this.toast('Critique limit reached', '3 iterations per session. Start a new draft for more.', 'warn');
+        this.toast(
+          'Critique limit reached',
+          '3 iterations per session. Start a new draft for more.',
+          'warn'
+        );
         return;
       }
       if (iterationCount === 2) {
@@ -1145,7 +1312,12 @@ ${this.form.projectType === 'app' ? `
     prototypeDiffSummary(previousHtml = '', nextHtml = '') {
       if (!previousHtml) return 'Baseline snapshot';
       const delta = nextHtml.length - previousHtml.length;
-      const direction = delta === 0 ? 'same length' : delta > 0 ? `${delta} chars longer` : `${Math.abs(delta)} chars shorter`;
+      const direction =
+        delta === 0
+          ? 'same length'
+          : delta > 0
+            ? `${delta} chars longer`
+            : `${Math.abs(delta)} chars shorter`;
       return `Updated prototype, ${direction}`;
     },
 
@@ -1163,7 +1335,17 @@ ${this.form.projectType === 'app' ? `
       const current = this.selectedBlueprintVersionEntry;
       const previous = this.selectedBlueprintPreviousEntry;
       if (!current || !previous) {
-        this.blueprintDiff = current ? { rows: [], summary: { additions: 0, deletions: 0, changed: 0, nextLines: String(current.blueprint || '').split('\n').length } } : null;
+        this.blueprintDiff = current
+          ? {
+              rows: [],
+              summary: {
+                additions: 0,
+                deletions: 0,
+                changed: 0,
+                nextLines: String(current.blueprint || '').split('\n').length,
+              },
+            }
+          : null;
         return;
       }
 
@@ -1208,8 +1390,11 @@ ${this.form.projectType === 'app' ? `
       };
 
       this.blueprintVersions.push(version);
-      this.blueprintVersions = this.blueprintVersions.slice(-20).map((entry, index) => ({ ...entry, version: index + 1 }));
-      this.selectedBlueprintVersion = this.blueprintVersions[this.blueprintVersions.length - 1]?.version || 0;
+      this.blueprintVersions = this.blueprintVersions
+        .slice(-20)
+        .map((entry, index) => ({ ...entry, version: index + 1 }));
+      this.selectedBlueprintVersion =
+        this.blueprintVersions[this.blueprintVersions.length - 1]?.version || 0;
       this.refreshBlueprintDiff();
     },
 
@@ -1248,7 +1433,7 @@ ${this.form.projectType === 'app' ? `
         icon: icons[event.status] || '○',
         message: event.message || null,
       };
-      const previousStep = this.pipelineLog.findIndex(e => e.step === event.step);
+      const previousStep = this.pipelineLog.findIndex((e) => e.step === event.step);
       if (previousStep >= 0) this.pipelineLog.splice(previousStep, 1);
       this.pipelineLog.push(entry);
     },
@@ -1301,7 +1486,7 @@ ${this.form.projectType === 'app' ? `
     },
 
     dismissToast(id) {
-      this.toasts = this.toasts.filter(toast => toast.id !== id);
+      this.toasts = this.toasts.filter((toast) => toast.id !== id);
     },
 
     extractHtml(markdown) {
@@ -1332,19 +1517,26 @@ ${this.form.projectType === 'app' ? `
       });
       this.savedDraftId = data.draftId;
       await this.loadRecords();
-      if (showToast) this.toast('Draft saved', `Draft #${data.draftId} is in the local record vault.`);
+      if (showToast)
+        this.toast('Draft saved', `Draft #${data.draftId} is in the local record vault.`);
       this.status = `Draft saved: #${data.draftId}`;
     },
 
     async runBuildAgent({ fromBuild = false } = {}) {
       if (!this.blueprint.trim()) {
-        this.toast('No blueprint', 'Generate a blueprint before creating a handoff package.', 'error');
+        this.toast(
+          'No blueprint',
+          'Generate a blueprint before creating a handoff package.',
+          'error'
+        );
         return;
       }
       if (!this.buildAgentsLoaded) await this.loadBuildAgents();
 
       await this.withBusy('Creating build-agent handoff package...', async () => {
-        const selectedIds = this.selectedBuildAgentIds.length ? this.selectedBuildAgentIds : [this.selectedBuildAgentId || 'handoff'];
+        const selectedIds = this.selectedBuildAgentIds.length
+          ? this.selectedBuildAgentIds
+          : [this.selectedBuildAgentId || 'handoff'];
         const data = await this.api('/api/build-agents/run', {
           method: 'POST',
           body: JSON.stringify({
@@ -1357,10 +1549,16 @@ ${this.form.projectType === 'app' ? `
             templateId: this.form.templateId,
             projectType: this.form.projectType,
             sessionId: fromBuild ? this.buildSession?.sessionId : '',
+            verification: this.verificationResult,
+            includeDesignPackage: this.exportDesignPackage,
           }),
         });
         this.buildAgentRunResult = data;
         this.handoffResult = data;
+        if (data.verification) {
+          this.verificationResult = data.verification;
+          this.verificationStatus = `Verification ${data.verification.overall.replaceAll('_', ' ')}.`;
+        }
         if (data.mode === 'multi-agent') {
           const agentCount = data.agentResults?.length || selectedIds.length;
           this.status = `Multi-agent handoff created for ${agentCount} agents.`;
@@ -1411,6 +1609,8 @@ ${this.form.projectType === 'app' ? `
         });
         this.buildSession = data;
         this.workspacePreviewUrl = `/workspace-preview/${data.sessionId}/`;
+        this.verificationResult = null;
+        this.verificationStatus = 'Workspace created. Run verification after files appear.';
         this.status = `Build workspace ready: ${data.sessionId.slice(0, 8)}...`;
         this.toast('Build started', `Workspace created at ${data.workspaceDir}`);
         await this.loadBuildFiles();
@@ -1423,7 +1623,7 @@ ${this.form.projectType === 'app' ? `
       await this.withBusy('Loading workspace files...', async () => {
         const data = await this.api(`/api/build/files/${this.buildSession.sessionId}`);
         this.buildFiles = data.files || [];
-        this.status = `${this.buildFiles.filter(f => f.type === 'file').length} files in workspace.`;
+        this.status = `${this.buildFiles.filter((f) => f.type === 'file').length} files in workspace.`;
       });
     },
 
@@ -1433,6 +1633,162 @@ ${this.form.projectType === 'app' ? `
         return;
       }
       return this.runBuildAgent({ fromBuild: true });
+    },
+
+    async runVerification({ projectPath = '', sessionId = '' } = {}) {
+      const effectiveSessionId = sessionId || this.buildSession?.sessionId || '';
+      const effectiveProjectPath = projectPath || this.handoffResult?.projectPath || '';
+      if (!effectiveSessionId && !effectiveProjectPath) {
+        this.toast('Nothing to verify', 'Create a workspace or handoff package first.', 'error');
+        return;
+      }
+
+      this.verificationBusy = true;
+      this.verificationStatus = 'Running verification...';
+      try {
+        const data = await this.api('/api/build/verify', {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionId: effectiveSessionId,
+            projectPath: effectiveProjectPath,
+            templateId: this.form.templateId,
+          }),
+        });
+        this.verificationResult = data.verification || null;
+        const overallText = this.verificationResult?.overall?.replaceAll('_', ' ') || 'completed';
+        this.verificationStatus = `Verification ${overallText}.`;
+        this.status = this.verificationStatus;
+        this.toast(
+          'Verification complete',
+          this.verificationStatus,
+          this.verificationResult?.overall === 'BLOCKED' ? 'warn' : 'success'
+        );
+      } catch (err) {
+        this.verificationStatus = `Verification failed: ${err.message}`;
+        this.toast('Verification failed', err.message, 'error');
+      } finally {
+        this.verificationBusy = false;
+      }
+    },
+
+    verificationPrompt() {
+      if (!this.verificationChecks.length) return '';
+      const failedChecks = this.verificationChecks
+        .filter((check) => check.status === 'failed' || check.status === 'skipped')
+        .map((check) => {
+          const output = [check.stderr, check.stdout]
+            .filter(Boolean)
+            .join('\n')
+            .trim()
+            .slice(0, 1200);
+          return `- ${check.label} [${check.status}]\n  Command: ${check.command || 'n/a'}\n  Details: ${JSON.stringify(check.details || {})}${output ? `\n  Output:\n${output}` : ''}`;
+        });
+      if (!failedChecks.length) return '';
+      return `Use the verification findings below to fix the current build workspace without rewriting the blueprint or changing the intended product scope.\n\nVerification overall: ${this.verificationResult?.overall || 'unknown'}\n\nFindings:\n${failedChecks.join('\n\n')}\n`;
+    },
+
+    async copyVerificationPrompt() {
+      const text = this.verificationPrompt();
+      if (!text) {
+        this.toast('No findings', 'Run verification and collect failing checks first.', 'error');
+        return;
+      }
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const area = document.createElement('textarea');
+          area.value = text;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+        }
+        this.toast('Prompt copied', 'Verification fix prompt copied to clipboard.');
+      } catch (err) {
+        this.toast('Copy failed', err.message, 'error');
+      }
+    },
+
+    async requestVerificationFix() {
+      const prompt = this.verificationPrompt();
+      if (!prompt) {
+        this.toast('No verification findings', 'Run verification first.', 'error');
+        return;
+      }
+
+      if (!this.buildSession?.sessionId) {
+        await this.copyVerificationPrompt();
+        this.status = 'Copied verification findings for manual handoff follow-up.';
+        return;
+      }
+
+      this.busy = true;
+      this.verificationBusy = true;
+      this.status = 'Sending verification findings back into the build agent...';
+      try {
+        const res = await fetch('/api/build/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt,
+            sessionId: this.buildSession.sessionId,
+            model: this.stageModels.blueprint?.provider || this.form.provider,
+            cloudModel: this.stageModels.blueprint?.cloudModel || this.form.cloudModel,
+            apiKey: this.resolveKeyForProvider(
+              this.stageModels.blueprint?.provider || this.form.provider
+            ),
+            templateId: this.form.templateId,
+            verify: true,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.details || errData.error || 'Verification refine failed');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split('\n\n');
+          buffer = events.pop() || '';
+
+          for (const rawEvent of events) {
+            const lines = rawEvent.split('\n');
+            const eventName = lines
+              .find((line) => line.startsWith('event:'))
+              ?.replace('event:', '')
+              .trim();
+            const dataLine = lines.find((line) => line.startsWith('data:'));
+            if (!eventName || !dataLine) continue;
+            const payload = JSON.parse(dataLine.replace('data:', '').trim());
+
+            if (eventName === 'verification') {
+              this.verificationResult = payload;
+              this.verificationStatus = `Verification ${payload.overall.replaceAll('_', ' ')} after fix pass.`;
+            } else if (eventName === 'filechange') {
+              this.status = `Updated ${payload.path}`;
+            } else if (eventName === 'error') {
+              throw new Error(payload.message || 'Verification refine failed');
+            }
+          }
+        }
+
+        await this.loadBuildFiles();
+        this.toast('Fix pass finished', this.verificationStatus);
+      } catch (err) {
+        this.toast('Fix pass failed', err.message, 'error');
+        this.status = `Fix pass failed: ${err.message}`;
+      } finally {
+        this.busy = false;
+        this.verificationBusy = false;
+      }
     },
 
     previewWorkspaceFile(filePath) {
@@ -1445,22 +1801,28 @@ ${this.form.projectType === 'app' ? `
       this.form.projectName = draft.project_name || this.form.projectName;
       this.form.brainDump = draft.brain_dump || this.form.brainDump;
       this.blueprint = draft.blueprint || '';
-      this.blueprintVersions = Array.isArray(draft.blueprint_versions) && draft.blueprint_versions.length
-        ? draft.blueprint_versions
-        : [];
+      this.blueprintVersions =
+        Array.isArray(draft.blueprint_versions) && draft.blueprint_versions.length
+          ? draft.blueprint_versions
+          : [];
       if (!this.blueprintVersions.length && this.blueprint.trim()) {
         this.recordBlueprintVersion(this.blueprint, { summary: 'Loaded baseline blueprint' });
       } else {
-        this.selectedBlueprintVersion = this.blueprintVersions[this.blueprintVersions.length - 1]?.version || 0;
+        this.selectedBlueprintVersion =
+          this.blueprintVersions[this.blueprintVersions.length - 1]?.version || 0;
         this.refreshBlueprintDiff();
       }
       this.prototypeHtml = draft.prototype_html || this.extractHtml(this.blueprint);
-      this.prototypeIterations = Array.isArray(draft.prototype_iterations) ? draft.prototype_iterations : [];
+      this.prototypeIterations = Array.isArray(draft.prototype_iterations)
+        ? draft.prototype_iterations
+        : [];
       const latestIteration = this.prototypeIterations[this.prototypeIterations.length - 1];
       this.activePrototypeVersion = latestIteration?.version || (this.prototypeHtml ? 1 : 0);
       this.prototypeQuality = latestIteration?.quality || null;
       this.critiqueText = '';
       this.savedDraftId = draft.id;
+      this.verificationResult = null;
+      this.verificationStatus = 'Verification has not run yet.';
       this.previewMode = this.prototypeHtml ? 'prototype' : 'blueprint';
       this.setStage(this.prototypeHtml ? 'prototype' : 'blueprint');
       this.toast('Draft loaded', `Loaded ${draft.project_name || 'untitled'}.`);
@@ -1486,7 +1848,12 @@ ${this.form.projectType === 'app' ? `
     },
 
     slug(value) {
-      return String(value || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'untitled';
+      return (
+        String(value || 'untitled')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'untitled'
+      );
     },
 
     toast(title, message, type = 'info') {

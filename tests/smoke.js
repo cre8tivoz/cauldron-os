@@ -13,7 +13,7 @@ const PORT = 3399;
 const OLLAMA_PORT = 3419;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -34,7 +34,11 @@ async function request(pathname, options = {}) {
   });
   const text = await res.text();
   let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
   return { res, body };
 }
 
@@ -48,18 +52,20 @@ function createFakeOllamaServer() {
     }
 
     let raw = '';
-    req.on('data', chunk => raw += chunk);
+    req.on('data', (chunk) => (raw += chunk));
     req.on('end', () => {
       const body = JSON.parse(raw || '{}');
       requests.push(body);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({
-        response: `Sure, here is the JSON:\n{\n  "questions": [\n    { "id": "target-users", "label": "Who is this actually for?", "why": "Clarifies audience and scope." },\n    { "label": "What is the one workflow version one must nail?", "why": "Prevents feature soup." }\n  ],\n  "assumptions": ["This is likely a web app."],\n  "redFlags": ["Payments are mentioned but trust is not."],\n  "suggestedScope": ["Start with one user role."]\n}\nNo really, that's it.`
-      }));
+      res.end(
+        JSON.stringify({
+          response: `Sure, here is the JSON:\n{\n  "questions": [\n    { "id": "target-users", "label": "Who is this actually for?", "why": "Clarifies audience and scope." },\n    { "label": "What is the one workflow version one must nail?", "why": "Prevents feature soup." }\n  ],\n  "assumptions": ["This is likely a web app."],\n  "redFlags": ["Payments are mentioned but trust is not."],\n  "suggestedScope": ["Start with one user role."]\n}\nNo really, that's it.`,
+        })
+      );
     });
   });
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     server.listen(OLLAMA_PORT, '127.0.0.1', () => resolve({ server, requests }));
   });
 }
@@ -78,8 +84,8 @@ function createFakeOllamaServer() {
   });
 
   let output = '';
-  child.stdout.on('data', d => output += d.toString());
-  child.stderr.on('data', d => output += d.toString());
+  child.stdout.on('data', (d) => (output += d.toString()));
+  child.stderr.on('data', (d) => (output += d.toString()));
 
   try {
     await waitForHealth();
@@ -137,7 +143,7 @@ function createFakeOllamaServer() {
     assert.equal(r.body.success, true);
     assert.equal(r.body.summary.additions, 1);
     assert.equal(r.body.summary.deletions, 1);
-    assert.ok(r.body.rows.some(row => row.type === 'add' && /New line/.test(row.text)));
+    assert.ok(r.body.rows.some((row) => row.type === 'add' && /New line/.test(row.text)));
 
     r = await request(`/api/drafts/${id}/export.md`);
     assert.equal(r.res.status, 200);

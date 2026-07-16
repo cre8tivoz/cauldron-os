@@ -1,12 +1,12 @@
 {
   "name": "cauldron-os",
-  "version": "0.40.0",
+  "version": "0.50.0",
   "description": "Local-first, design-aware blueprint generator with Annoying PM Mode for sharper AI-assisted development",
   "main": "server.js",
   "scripts": {
     "dev": "node --watch server.js",
     "start": "node server.js",
-    "test": "node tests/smoke.js && node tests/cloud-models-smoke.js && node tests/frontend-static-smoke.js && node tests/windows-compatibility-smoke.js && node tests/research-history-smoke.js && node tests/templates-smoke.js && node tests/template-generation-smoke.js && node tests/design-system-validation-smoke.js && node tests/design-systems-smoke.js && node tests/community-smoke.js && node tests/xml-parser-smoke.js && node tests/build-agents-smoke.js && node tests/scaffold-smoke.js && node tests/scaffold-export-smoke.js && node tests/quality-scorer-smoke.js && node tests/critique-smoke.js && node tests/handoff-smoke.js && node tests/build-generate-smoke.js && node tests/workspace-preview-smoke.js && node tests/origin-guard-smoke.js && node tests/deep-research-smoke.js",
+    "test": "node tests/smoke.js && node tests/cloud-models-smoke.js && node tests/frontend-static-smoke.js && node tests/windows-compatibility-smoke.js && node tests/research-history-smoke.js && node tests/templates-smoke.js && node tests/template-generation-smoke.js && node tests/design-system-validation-smoke.js && node tests/design-systems-smoke.js && node tests/community-smoke.js && node tests/xml-parser-smoke.js && node tests/build-agents-smoke.js && node tests/scaffold-smoke.js && node tests/scaffold-export-smoke.js && node tests/quality-scorer-smoke.js && node tests/critique-smoke.js && node tests/handoff-smoke.js && node tests/build-generate-smoke.js && node tests/workspace-preview-smoke.js && node tests/origin-guard-smoke.js && node tests/deep-research-smoke.js && node tests/verification-smoke.js && node tests/design-system-export-smoke.js",
     "test:integration": "node tests/build-status-smoke.js && node tests/private-records-smoke.js",
     "lint": "eslint .",
     "format": "prettier --write .",

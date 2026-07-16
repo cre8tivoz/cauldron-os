@@ -19,7 +19,7 @@ const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-wsp-'));
 const PORT = 3424;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -40,7 +40,11 @@ async function request(pathname, options = {}) {
   });
   const text = await res.text();
   let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
   return { res, body, text };
 }
 
@@ -56,8 +60,8 @@ async function request(pathname, options = {}) {
   });
 
   let output = '';
-  child.stdout.on('data', d => output += d.toString());
-  child.stderr.on('data', d => output += d.toString());
+  child.stdout.on('data', (d) => (output += d.toString()));
+  child.stderr.on('data', (d) => (output += d.toString()));
 
   try {
     await waitForHealth();
@@ -65,7 +69,10 @@ async function request(pathname, options = {}) {
     // 1. Start a build session to create a workspace
     let r = await request('/api/build/start', {
       method: 'POST',
-      body: JSON.stringify({ prompt: 'Workspace preview smoke test', model: 'gemini-3.1-flash-lite' }),
+      body: JSON.stringify({
+        prompt: 'Workspace preview smoke test',
+        model: 'gemini-3.1-flash-lite',
+      }),
     });
     assert.equal(r.res.status, 200, 'build/start should succeed');
     assert.equal(r.body.success, true);
@@ -79,7 +86,11 @@ async function request(pathname, options = {}) {
     r = await request(`/workspace-preview/${sid}/index.html`);
     assert.equal(r.res.status, 200, 'normal file should serve with 200');
     assert.match(r.text, /hello/);
-    assert.equal(r.res.headers.get('access-control-allow-origin'), null, 'no CORS wildcard header on file response');
+    assert.equal(
+      r.res.headers.get('access-control-allow-origin'),
+      null,
+      'no CORS wildcard header on file response'
+    );
     console.log('Normal file serve: OK');
 
     // 3. Symlink escape: link to a secret file outside the workspace, expect 403
@@ -102,15 +113,24 @@ async function request(pathname, options = {}) {
 
     // 4. Path traversal attempts must not leak the repo's package.json
     r = await request(`/workspace-preview/${sid}/..%2f..%2fpackage.json`);
-    assert.ok([403, 404].includes(r.res.status), `traversal (encoded) should be 403/404, got ${r.res.status}`);
-    assert.ok(!r.text.includes('"name": "cauldron'), 'encoded traversal must not leak package.json');
+    assert.ok(
+      [403, 404].includes(r.res.status),
+      `traversal (encoded) should be 403/404, got ${r.res.status}`
+    );
+    assert.ok(
+      !r.text.includes('"name": "cauldron'),
+      'encoded traversal must not leak package.json'
+    );
 
     // fetch() normalizes '../../' client-side to '/package.json', an unmatched
     // route served by the SPA catch-all (200 index.html — the app shell, NOT the
     // workspace-preview middleware). The encoded %2f case above is the real
     // middleware test; here assert only the security property: no real package.json leak.
     r = await request(`/workspace-preview/${sid}/../../package.json`);
-    assert.ok(!r.text.includes('"name": "cauldron'), 'literal traversal must not leak package.json');
+    assert.ok(
+      !r.text.includes('"name": "cauldron'),
+      'literal traversal must not leak package.json'
+    );
     console.log('Path traversal blocked: OK');
 
     console.log('Workspace preview smoke tests passed ✓');

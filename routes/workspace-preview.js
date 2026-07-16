@@ -3,8 +3,8 @@
  * Route handlers for workspace preview.
  */
 
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 function registerWorkspacePreviewRoutes(app, deps) {
   const { workspace } = deps;
@@ -25,16 +25,25 @@ function registerWorkspacePreviewRoutes(app, deps) {
     if (relPath === '/' || relPath === '') {
       const indexPath = path.join(wsDir, 'index.html');
       let indexReal;
-      try { indexReal = fs.realpathSync(indexPath); } catch { return res.status(404).send('No index.html found in workspace'); }
+      try {
+        indexReal = fs.realpathSync(indexPath);
+      } catch {
+        return res.status(404).send('No index.html found in workspace');
+      }
       if (indexReal !== baseReal && !indexReal.startsWith(baseReal + path.sep)) {
         return res.status(403).send('Forbidden');
       }
-      if (!fs.statSync(indexReal).isFile()) return res.status(404).send('No index.html found in workspace');
+      if (!fs.statSync(indexReal).isFile())
+        return res.status(404).send('No index.html found in workspace');
       return res.sendFile(path.relative(baseReal, indexReal), { root: baseReal });
     }
     const candidate = path.resolve(wsDir, '.' + relPath); // '.' keeps it relative to wsDir
     let real;
-    try { real = fs.realpathSync(candidate); } catch { return res.status(404).send('File not found'); }
+    try {
+      real = fs.realpathSync(candidate);
+    } catch {
+      return res.status(404).send('File not found');
+    }
     if (real !== baseReal && !real.startsWith(baseReal + path.sep)) {
       return res.status(403).send('Forbidden');
     }

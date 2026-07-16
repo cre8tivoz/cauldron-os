@@ -5,9 +5,6 @@
  * - GET /api/build-status: aggregate generated-project status.
  */
 
-
-
-
 function registerTemplatesRoutes(app, deps) {
   const { TEMPLATES, getBuildStatus } = deps;
 

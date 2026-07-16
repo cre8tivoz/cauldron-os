@@ -3,7 +3,7 @@
  * SPA catch-all route — serves index.html for all unmatched routes.
  */
 
-const path = require("path");
+const path = require('path');
 
 function registerSpaCatchallRoutes(app, deps) {
   app.use((req, res) => {

@@ -12,24 +12,27 @@ function validateBlueprint(blueprint) {
   const requiredSections = [
     { name: 'Project Blueprint header', pattern: /^# Project Blueprint/im },
     { name: 'PRD section', pattern: /^## PRD/im },
-    { name: 'Database Schema or Content Structure', pattern: /^## (?:Database Schema|Content Structure)/im },
+    {
+      name: 'Database Schema or Content Structure',
+      pattern: /^## (?:Database Schema|Content Structure)/im,
+    },
     { name: 'Security Posture', pattern: /^## Security Posture/im },
     { name: 'Architecture Notes', pattern: /^## Architecture Notes/im },
     { name: 'HTML preview block', pattern: /```html/i },
   ];
 
-  const results = requiredSections.map(sec => ({
+  const results = requiredSections.map((sec) => ({
     ...sec,
-    present: sec.pattern.test(blueprint)
+    present: sec.pattern.test(blueprint),
   }));
 
-  const missing = results.filter(r => !r.present);
+  const missing = results.filter((r) => !r.present);
 
   return {
     valid: missing.length === 0,
     results,
     missingCount: missing.length,
-    missingSections: missing.map(m => m.name)
+    missingSections: missing.map((m) => m.name),
   };
 }
 
@@ -49,12 +52,14 @@ if (require.main === module) {
   console.log(`Status: ${report.valid ? '✅ PASS' : '❌ FAIL'}`);
   console.log(`Missing: ${report.missingCount} section(s)\n`);
 
-  report.results.forEach(r => {
+  report.results.forEach((r) => {
     console.log(`  ${r.present ? '✓' : '✗'} ${r.name}`);
   });
 
   if (!report.valid) {
-    console.log(`\nMissing sections need to be added:\n  - ${report.missingSections.join('\n  - ')}`);
+    console.log(
+      `\nMissing sections need to be added:\n  - ${report.missingSections.join('\n  - ')}`
+    );
     process.exit(1);
   }
 }

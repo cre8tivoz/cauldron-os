@@ -1,5 +1,5 @@
 /**
- * Cauldron OS v0.40 — Witch Daddy Labs
+ * Cauldron OS v0.50 — Witch Daddy Labs
  *
  * Thin composition root. All business logic and routes extracted to:
  * - lib/        (model-client, research, agent-loop, tools, workspace, xml-parser)
@@ -27,15 +27,8 @@ const {
   callOllamaModel,
   callCloudModel,
 } = require('./lib/model-client');
-const {
-  scrapeURLFast,
-  scrapeRenderedURL,
-  formatResearchForPrompt,
-} = require('./lib/research');
-const {
-  createDesignSystems,
-  createDesignSystemService,
-} = require('./lib/design-system-catalog');
+const { scrapeURLFast, scrapeRenderedURL, formatResearchForPrompt } = require('./lib/research');
+const { createDesignSystems, createDesignSystemService } = require('./lib/design-system-catalog');
 const registerAllRoutes = require('./routes');
 const { version: PACKAGE_VERSION } = require('./package.json');
 
@@ -62,7 +55,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#08090a', '#0f1011', '#161718'],
     fonts: ['Inter Variable', 'Berkeley Mono'],
-    promptGuidance: 'Pitch-black SaaS aesthetic with precise typography and monospace code accents. Sidebar-driven tooling layout. Dark grays layered for depth. Use monospace for data and code, Inter for UI. Minimal chrome, maximum data density. Professional developer tool feel.'
+    promptGuidance:
+      'Pitch-black SaaS aesthetic with precise typography and monospace code accents. Sidebar-driven tooling layout. Dark grays layered for depth. Use monospace for data and code, Inter for UI. Minimal chrome, maximum data density. Professional developer tool feel.',
   },
   'refero-mercury': {
     name: 'Mercury (Mountain Top Command)',
@@ -70,7 +64,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#5266eb', '#cdddff', '#171721'],
     fonts: ['arcadiaDisplay', 'arcadia'],
-    promptGuidance: 'Dark backdrop with distinctive Cornflower Blue (#5266eb) as the signature accent. High-contrast hierarchy with ghost-blue highlights on deep navy surfaces. Custom arcadia typeface family gives it a refined, editorial feel. Banking/finance quality polish — trustworthy and premium.'
+    promptGuidance:
+      'Dark backdrop with distinctive Cornflower Blue (#5266eb) as the signature accent. High-contrast hierarchy with ghost-blue highlights on deep navy surfaces. Custom arcadia typeface family gives it a refined, editorial feel. Banking/finance quality polish — trustworthy and premium.',
   },
   'refero-github': {
     name: 'GitHub (Developer Warmth)',
@@ -78,7 +73,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#0d1117', '#000000', '#151a22'],
     fonts: ['Mona Sans', 'Mona Sans VF', 'Mona Sans Mono'],
-    promptGuidance: 'Warm dark canvas (#0d1117) with GitHub\'s signature developer-friendly aesthetic. Mona Sans for UI with dedicated monospace variant for code. Repository-and-navigation oriented layout. Approachable dark mode that feels like a workspace, not a cinema. Community and collaboration cues.'
+    promptGuidance:
+      "Warm dark canvas (#0d1117) with GitHub's signature developer-friendly aesthetic. Mona Sans for UI with dedicated monospace variant for code. Repository-and-navigation oriented layout. Approachable dark mode that feels like a workspace, not a cinema. Community and collaboration cues.",
   },
   'refero-slash': {
     name: 'Slash (Editorial Noir)',
@@ -86,7 +82,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#000000', '#030304', '#08080a'],
     fonts: ['Inter', 'Ivy Presto'],
-    promptGuidance: 'Pure black canvas with editorial serif accent (Ivy Presto) for headings. Inter for body. Extremely minimalist — almost no chrome or borders. Content-forward design that lets typography do the heavy lifting. Feels like a premium magazine in dark mode. High-contrast, elegant, restrained.'
+    promptGuidance:
+      'Pure black canvas with editorial serif accent (Ivy Presto) for headings. Inter for body. Extremely minimalist — almost no chrome or borders. Content-forward design that lets typography do the heavy lifting. Feels like a premium magazine in dark mode. High-contrast, elegant, restrained.',
   },
   'refero-superhuman': {
     name: 'Superhuman (Warm Parchment)',
@@ -94,7 +91,8 @@ const REFERO_STYLES = {
     scheme: 'both',
     colors: ['#f2f0eb', '#292827', '#ffffff'],
     fonts: ['Super Sans VF'],
-    promptGuidance: 'Warm parchment off-white (#f2f0eb) canvas with deep ink (#292827) text — email/correspondence inspired. Custom Super Sans VF gives controlled warmth. Works in both light (parchment) and dark (ink) modes. Feels like writing on quality paper. Intimate, productive, human-scale interface. Keyboard-first interaction cues.'
+    promptGuidance:
+      'Warm parchment off-white (#f2f0eb) canvas with deep ink (#292827) text — email/correspondence inspired. Custom Super Sans VF gives controlled warmth. Works in both light (parchment) and dark (ink) modes. Feels like writing on quality paper. Intimate, productive, human-scale interface. Keyboard-first interaction cues.',
   },
   'refero-apple': {
     name: 'Apple (Quiet Premium)',
@@ -102,7 +100,8 @@ const REFERO_STYLES = {
     scheme: 'light',
     colors: ['#1d1d1f', '#707070', '#474747'],
     fonts: ['SF Pro Display', 'SF Pro Text'],
-    promptGuidance: 'Quiet light aesthetic with Apple\'s signature SF Pro type system. Generous whitespace, rounded corners, subtle shadows. Product-focused layout with hero imagery. The quintessential premium brand experience — minimal, expensive-feeling, everything in its right place. Neutral grays with no aggressive colors.'
+    promptGuidance:
+      "Quiet light aesthetic with Apple's signature SF Pro type system. Generous whitespace, rounded corners, subtle shadows. Product-focused layout with hero imagery. The quintessential premium brand experience — minimal, expensive-feeling, everything in its right place. Neutral grays with no aggressive colors.",
   },
   'refero-travelperk': {
     name: 'Travelperk (Electric Lime)',
@@ -110,7 +109,8 @@ const REFERO_STYLES = {
     scheme: 'light',
     colors: ['#beff50', '#14140f', '#000000'],
     fonts: ['OTSono'],
-    promptGuidance: 'Bold lime green (#beff50) signature color against near-black (#14140f) text — energetic and unmistakable. Custom OTSono font gives distinctive character. Playful but professional. High-energy B2B SaaS that refuses to be boring. Great for fintech, travel, or any brand that wants to stand out with confidence.'
+    promptGuidance:
+      'Bold lime green (#beff50) signature color against near-black (#14140f) text — energetic and unmistakable. Custom OTSono font gives distinctive character. Playful but professional. High-energy B2B SaaS that refuses to be boring. Great for fintech, travel, or any brand that wants to stand out with confidence.',
   },
   'refero-arva': {
     name: 'Arva (Teal Serif)',
@@ -118,7 +118,8 @@ const REFERO_STYLES = {
     scheme: 'light',
     colors: ['#07503f', '#b2cee7', '#fceace'],
     fonts: ['Inter', 'RecklessLight', 'Reckless'],
-    promptGuidance: 'Deep teal (#07503f) as the anchor color paired with a refined serif (Reckless) for warmth. Light airy background with warm cream accents. Nature-and-craft aesthetic — feels like a design-forward brand in the sustainability or wellness space. Calm, grounded, artisanal without being rustic.'
+    promptGuidance:
+      'Deep teal (#07503f) as the anchor color paired with a refined serif (Reckless) for warmth. Light airy background with warm cream accents. Nature-and-craft aesthetic — feels like a design-forward brand in the sustainability or wellness space. Calm, grounded, artisanal without being rustic.',
   },
   'refero-posthog': {
     name: 'PostHog (Clean Developer)',
@@ -126,7 +127,8 @@ const REFERO_STYLES = {
     scheme: 'light',
     colors: ['#ffffff', '#eeefe9', '#e5e7e0'],
     fonts: ['IBM Plex Sans Variable', 'ui-monospace'],
-    promptGuidance: 'Crisp white canvas with subtle warm-gray surfaces. IBM Plex family for a developer-friendly but polished feel. Monospace for data and metrics. Clean, functional, transparent. Open-source tooling aesthetic — honest, unstyled, proud of being utilitarian. Great for analytics, dev tools, or data products.'
+    promptGuidance:
+      'Crisp white canvas with subtle warm-gray surfaces. IBM Plex family for a developer-friendly but polished feel. Monospace for data and metrics. Clean, functional, transparent. Open-source tooling aesthetic — honest, unstyled, proud of being utilitarian. Great for analytics, dev tools, or data products.',
   },
   'refero-monopo': {
     name: 'Monopo Saigon (Gradient Depths)',
@@ -134,7 +136,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#000000', '#ffffff', '#181818'],
     fonts: ['Roobert', 'Raleway'],
-    promptGuidance: 'Pure black canvas with shifting gradient overlays creating depth. Frosted glass effects and layered transparency. Roobert for bold headings, Raleway for body. Agency/studio portfolio feel — theatrical, immersive, showcase-first. Dark and atmospheric with moments of bright contrast. Motion-forward aesthetic.'
+    promptGuidance:
+      'Pure black canvas with shifting gradient overlays creating depth. Frosted glass effects and layered transparency. Roobert for bold headings, Raleway for body. Agency/studio portfolio feel — theatrical, immersive, showcase-first. Dark and atmospheric with moments of bright contrast. Motion-forward aesthetic.',
   },
   'refero-huly': {
     name: 'Huly (Deep Workspace)',
@@ -142,7 +145,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#090a0c', '#111111', '#303236'],
     fonts: ['Esbuild', 'Inter'],
-    promptGuidance: 'Deep charcoal workspace with Esbuild (custom geometric) for headings and Inter for body. Project-management inspired sidebar-and-canvas layout. Dense information display with clean separation. Feels like a professional creative tool — Figma/Notion territory. Multi-panel, keyboard-shortcut-ready, power-user oriented.'
+    promptGuidance:
+      'Deep charcoal workspace with Esbuild (custom geometric) for headings and Inter for body. Project-management inspired sidebar-and-canvas layout. Dense information display with clean separation. Feels like a professional creative tool — Figma/Notion territory. Multi-panel, keyboard-shortcut-ready, power-user oriented.',
   },
   'refero-amplemarket': {
     name: 'Amplemarket (Crisp Monochrome)',
@@ -150,7 +154,8 @@ const REFERO_STYLES = {
     scheme: 'light',
     colors: ['#111111', '#ffffff', '#272625'],
     fonts: ['Labil Grotesk Variable'],
-    promptGuidance: 'Stark black-on-white with Labil Grotesk — a controlled, neutral grotesk. No decorative colors, no gradients. Pure information hierarchy through typography weight and spacing alone. Sales/enterprise tool aesthetic. Sharp, fast, no-nonsense. The design disappears so the data speaks.'
+    promptGuidance:
+      'Stark black-on-white with Labil Grotesk — a controlled, neutral grotesk. No decorative colors, no gradients. Pure information hierarchy through typography weight and spacing alone. Sales/enterprise tool aesthetic. Sharp, fast, no-nonsense. The design disappears so the data speaks.',
   },
   'refero-oryzo': {
     name: 'ORYZO AI (Warm Earth)',
@@ -158,7 +163,8 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#100904', '#ffedd7', '#40372e'],
     fonts: ['halyard-display-variable', 'Arial'],
-    promptGuidance: 'Warm dark canvas with brown-earth undertones (#100904) rather than cool navy. Cream/warm-white text (#ffedd7) for a softer, less clinical read. Halyard Display for headlines. AI/productivity tool with a human touch. Approachable dark mode — feels like a well-lit room at night rather than a cave.'
+    promptGuidance:
+      'Warm dark canvas with brown-earth undertones (#100904) rather than cool navy. Cream/warm-white text (#ffedd7) for a softer, less clinical read. Halyard Display for headlines. AI/productivity tool with a human touch. Approachable dark mode — feels like a well-lit room at night rather than a cave.',
   },
   'refero-authkit': {
     name: 'Authkit (Midnight Auth)',
@@ -166,12 +172,14 @@ const REFERO_STYLES = {
     scheme: 'dark',
     colors: ['#05060f', '#ffffff', '#2f343e'],
     fonts: ['Untitled Sans', 'aeonikPro', 'dotDigital'],
-    promptGuidance: 'Near-black navy canvas (#05060f) with pure white text — maximum contrast. Untitled Sans and aeonikPro for a modern, slightly geometric feel. Clean, trustworthy, security-conscious aesthetic. Authentication/identity product territory — needs to feel safe and solid. Minimal motion, maximum clarity.'
+    promptGuidance:
+      'Near-black navy canvas (#05060f) with pure white text — maximum contrast. Untitled Sans and aeonikPro for a modern, slightly geometric feel. Clean, trustworthy, security-conscious aesthetic. Authentication/identity product territory — needs to feel safe and solid. Minimal motion, maximum clarity.',
   },
 };
 
 // Cache for design system references (avoid re-fetching)
-const DESIGN_SYSTEM_SOURCE = 'https://raw.githubusercontent.com/Meliwat/awesome-design-md-pre-paywall/main/design-md';
+const DESIGN_SYSTEM_SOURCE =
+  'https://raw.githubusercontent.com/Meliwat/awesome-design-md-pre-paywall/main/design-md';
 const LEGACY_DESIGN_SYSTEMS = {
   none: { name: 'None', repo: null, path: null },
   cursor: { name: 'Cursor (Sleek Dark)', repo: 'cursor', path: 'DESIGN.md' },
@@ -209,7 +217,8 @@ const TEMPLATES = [
     scaffold: 'static-html',
     recommendedUse: 'simple landing pages, microsites, and zero-build concept pages',
     files: ['index.html', 'styles.css', 'README.md', 'blueprint.md', 'cauldron.project.json'],
-    promptBias: 'Build a polished static HTML/CSS site with semantic markup, responsive sections, strong hierarchy, and no build tooling. The HTML preview must be a complete, working landing page with all sections rendered using realistic content and proper design states.',
+    promptBias:
+      'Build a polished static HTML/CSS site with semantic markup, responsive sections, strong hierarchy, and no build tooling. The HTML preview must be a complete, working landing page with all sections rendered using realistic content and proper design states.',
   },
   {
     id: 'html-alpine',
@@ -218,7 +227,8 @@ const TEMPLATES = [
     scaffold: 'html-alpine',
     recommendedUse: 'interactive lightweight prototypes and single-page tools',
     files: ['index.html', 'styles.css', 'README.md', 'blueprint.md', 'cauldron.project.json'],
-    promptBias: 'Build a polished, self-contained interactive prototype using semantic HTML, AlpineJS state management (x-data, x-show, x-transition, x-for), minimal dependencies, accessible controls, and premium dark UI styling. Include baked-in demo data, localStorage persistence, and proper loading/empty/error states. The HTML preview must be a fully working app.',
+    promptBias:
+      'Build a polished, self-contained interactive prototype using semantic HTML, AlpineJS state management (x-data, x-show, x-transition, x-for), minimal dependencies, accessible controls, and premium dark UI styling. Include baked-in demo data, localStorage persistence, and proper loading/empty/error states. The HTML preview must be a fully working app.',
   },
   {
     id: 'nextjs',
@@ -226,8 +236,16 @@ const TEMPLATES = [
     projectType: 'app',
     scaffold: 'nextjs',
     recommendedUse: 'modern React apps, SaaS dashboards, and production web apps',
-    files: ['app/page.tsx', 'app/layout.tsx', 'package.json', 'README.md', 'blueprint.md', 'cauldron.project.json'],
-    promptBias: 'Build a production-quality Next.js app with TypeScript, App Router, Server Components by default, and client components for interactive sections. Use Tailwind CSS for styling with a professional design system approach. Include proper loading/error/empty states, responsive design, and accessible markup.',
+    files: [
+      'app/page.tsx',
+      'app/layout.tsx',
+      'package.json',
+      'README.md',
+      'blueprint.md',
+      'cauldron.project.json',
+    ],
+    promptBias:
+      'Build a production-quality Next.js app with TypeScript, App Router, Server Components by default, and client components for interactive sections. Use Tailwind CSS for styling with a professional design system approach. Include proper loading/error/empty states, responsive design, and accessible markup.',
   },
   {
     id: 'astro',
@@ -235,8 +253,16 @@ const TEMPLATES = [
     projectType: 'site',
     scaffold: 'astro',
     recommendedUse: 'content-heavy sites, blogs, documentation, and marketing pages',
-    files: ['src/pages/index.astro', 'public/', 'package.json', 'README.md', 'blueprint.md', 'cauldron.project.json'],
-    promptBias: 'Build a polished Astro site with static output, semantic HTML, and modern CSS. Use Astro components for layout and content sections. The site must be fully working with realistic content, proper meta tags, responsive design, and accessible markup.',
+    files: [
+      'src/pages/index.astro',
+      'public/',
+      'package.json',
+      'README.md',
+      'blueprint.md',
+      'cauldron.project.json',
+    ],
+    promptBias:
+      'Build a polished Astro site with static output, semantic HTML, and modern CSS. Use Astro components for layout and content sections. The site must be fully working with realistic content, proper meta tags, responsive design, and accessible markup.',
   },
 ];
 
@@ -363,20 +389,30 @@ function getSystemPrompt(projectType = 'app', designReference = '') {
 }
 
 function getTemplate(templateId = '') {
-  return TEMPLATES.find(t => t.id === templateId) || null;
+  return TEMPLATES.find((t) => t.id === templateId) || null;
 }
 
 function formatTemplateForPrompt(template) {
   if (!template) return '';
-  const files = Array.isArray(template.files) && template.files.length
-    ? `\n\nExpected scaffold files:\n${template.files.map(file => `- ${file}`).join('\n')}`
-    : '';
+  const files =
+    Array.isArray(template.files) && template.files.length
+      ? `\n\nExpected scaffold files:\n${template.files.map((file) => `- ${file}`).join('\n')}`
+      : '';
   return `## Project Type: ${template.name}\n${template.promptBias}${files}`;
 }
 
 // ─── Cloud Agent Build Helper ──────────────────────────────────────────────
 
-async function _runCloudAgentBuild({ prompt, model, apiKey, systemPrompt, sessionId, onToken, signal, cloudModel }) {
+async function _runCloudAgentBuild({
+  prompt,
+  model,
+  apiKey,
+  systemPrompt,
+  sessionId,
+  onToken,
+  signal,
+  cloudModel,
+}) {
   const MAX_ROUNDS = 40;
   const provider = model;
   const url = provider === 'gemini' ? GEMINI_BASE_URL : OPENAI_BASE_URL;
@@ -397,7 +433,7 @@ async function _runCloudAgentBuild({ prompt, model, apiKey, systemPrompt, sessio
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       signal,
       body: JSON.stringify({
@@ -422,7 +458,7 @@ async function _runCloudAgentBuild({ prompt, model, apiKey, systemPrompt, sessio
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(l => l.trim().startsWith('data: '));
+      const lines = chunk.split('\n').filter((l) => l.trim().startsWith('data: '));
 
       for (const line of lines) {
         const data = line.slice(6).trim();
@@ -489,7 +525,11 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (!origin) return next();
   let host;
-  try { host = new URL(origin).hostname; } catch { return res.status(403).json({ error: 'Cross-origin request blocked' }); }
+  try {
+    host = new URL(origin).hostname;
+  } catch {
+    return res.status(403).json({ error: 'Cross-origin request blocked' });
+  }
   if (host === 'localhost' || host === '127.0.0.1') return next();
   return res.status(403).json({ error: 'Cross-origin request blocked' });
 });
@@ -519,7 +559,8 @@ function getProjectPath(name) {
   const projectPath = path.join(getProjectsDir(), safe);
   const root = getProjectsDir();
   if (!projectPath.startsWith(root)) throw new Error('Invalid project path');
-  if (!fs.existsSync(projectPath) || !fs.statSync(projectPath).isDirectory()) throw new Error(`Project not found: ${safe}`);
+  if (!fs.existsSync(projectPath) || !fs.statSync(projectPath).isDirectory())
+    throw new Error(`Project not found: ${safe}`);
   return { safe, projectPath };
 }
 
@@ -593,7 +634,9 @@ function createBlueprintFromProjectFolder(projectPath, name, packageJson) {
       '```text',
       inventory || 'No readable project files found.',
       '```',
-    ].filter(Boolean).join('\n'),
+    ]
+      .filter(Boolean)
+      .join('\n'),
   };
 }
 
@@ -601,16 +644,23 @@ function listImportableProjects() {
   const projectsDir = getProjectsDir();
   if (!fs.existsSync(projectsDir)) return [];
 
-  return fs.readdirSync(projectsDir, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => {
+  return fs
+    .readdirSync(projectsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
       const projectPath = path.join(projectsDir, entry.name);
       const packagePath = path.join(projectPath, 'package.json');
       let packageJson = null;
       if (fs.existsSync(packagePath)) {
-        try { packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8')); } catch {}
+        try {
+          packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+        } catch {}
       }
-      const { blueprint, source } = createBlueprintFromProjectFolder(projectPath, entry.name, packageJson);
+      const { blueprint, source } = createBlueprintFromProjectFolder(
+        projectPath,
+        entry.name,
+        packageJson
+      );
       const existing = db.getDraftByProjectName(entry.name);
       return {
         name: entry.name,
@@ -624,7 +674,7 @@ function listImportableProjects() {
         blueprint,
       };
     })
-    .filter(project => project.blueprint && project.blueprint.trim());
+    .filter((project) => project.blueprint && project.blueprint.trim());
 }
 
 function readTail(filePath, maxChars = 6000) {
@@ -643,46 +693,93 @@ function readTail(filePath, maxChars = 6000) {
 
 function getProcessLines() {
   try {
-    return execFileSync('ps', ['-axo', 'pid,ppid,stat,etime,command'], { encoding: 'utf8', timeout: 2000 }).split('\n');
+    return execFileSync('ps', ['-axo', 'pid,ppid,stat,etime,command'], {
+      encoding: 'utf8',
+      timeout: 2000,
+    }).split('\n');
   } catch {
     return [];
   }
 }
 
 function getRunningProcessForProject(projectPath, processLines = getProcessLines()) {
-  return processLines.find(line => line.includes(projectPath) && /(opencode|npm run dev|next dev|vite|astro)/i.test(line)) || '';
+  return (
+    processLines.find(
+      (line) =>
+        line.includes(projectPath) && /(opencode|npm run dev|next dev|vite|astro)/i.test(line)
+    ) || ''
+  );
 }
 
 function classifyProjectStatus({ projectPath, hasPackage, hasLog, logTail, runningLine }) {
   if (runningLine) return 'running';
   const tail = String(logTail || '').toLowerCase();
-  if (/permission|external_directory|denied|failed|error|traceback|exception|cancelled|aborted/.test(tail)) return 'stalled';
-  if (/build (?:complete|completed|finished|successful)|implementation (?:complete|completed)|project (?:complete|completed)|done(?:[.!]|\\s*$)|successfully (?:built|created|implemented)|all (?:set|done)|ready for review|handoff complete|everything is documented in the `?readme/i.test(tail)) return 'completed';
+  if (
+    /permission|external_directory|denied|failed|error|traceback|exception|cancelled|aborted/.test(
+      tail
+    )
+  )
+    return 'stalled';
+  if (
+    /build (?:complete|completed|finished|successful)|implementation (?:complete|completed)|project (?:complete|completed)|done(?:[.!]|\\s*$)|successfully (?:built|created|implemented)|all (?:set|done)|ready for review|handoff complete|everything is documented in the `?readme/i.test(
+      tail
+    )
+  )
+    return 'completed';
   if (/project scaffold(?:ed| is built)|here'?s what was built/i.test(tail)) return 'completed';
-  if (/next steps|todo|remaining|manual|configure|migration|supabase|prisma|env|needs/.test(tail)) return 'needs_review';
-  if (hasPackage && (fs.existsSync(path.join(projectPath, 'README.md')) || fs.existsSync(path.join(projectPath, 'app')) || fs.existsSync(path.join(projectPath, 'src')))) return 'needs_review';
+  if (/next steps|todo|remaining|manual|configure|migration|supabase|prisma|env|needs/.test(tail))
+    return 'needs_review';
+  if (
+    hasPackage &&
+    (fs.existsSync(path.join(projectPath, 'README.md')) ||
+      fs.existsSync(path.join(projectPath, 'app')) ||
+      fs.existsSync(path.join(projectPath, 'src')))
+  )
+    return 'needs_review';
   if (hasLog) return 'unknown';
   return hasPackage ? 'needs_review' : 'unknown';
 }
 
 function getBuildStatus() {
   const projectsDir = getProjectsDir();
-  if (!fs.existsSync(projectsDir)) return { projects: [], summary: { tracked: 0, running: 0, stalled: 0, failed: 0, needs_review: 0, completed: 0, unknown: 0 } };
-  const overrides = new Map(db.getProjectStatusOverrides().map(row => [row.project_name, row]));
+  if (!fs.existsSync(projectsDir))
+    return {
+      projects: [],
+      summary: {
+        tracked: 0,
+        running: 0,
+        stalled: 0,
+        failed: 0,
+        needs_review: 0,
+        completed: 0,
+        unknown: 0,
+      },
+    };
+  const overrides = new Map(db.getProjectStatusOverrides().map((row) => [row.project_name, row]));
   const processLines = getProcessLines();
-  const projects = fs.readdirSync(projectsDir, { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .map(entry => {
+  const projects = fs
+    .readdirSync(projectsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
       const projectPath = path.join(projectsDir, entry.name);
-      const logPaths = ['opencode-handoff.log', 'opencode-resume.log'].map(file => path.join(projectPath, file));
-      const newestLog = logPaths
-        .filter(file => fs.existsSync(file))
-        .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] || null;
+      const logPaths = ['opencode-handoff.log', 'opencode-resume.log'].map((file) =>
+        path.join(projectPath, file)
+      );
+      const newestLog =
+        logPaths
+          .filter((file) => fs.existsSync(file))
+          .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs)[0] || null;
       const hasPackage = fs.existsSync(path.join(projectPath, 'package.json'));
       const hasBlueprint = fs.existsSync(path.join(projectPath, 'blueprint.md'));
       const logTail = newestLog ? readTail(newestLog, 3500) : '';
       const runningLine = getRunningProcessForProject(projectPath, processLines);
-      const autoStatus = classifyProjectStatus({ projectPath, hasPackage, hasLog: Boolean(newestLog), logTail, runningLine });
+      const autoStatus = classifyProjectStatus({
+        projectPath,
+        hasPackage,
+        hasLog: Boolean(newestLog),
+        logTail,
+        runningLine,
+      });
       const override = overrides.get(entry.name);
       const status = override?.status || autoStatus;
       return {
@@ -700,12 +797,22 @@ function getBuildStatus() {
         logTail,
         running: Boolean(runningLine),
         runningProcess: runningLine.trim(),
-        updatedAt: newestLog ? fs.statSync(newestLog).mtime.toISOString() : fs.statSync(projectPath).mtime.toISOString(),
+        updatedAt: newestLog
+          ? fs.statSync(newestLog).mtime.toISOString()
+          : fs.statSync(projectPath).mtime.toISOString(),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const summary = { tracked: projects.length, running: 0, stalled: 0, failed: 0, needs_review: 0, completed: 0, unknown: 0 };
+  const summary = {
+    tracked: projects.length,
+    running: 0,
+    stalled: 0,
+    failed: 0,
+    needs_review: 0,
+    completed: 0,
+    unknown: 0,
+  };
   for (const project of projects) {
     summary[project.status] = (summary[project.status] || 0) + 1;
   }
@@ -718,7 +825,7 @@ function buildResumePrompt(projectName) {
     'Read blueprint.md, README.md, package.json, and any opencode logs first.',
     'Finish the most useful first-pass implementation without requiring real secrets.',
     'If credentials are needed, update .env.example and document exact setup steps.',
-    'Prioritise getting the app scaffold runnable, then write a concise completion report.'
+    'Prioritise getting the app scaffold runnable, then write a concise completion report.',
   ].join(' ');
 }
 
@@ -727,7 +834,7 @@ function buildOpencodeArgs(prompt, projectPath) {
 }
 
 function commandPreview(command, args) {
-  return [command, ...args.map(arg => /\s/.test(arg) ? JSON.stringify(arg) : arg)].join(' ');
+  return [command, ...args.map((arg) => (/\s/.test(arg) ? JSON.stringify(arg) : arg))].join(' ');
 }
 
 const deps = {
@@ -783,9 +890,18 @@ registerAllRoutes(app, deps);
 
 // ─── Shutdown: flush debounced DB writes on exit ────────────────────────────
 for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => { try { db.flush(); } catch {} process.exit(0); });
+  process.on(sig, () => {
+    try {
+      db.flush();
+    } catch {}
+    process.exit(0);
+  });
 }
-process.on('exit', () => { try { db.flush(); } catch {} });
+process.on('exit', () => {
+  try {
+    db.flush();
+  } catch {}
+});
 
 // ─── Start server ──────────────────────────────────────────────────────────
 (async () => {

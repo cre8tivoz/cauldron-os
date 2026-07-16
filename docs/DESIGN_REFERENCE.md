@@ -8,7 +8,7 @@ The Design Reference Selector reads local `DESIGN.md` files from `design-systems
 
 Your DESIGN.md should follow the portable `DESIGN.md` pattern used by Open Design and awesome-design-md. Minimal recommended sections:
 
-```markdown
+````markdown
 ---
 name: Brand Name
 summary: One-line tagline describing the aesthetic
@@ -19,19 +19,20 @@ style: [dark|light|adaptive]
 ## Typography
 
 **Primary Font:** [Font name](link-to-font)
+
 - Headings: weight 600–700, scale 1.2–1.5
 - Body: weight 400–500, line-height 1.6
 - Mono: [font name] for code
 
 ## Color Palette
 
-| Role | Hex | RGB |
-|------|-----|-----|
-| Background | `#0a0a0a` | rgb(10, 10, 10) |
-| Surface | `#1a1a1d` | rgb(26, 26, 29) |
-| Border | `rgba(255,255,255,0.1)` | — |
-| Primary | `#b794f6` | rgb(183, 148, 246) |
-| Secondary | `#34d399` | rgb(52, 211, 153) |
+| Role       | Hex                     | RGB                |
+| ---------- | ----------------------- | ------------------ |
+| Background | `#0a0a0a`               | rgb(10, 10, 10)    |
+| Surface    | `#1a1a1d`               | rgb(26, 26, 29)    |
+| Border     | `rgba(255,255,255,0.1)` | —                  |
+| Primary    | `#b794f6`               | rgb(183, 148, 246) |
+| Secondary  | `#34d399`               | rgb(52, 211, 153)  |
 
 ## Spacing
 
@@ -48,11 +49,11 @@ style: [dark|light|adaptive]
 
 ## Component States
 
-| Element | Hover | Focus | Active | Disabled |
-|---------|-------|-------|--------|----------|
+| Element | Hover                   | Focus         | Active     | Disabled    |
+| ------- | ----------------------- | ------------- | ---------- | ----------- |
 | Button  | border lighten + shadow | ring + offset | scale 0.98 | opacity 0.4 |
-| Input   | border accent | ring accent | — | opacity 0.5 |
-| Card    | border glow + lift | — | — | desaturate |
+| Input   | border accent           | ring accent   | —          | opacity 0.5 |
+| Card    | border glow + lift      | —             | —          | desaturate  |
 
 ## Brand Voice (optional)
 
@@ -62,13 +63,15 @@ Tone: helpful, uncluttered, premium
 ## Examples (optional)
 
 Include 1–2 code snippets:
+
 ```css
 .button {
   background: linear-gradient(135deg, #1a1a1d, #2f2f33);
-  border: 1px solid rgba(183,148,246,0.3);
+  border: 1px solid rgba(183, 148, 246, 0.3);
   color: #b794f6;
 }
 ```
+````
 
 ```
 
@@ -117,3 +120,4 @@ See existing brands for structure:
 ## Questions?
 
 Open an issue at https://github.com/witchdaddylabs/cauldron-os/issues with tag `design-system`.
+```

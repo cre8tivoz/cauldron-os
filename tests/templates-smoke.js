@@ -13,7 +13,8 @@ function waitForServer(url, timeoutMs = 15000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -23,9 +24,9 @@ function waitForServer(url, timeoutMs = 15000) {
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-templates-'));
   const probe = http.createServer((req, res) => res.end('ok'));
-  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const appPort = probe.address().port + 1;
-  await new Promise(resolve => probe.close(resolve));
+  await new Promise((resolve) => probe.close(resolve));
 
   const app = spawn(process.execPath, ['server.js'], {
     cwd: path.join(__dirname, '..'),
@@ -41,7 +42,7 @@ function waitForServer(url, timeoutMs = 15000) {
     assert.strictEqual(data.success, true);
     assert.ok(Array.isArray(data.templates), 'templates response should include templates array');
 
-    const alpine = data.templates.find(template => template.id === 'html-alpine');
+    const alpine = data.templates.find((template) => template.id === 'html-alpine');
     assert.ok(alpine, 'HTML + AlpineJS template should be first-class');
     assert.strictEqual(alpine.name, 'HTML + AlpineJS');
     assert.strictEqual(alpine.projectType, 'prototype');
@@ -55,7 +56,7 @@ function waitForServer(url, timeoutMs = 15000) {
   } finally {
     app.kill('SIGTERM');
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

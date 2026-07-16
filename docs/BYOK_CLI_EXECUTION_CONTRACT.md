@@ -15,13 +15,13 @@ This contract defines the v0.30 target for agent handoff. It keeps Cauldron loca
 
 Initial target agents:
 
-| Agent | Detection command | Launch style |
-| --- | --- | --- |
-| Cursor | `which cursor` | open project directory or README; prompt mode if available |
-| Claude Code | `which claude` | run in project directory with prompt file |
-| Codex | `which codex` | run in project directory with prompt file |
-| OpenCode | `which opencode` | existing project resume/open flow |
-| Handoff only | none | save package and show instructions |
+| Agent        | Detection command | Launch style                                               |
+| ------------ | ----------------- | ---------------------------------------------------------- |
+| Cursor       | `which cursor`    | open project directory or README; prompt mode if available |
+| Claude Code  | `which claude`    | run in project directory with prompt file                  |
+| Codex        | `which codex`     | run in project directory with prompt file                  |
+| OpenCode     | `which opencode`  | existing project resume/open flow                          |
+| Handoff only | none              | save package and show instructions                         |
 
 Detection must be capability-based. If a command is missing, return `available: false`; do not fail the app.
 

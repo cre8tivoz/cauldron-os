@@ -10,17 +10,23 @@ const { findNextAction } = require('../lib/xml-parser');
 
 // — 1. Single content with nested HTML —
 {
-  const xml = '<action name="write_file"><path>a.html</path><content><div><span>hi</span></div></content></action>';
+  const xml =
+    '<action name="write_file"><path>a.html</path><content><div><span>hi</span></div></content></action>';
   const result = findNextAction(xml);
   assert(result !== null && result !== 'incomplete', 'test 1: should parse successfully');
   assert.equal(result.args.path, 'a.html', 'test 1: path should be a.html');
-  assert.equal(result.args.content, '<div><span>hi</span></div>', 'test 1: content should include nested HTML');
+  assert.equal(
+    result.args.content,
+    '<div><span>hi</span></div>',
+    'test 1: content should include nested HTML'
+  );
   console.log('  ✓ nested HTML content preserved');
 }
 
 // — 2. Flat repeated raw tag (the bug: two <content> blocks) —
 {
-  const xml = '<action name="edit_file"><path>x.js</path><old_string>foo</old_string><new_string>bar</new_string><content>A</content><something/><content>B</content></action>';
+  const xml =
+    '<action name="edit_file"><path>x.js</path><old_string>foo</old_string><new_string>bar</new_string><content>A</content><something/><content>B</content></action>';
   const result = findNextAction(xml);
   assert(result !== null && result !== 'incomplete', 'test 2: should parse successfully');
   assert.equal(result.args.content, 'A', 'test 2: content should be "A" (first block only)');

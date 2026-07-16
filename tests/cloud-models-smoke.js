@@ -10,7 +10,7 @@ const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-cloud-models-'))
 const PORT = 3401;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -31,7 +31,11 @@ async function request(pathname, options = {}) {
   });
   const text = await res.text();
   let body;
-  try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
+  try {
+    body = text ? JSON.parse(text) : {};
+  } catch {
+    body = { raw: text };
+  }
   return { res, body };
 }
 
@@ -43,8 +47,8 @@ async function request(pathname, options = {}) {
   });
 
   let output = '';
-  child.stdout.on('data', d => output += d.toString());
-  child.stderr.on('data', d => output += d.toString());
+  child.stdout.on('data', (d) => (output += d.toString()));
+  child.stderr.on('data', (d) => (output += d.toString()));
 
   try {
     await waitForHealth();

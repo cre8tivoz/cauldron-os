@@ -9,29 +9,42 @@
  * - POST /api/handoff: project package export; currently writes files but does not launch a CLI.
  */
 
-const fs = require("fs");
-const path = require("path");
-const { buildLineDiff } = require("../lib/blueprint-diff");
-const { createHandoffPackage } = require("../lib/handoff-package");
-const { scorePrototypeHtml } = require("../lib/quality-scorer");
-
+const fs = require('fs');
+const path = require('path');
+const { buildLineDiff } = require('../lib/blueprint-diff');
+const { createHandoffPackage } = require('../lib/handoff-package');
+const { scorePrototypeHtml } = require('../lib/quality-scorer');
 
 function registerGenerationRoutes(app, deps) {
   const {
-    db, workspace,
-    getSystemPrompt, getTemplate, formatTemplateForPrompt, ensureDesignSystem,
-    CLARIFY_SYSTEM_PROMPT, PROTOTYPE_SYSTEM_PROMPT, CLARIFY_NUM_PREDICT, BLUEPRINT_NUM_PREDICT,
-    CLOUD_TIMEOUT_MS, OLLAMA_TIMEOUT_MS,
-    safeProjectName, getProjectsDir,
-    callOllamaModel, callCloudModel, getCloudModelName,
-    extractJsonObject, normaliseClarifyResult,
-    scrapeURLFast, scrapeRenderedURL, formatResearchForPrompt,
+    db,
+    workspace,
+    getSystemPrompt,
+    getTemplate,
+    formatTemplateForPrompt,
+    ensureDesignSystem,
+    CLARIFY_SYSTEM_PROMPT,
+    PROTOTYPE_SYSTEM_PROMPT,
+    CLARIFY_NUM_PREDICT,
+    BLUEPRINT_NUM_PREDICT,
+    CLOUD_TIMEOUT_MS,
+    OLLAMA_TIMEOUT_MS,
+    safeProjectName,
+    getProjectsDir,
+    callOllamaModel,
+    callCloudModel,
+    getCloudModelName,
+    extractJsonObject,
+    normaliseClarifyResult,
+    scrapeURLFast,
+    scrapeRenderedURL,
+    formatResearchForPrompt,
     PACKAGE_VERSION,
   } = deps;
 
   app.post('/api/research-url', async (req, res) => {
     const { url, projectName = '', brainDump = '', mode = 'fast' } = req.body;
-  
+
     if (!url) {
       return res.status(400).json({ error: 'URL required' });
     }
@@ -51,7 +64,13 @@ function registerGenerationRoutes(app, deps) {
       } catch (recordErr) {
         console.warn('[Cauldron] Research history warning:', recordErr.message);
       }
-      res.json({ success: true, findings, formatted, researchId: researchRecord?.id || null, reuseCount: researchRecord?.reuse_count || null });
+      res.json({
+        success: true,
+        findings,
+        formatted,
+        researchId: researchRecord?.id || null,
+        reuseCount: researchRecord?.reuse_count || null,
+      });
     };
 
     if (mode === 'deep') {
@@ -63,14 +82,14 @@ function registerGenerationRoutes(app, deps) {
         return res.status(500).json({ error: `Deep research failed: ${err.message}` });
       }
     }
-  
+
     try {
-        const findings = await scrapeURLFast(url);
-        return persistAndRespond(findings);
-      } catch (err) {
-        console.error('Research failed:', err);
-        return res.status(500).json({ error: `Research failed: ${err.message}` });
-      }
+      const findings = await scrapeURLFast(url);
+      return persistAndRespond(findings);
+    } catch (err) {
+      console.error('Research failed:', err);
+      return res.status(500).json({ error: `Research failed: ${err.message}` });
+    }
   });
 
   app.post('/api/clarify', async (req, res) => {
@@ -85,7 +104,9 @@ function registerGenerationRoutes(app, deps) {
 
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) {
-          return res.status(400).json({ error: 'Missing API key', details: `No API key was provided for ${model}.` });
+          return res
+            .status(400)
+            .json({ error: 'Missing API key', details: `No API key was provided for ${model}.` });
         }
         rawText = await callCloudModel({
           provider: model,
@@ -120,7 +141,9 @@ function registerGenerationRoutes(app, deps) {
       res.json({ success: true, ...diff });
     } catch (err) {
       console.error('[Cauldron] Blueprint diff error:', err);
-      res.status(500).json({ success: false, error: 'Blueprint diff failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Blueprint diff failed', details: err.message });
     }
   });
 
@@ -141,7 +164,17 @@ function registerGenerationRoutes(app, deps) {
     let providerUsed = '';
 
     try {
-      const { prompt, model, projectType = 'app', apiKey = '', designReference = 'none', researchData = null, cloudModel = '', researchUrl = '', templateId = '' } = req.body;
+      const {
+        prompt,
+        model,
+        projectType = 'app',
+        apiKey = '',
+        designReference = 'none',
+        researchData = null,
+        cloudModel = '',
+        researchUrl = '',
+        templateId = '',
+      } = req.body;
 
       res.setHeader('Content-Type', 'application/x-ndjson');
       res.setHeader('Cache-Control', 'no-cache');
@@ -155,9 +188,11 @@ function registerGenerationRoutes(app, deps) {
 
       // Inject actual design system content if fetched
       if (designSystemContent && designSystemContent.trim()) {
-        const truncated = designSystemContent.length > 16000
-          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
-          : designSystemContent;
+        const truncated =
+          designSystemContent.length > 16000
+            ? designSystemContent.slice(0, 16000) +
+              '\n\n[Design system content truncated — showing first 16k chars]'
+            : designSystemContent;
         systemPrompt += `\n\n## Target Design System Content\n${truncated}\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.`;
       }
 
@@ -183,7 +218,14 @@ function registerGenerationRoutes(app, deps) {
 
       if (!prompt) {
         emitProgress(2, 4, 'Validation', 'error');
-        res.write(JSON.stringify({ type: 'error', step: 2, label: 'Validation', message: 'Prompt required' }) + '\n');
+        res.write(
+          JSON.stringify({
+            type: 'error',
+            step: 2,
+            label: 'Validation',
+            message: 'Prompt required',
+          }) + '\n'
+        );
         return res.end();
       }
 
@@ -196,7 +238,14 @@ function registerGenerationRoutes(app, deps) {
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) {
           emitProgress(2, 4, STAGES[1].label, 'error');
-          res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: `No API key was provided for ${model}. Add it in Cloud Cauldron and try again.` }) + '\n');
+          res.write(
+            JSON.stringify({
+              type: 'error',
+              step: 2,
+              label: STAGES[1].label,
+              message: `No API key was provided for ${model}. Add it in Cloud Cauldron and try again.`,
+            }) + '\n'
+          );
           return res.end();
         }
 
@@ -259,14 +308,15 @@ function registerGenerationRoutes(app, deps) {
       emitProgress(4, 4, STAGES[3].label, 'complete', +(Date.now() - t4).toFixed(0) / 1000);
 
       // ── Final blueprint event ──
-      res.write(JSON.stringify({
-        type: 'blueprint',
-        data: { success: true, blueprint, canHandoff: true, modelUsed, providerUsed },
-        duration: totalDuration,
-        steps: 4,
-      }) + '\n');
+      res.write(
+        JSON.stringify({
+          type: 'blueprint',
+          data: { success: true, blueprint, canHandoff: true, modelUsed, providerUsed },
+          duration: totalDuration,
+          steps: 4,
+        }) + '\n'
+      );
       res.end();
-
     } catch (err) {
       console.error('Generate error:', err);
 
@@ -274,29 +324,48 @@ function registerGenerationRoutes(app, deps) {
         const msg = ['openai', 'gemini'].includes(req.body.model)
           ? `Cloud model did not respond within ${CLOUD_TIMEOUT_MS / 1000}s.`
           : `Ollama did not respond within ${OLLAMA_TIMEOUT_MS / 1000}s. Try a shorter prompt or a smaller model output.`;
-        res.write(JSON.stringify({ type: 'error', step: 2, label: 'Generating Blueprint...', message: msg }) + '\n');
+        res.write(
+          JSON.stringify({
+            type: 'error',
+            step: 2,
+            label: 'Generating Blueprint...',
+            message: msg,
+          }) + '\n'
+        );
         return res.end();
       }
 
-      res.write(JSON.stringify({ type: 'error', step: 0, label: 'Generation', message: err.message }) + '\n');
+      res.write(
+        JSON.stringify({ type: 'error', step: 0, label: 'Generation', message: err.message }) + '\n'
+      );
       res.end();
     }
   });
 
   app.post('/api/refine', async (req, res) => {
     try {
-      const { currentBlueprint, refinementPrompt, model, projectType = 'app', apiKey = '', designReference = 'none', cloudModel = '' } = req.body;
-    
+      const {
+        currentBlueprint,
+        refinementPrompt,
+        model,
+        projectType = 'app',
+        apiKey = '',
+        designReference = 'none',
+        cloudModel = '',
+      } = req.body;
+
       const designSystemContent = await ensureDesignSystem(designReference);
       let systemPrompt = getSystemPrompt(projectType, designReference);
 
       if (designSystemContent && designSystemContent.trim()) {
-        const truncated = designSystemContent.length > 16000
-          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
-          : designSystemContent;
+        const truncated =
+          designSystemContent.length > 16000
+            ? designSystemContent.slice(0, 16000) +
+              '\n\n[Design system content truncated — showing first 16k chars]'
+            : designSystemContent;
         systemPrompt += `\n\n## Target Design System Content\n${truncated}\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.`;
       }
-    
+
       const prompt = `Here is the current blueprint:
 
   ${currentBlueprint}
@@ -305,25 +374,46 @@ function registerGenerationRoutes(app, deps) {
   ${refinementPrompt}
 
   Please rewrite the blueprint entirely to incorporate the requested refinements while keeping the rest of the structure and intent intact. Ensure the output is a complete blueprint.`;
-    
+
       if (!currentBlueprint || !refinementPrompt) {
         return res.status(400).json({ error: 'currentBlueprint and refinementPrompt required' });
       }
-    
+
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) return res.status(400).json({ error: 'Missing API key' });
         const modelUsed = getCloudModelName(model, projectType, cloudModel);
         const blueprint = await callCloudModel({
-          provider: model, apiKey, prompt, systemPrompt, projectType, requestedModel: cloudModel,
+          provider: model,
+          apiKey,
+          prompt,
+          systemPrompt,
+          projectType,
+          requestedModel: cloudModel,
         });
-        return res.json({ success: true, blueprint, canHandoff: true, modelUsed, providerUsed: model });
+        return res.json({
+          success: true,
+          blueprint,
+          canHandoff: true,
+          modelUsed,
+          providerUsed: model,
+        });
       }
-    
+
       const ollamaModel = model;
       const blueprint = await callOllamaModel({
-        model: ollamaModel, prompt, systemPrompt, numPredict: BLUEPRINT_NUM_PREDICT, temperature: 0.55,
+        model: ollamaModel,
+        prompt,
+        systemPrompt,
+        numPredict: BLUEPRINT_NUM_PREDICT,
+        temperature: 0.55,
       });
-      res.json({ success: true, blueprint, canHandoff: true, modelUsed: ollamaModel, providerUsed: 'ollama' });
+      res.json({
+        success: true,
+        blueprint,
+        canHandoff: true,
+        modelUsed: ollamaModel,
+        providerUsed: 'ollama',
+      });
     } catch (err) {
       console.error('Refine error:', err);
       res.status(500).json({ error: 'Refinement failed', details: err.message });
@@ -358,7 +448,10 @@ function registerGenerationRoutes(app, deps) {
       } = req.body;
 
       if (!blueprint || !blueprint.trim()) {
-        return res.status(400).json({ error: 'Blueprint required', details: 'Generate a blueprint first before creating a prototype.' });
+        return res.status(400).json({
+          error: 'Blueprint required',
+          details: 'Generate a blueprint first before creating a prototype.',
+        });
       }
 
       res.setHeader('Content-Type', 'application/x-ndjson');
@@ -372,10 +465,15 @@ function registerGenerationRoutes(app, deps) {
       let systemPrompt = PROTOTYPE_SYSTEM_PROMPT.replace('{blueprint text goes here}', blueprint);
 
       if (designSystemContent && designSystemContent.trim()) {
-        const truncated = designSystemContent.length > 16000
-          ? designSystemContent.slice(0, 16000) + '\n\n[Design system content truncated — showing first 16k chars]'
-          : designSystemContent;
-        systemPrompt += '\n\n## Target Design System Content\n' + truncated + '\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.';
+        const truncated =
+          designSystemContent.length > 16000
+            ? designSystemContent.slice(0, 16000) +
+              '\n\n[Design system content truncated — showing first 16k chars]'
+            : designSystemContent;
+        systemPrompt +=
+          '\n\n## Target Design System Content\n' +
+          truncated +
+          '\n\nUse the above design system as the primary visual language. The user selected this reference — it takes priority over generic taste mandates.';
       }
 
       if (templateId) {
@@ -388,7 +486,8 @@ function registerGenerationRoutes(app, deps) {
       const critiqueText = String(critique || '').trim();
       const previousHtml = String(previousPrototypeHtml || '').trim();
       if (critiqueText) {
-        systemPrompt += '\n\n## Critique Review Mode\nYou are revising an existing prototype. Preserve working interactions and the selected design language, but directly address the requested critique. Return the full updated prototype, not a patch.';
+        systemPrompt +=
+          '\n\n## Critique Review Mode\nYou are revising an existing prototype. Preserve working interactions and the selected design language, but directly address the requested critique. Return the full updated prototype, not a patch.';
       }
 
       emitProgress(1, 3, STAGES[0].label, 'complete', +(Date.now() - t1).toFixed(0) / 1000);
@@ -406,12 +505,21 @@ function registerGenerationRoutes(app, deps) {
         critiqueText
           ? 'Regenerate the complete prototype incorporating the requested change. Output ONLY the HTML inside a ```html fenced code block.'
           : 'Convert this blueprint into a complete, polished HTML prototype. Output ONLY the HTML inside a ```html fenced code block.',
-      ].filter(Boolean).join('\n\n');
+      ]
+        .filter(Boolean)
+        .join('\n\n');
 
       if (['openai', 'gemini'].includes(model)) {
         if (!apiKey) {
           emitProgress(2, 3, STAGES[1].label, 'error');
-          res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No API key was provided for ' + model + '.' }) + '\n');
+          res.write(
+            JSON.stringify({
+              type: 'error',
+              step: 2,
+              label: STAGES[1].label,
+              message: 'No API key was provided for ' + model + '.',
+            }) + '\n'
+          );
           return res.end();
         }
 
@@ -441,7 +549,14 @@ function registerGenerationRoutes(app, deps) {
 
       if (!prototypeHtml) {
         emitProgress(2, 3, STAGES[1].label, 'error');
-        res.write(JSON.stringify({ type: 'error', step: 2, label: STAGES[1].label, message: 'No HTML prototype was generated. Try again or adjust the blueprint.' }) + '\n');
+        res.write(
+          JSON.stringify({
+            type: 'error',
+            step: 2,
+            label: STAGES[1].label,
+            message: 'No HTML prototype was generated. Try again or adjust the blueprint.',
+          }) + '\n'
+        );
         return res.end();
       }
 
@@ -453,18 +568,20 @@ function registerGenerationRoutes(app, deps) {
       emitProgress(3, 3, STAGES[2].label, 'complete', +(Date.now() - t3).toFixed(0) / 1000);
       const totalDuration = +(Date.now() - startTime).toFixed(0) / 1000;
 
-      res.write(JSON.stringify({
-        type: 'prototype',
-        data: {
-          html: prototypeHtml,
-          success: true,
-          critique: critiqueText,
-          iterationIndex: Number(iterationIndex) || 0,
-          quality,
-        },
-        duration: totalDuration,
-        steps: 3,
-      }) + '\n');
+      res.write(
+        JSON.stringify({
+          type: 'prototype',
+          data: {
+            html: prototypeHtml,
+            success: true,
+            critique: critiqueText,
+            iterationIndex: Number(iterationIndex) || 0,
+            quality,
+          },
+          duration: totalDuration,
+          steps: 3,
+        }) + '\n'
+      );
       res.end();
     } catch (err) {
       console.error('Generate prototype error:', err);
@@ -473,11 +590,25 @@ function registerGenerationRoutes(app, deps) {
         const msg = ['openai', 'gemini'].includes(req.body.model)
           ? 'Cloud model did not respond within timeout.'
           : 'Ollama did not respond within timeout.';
-        res.write(JSON.stringify({ type: 'error', step: 2, label: 'Generating Prototype...', message: msg }) + '\n');
+        res.write(
+          JSON.stringify({
+            type: 'error',
+            step: 2,
+            label: 'Generating Prototype...',
+            message: msg,
+          }) + '\n'
+        );
         return res.end();
       }
 
-      res.write(JSON.stringify({ type: 'error', step: 0, label: 'Prototype Generation', message: err.message }) + '\n');
+      res.write(
+        JSON.stringify({
+          type: 'error',
+          step: 0,
+          label: 'Prototype Generation',
+          message: err.message,
+        }) + '\n'
+      );
       res.end();
     }
   });
@@ -491,10 +622,14 @@ function registerGenerationRoutes(app, deps) {
       prototypeHtml,
       templateId = '',
       projectType = 'app',
+      verification = null,
+      includeDesignPackage = false,
     } = req.body;
 
     if (!projectName || (!blueprint && !sessionId)) {
-      return res.status(400).json({ error: 'projectName and either blueprint or sessionId required' });
+      return res
+        .status(400)
+        .json({ error: 'projectName and either blueprint or sessionId required' });
     }
 
     const safeName = safeProjectName(projectName);
@@ -521,6 +656,8 @@ function registerGenerationRoutes(app, deps) {
         sessionId,
         workspace,
         agentId: 'handoff',
+        verification,
+        includeDesignPackage,
       });
 
       // Set initial project status
@@ -536,7 +673,7 @@ function registerGenerationRoutes(app, deps) {
           projectName: safeName,
           brainDump: sessionId ? `Build session: ${sessionId}` : '',
           blueprint: handoff.blueprint || '',
-          designReference: sessionId ? 'build-handoff' : (designReference || 'handoff'),
+          designReference: sessionId ? 'build-handoff' : designReference || 'handoff',
           generationMode: sessionId ? 'build-handoff' : 'handoff',
           modelUsed: 'handoff-package',
         });
@@ -547,14 +684,16 @@ function registerGenerationRoutes(app, deps) {
 
       res.json({
         success: true,
-        message: handoff.filesCopied > 0
-          ? `Handoff package created with ${handoff.filesCopied} copied workspace files`
-          : 'Handoff package created',
+        message:
+          handoff.filesCopied > 0
+            ? `Handoff package created with ${handoff.filesCopied} copied workspace files`
+            : 'Handoff package created',
         projectPath,
         manifestPath: handoff.manifestPath,
         draftId,
         files: handoff.files,
         filesCopied: handoff.filesCopied,
+        verification: handoff.manifest.verification || null,
       });
     } catch (err) {
       console.error('[Cauldron] Handoff error:', err);

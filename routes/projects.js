@@ -7,15 +7,19 @@
  * - POST /api/projects/import: import local project folders into records.
  */
 
-const { spawn } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 function registerProjectsRoutes(app, deps) {
   const {
     db,
-    safeProjectName, getProjectPath, buildResumePrompt, buildOpencodeArgs,
-    commandPreview, listImportableProjects,
+    safeProjectName,
+    getProjectPath,
+    buildResumePrompt,
+    buildOpencodeArgs,
+    commandPreview,
+    listImportableProjects,
   } = deps;
 
   app.post('/api/projects/:name/status', (req, res) => {
@@ -27,7 +31,9 @@ function registerProjectsRoutes(app, deps) {
       res.json({ success: true, project: safe, override });
     } catch (err) {
       console.error('[Cauldron] Project status update error:', err);
-      res.status(500).json({ success: false, error: 'Project status update failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Project status update failed', details: err.message });
     }
   });
 
@@ -38,13 +44,16 @@ function registerProjectsRoutes(app, deps) {
       res.json({ success: true, project: safe });
     } catch (err) {
       console.error('[Cauldron] Project status reset error:', err);
-      res.status(500).json({ success: false, error: 'Project status reset failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Project status reset failed', details: err.message });
     }
   });
 
   app.post('/api/projects/:name/resume', (req, res) => {
     try {
-      const dryRun = req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
+      const dryRun =
+        req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
       const { safe, projectPath } = getProjectPath(req.params.name);
       const prompt = req.body?.prompt || buildResumePrompt(safe);
       const opencodeArgs = buildOpencodeArgs(prompt, projectPath);
@@ -54,8 +63,15 @@ function registerProjectsRoutes(app, deps) {
       if (dryRun) return res.json({ success: true, dryRun: true, project: safe, command, logPath });
 
       const outFd = fs.openSync(logPath, 'a');
-      fs.appendFileSync(logPath, `\n\n=== Resume launched ${new Date().toISOString()} ===\n${command}\n\n`);
-      const child = spawn('opencode', opencodeArgs, { cwd: projectPath, detached: true, stdio: ['ignore', outFd, outFd] });
+      fs.appendFileSync(
+        logPath,
+        `\n\n=== Resume launched ${new Date().toISOString()} ===\n${command}\n\n`
+      );
+      const child = spawn('opencode', opencodeArgs, {
+        cwd: projectPath,
+        detached: true,
+        stdio: ['ignore', outFd, outFd],
+      });
       child.unref();
       res.json({ success: true, dryRun: false, project: safe, pid: child.pid, command, logPath });
     } catch (err) {
@@ -66,11 +82,13 @@ function registerProjectsRoutes(app, deps) {
 
   app.post('/api/projects/:name/open-visible', (req, res) => {
     try {
-      const dryRun = req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
+      const dryRun =
+        req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
       const { safe, projectPath } = getProjectPath(req.params.name);
       const shellCommand = `cd ${JSON.stringify(projectPath)} && opencode`;
 
-      if (dryRun) return res.json({ success: true, dryRun: true, project: safe, command: shellCommand });
+      if (dryRun)
+        return res.json({ success: true, dryRun: true, project: safe, command: shellCommand });
 
       let child;
       if (process.platform === 'darwin') {
@@ -78,23 +96,32 @@ function registerProjectsRoutes(app, deps) {
           'tell application "Terminal"',
           'activate',
           `do script ${JSON.stringify(shellCommand)}`,
-          'end tell'
+          'end tell',
         ].join('\n');
         child = spawn('osascript', ['-e', osa], { detached: true, stdio: 'ignore' });
       } else {
         child = spawn('opencode', [], { cwd: projectPath, detached: true, stdio: 'ignore' });
       }
       child.unref();
-      res.json({ success: true, dryRun: false, project: safe, pid: child.pid, command: shellCommand });
+      res.json({
+        success: true,
+        dryRun: false,
+        project: safe,
+        pid: child.pid,
+        command: shellCommand,
+      });
     } catch (err) {
       console.error('[Cauldron] Visible OpenCode error:', err);
-      res.status(500).json({ success: false, error: 'Visible OpenCode launch failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Visible OpenCode launch failed', details: err.message });
     }
   });
 
   app.post('/api/projects/import', (req, res) => {
     try {
-      const dryRun = req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
+      const dryRun =
+        req.query.dryRun === '1' || req.query.dryRun === 'true' || req.body?.dryRun === true;
       const projects = listImportableProjects();
       const imported = [];
       const skipped = [];
@@ -102,7 +129,11 @@ function registerProjectsRoutes(app, deps) {
       if (!dryRun) {
         for (const project of projects) {
           if (project.alreadyImported) {
-            skipped.push({ name: project.name, reason: 'already imported', draftId: project.existingDraftId });
+            skipped.push({
+              name: project.name,
+              reason: 'already imported',
+              draftId: project.existingDraftId,
+            });
             continue;
           }
 
@@ -131,13 +162,18 @@ function registerProjectsRoutes(app, deps) {
         dryRun,
         imported: imported.length,
         skipped: skipped.length,
-        projects: projects.map(({ blueprint, ...project }) => ({ ...project, blueprintChars: blueprint.length })),
+        projects: projects.map(({ blueprint, ...project }) => ({
+          ...project,
+          blueprintChars: blueprint.length,
+        })),
         importedProjects: imported,
         skippedProjects: skipped,
       });
     } catch (err) {
       console.error('[Cauldron] Project import error:', err);
-      res.status(500).json({ success: false, error: 'Project import failed', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Project import failed', details: err.message });
     }
   });
 }
