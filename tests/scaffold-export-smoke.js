@@ -18,7 +18,8 @@ function waitForServer(url, timeoutMs = 30000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -37,15 +38,18 @@ async function postJson(url, body) {
 
 function assertProjectFiles(projectPath, files) {
   for (const file of files) {
-    assert.ok(fs.existsSync(path.join(projectPath, file)), `${file} should exist in ${projectPath}`);
+    assert.ok(
+      fs.existsSync(path.join(projectPath, file)),
+      `${file} should exist in ${projectPath}`
+    );
   }
 }
 
 (async () => {
   const probe = http.createServer((req, res) => res.end('ok'));
-  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const appPort = probe.address().port + 1;
-  await new Promise(resolve => probe.close(resolve));
+  await new Promise((resolve) => probe.close(resolve));
 
   const app = spawn(process.execPath, ['server.js'], {
     cwd: repoRoot,
@@ -57,10 +61,47 @@ function assertProjectFiles(projectPath, files) {
     await waitForServer(`http://127.0.0.1:${appPort}/api/health`);
 
     const expectations = {
-      'static-html': ['index.html', 'styles.css', 'README.md', 'blueprint.md', 'design-system.md', 'cauldron.project.json'],
-      'html-alpine': ['index.html', 'styles.css', 'app.js', 'README.md', 'blueprint.md', 'design-system.md', 'cauldron.project.json'],
-      nextjs: ['package.json', 'app/page.tsx', 'app/layout.tsx', 'app/globals.css', 'README.md', 'blueprint.md', 'design-system.md', 'cauldron.project.json'],
-      astro: ['package.json', 'astro.config.mjs', 'src/pages/index.astro', 'src/styles/global.css', 'README.md', 'blueprint.md', 'design-system.md', 'cauldron.project.json'],
+      'static-html': [
+        'index.html',
+        'styles.css',
+        'README.md',
+        'blueprint.md',
+        'design-system.md',
+        'launch-checklist.md',
+        'cauldron.project.json',
+      ],
+      'html-alpine': [
+        'index.html',
+        'styles.css',
+        'app.js',
+        'README.md',
+        'blueprint.md',
+        'design-system.md',
+        'launch-checklist.md',
+        'cauldron.project.json',
+      ],
+      nextjs: [
+        'package.json',
+        'app/page.tsx',
+        'app/layout.tsx',
+        'app/globals.css',
+        'README.md',
+        'blueprint.md',
+        'design-system.md',
+        'launch-checklist.md',
+        'cauldron.project.json',
+      ],
+      astro: [
+        'package.json',
+        'astro.config.mjs',
+        'src/pages/index.astro',
+        'src/styles/global.css',
+        'README.md',
+        'blueprint.md',
+        'design-system.md',
+        'launch-checklist.md',
+        'cauldron.project.json',
+      ],
     };
 
     for (const [templateId, files] of Object.entries(expectations)) {
@@ -83,9 +124,31 @@ function assertProjectFiles(projectPath, files) {
       assert.equal(manifest.scaffold.templateId, templateId);
       assert.equal(manifest.scaffold.scaffold, templateId);
       assert.ok(manifest.scaffold.entrypoint, `${templateId} should expose an entrypoint`);
-      assert.deepEqual(manifest.scaffold.files.map(file => file.path), data.files.scaffold);
-      assertProjectFiles(data.projectPath, manifest.scaffold.files.map(file => file.path));
-      assert.ok(!fs.existsSync(path.join(data.projectPath, 'node_modules')), 'scaffold export should not run npm install');
+      assert.deepEqual(
+        manifest.scaffold.files.map((file) => file.path),
+        data.files.scaffold
+      );
+      assertProjectFiles(
+        data.projectPath,
+        manifest.scaffold.files.map((file) => file.path)
+      );
+      assert.ok(
+        !fs.existsSync(path.join(data.projectPath, 'node_modules')),
+        'scaffold export should not run npm install'
+      );
+      const checklist = fs.readFileSync(path.join(data.projectPath, 'launch-checklist.md'), 'utf8');
+      assert.ok(
+        checklist.includes('Run commands'),
+        `${templateId} checklist should include run commands`
+      );
+      assert.ok(
+        checklist.includes(manifest.scaffold.entrypoint),
+        `${templateId} checklist should mention entrypoint`
+      );
+      assert.ok(
+        !checklist.includes('sk-'),
+        `${templateId} checklist should not include secret-looking values`
+      );
     }
 
     const duplicate = await postJson(`http://127.0.0.1:${appPort}/api/build-agents/run`, {
@@ -107,20 +170,32 @@ function assertProjectFiles(projectPath, files) {
       projectType: 'app',
       bootstrap: true,
     });
-    assert.equal(bootstrapResult.res.status, 200, bootstrapResult.data.error || 'bootstrap export should succeed');
+    assert.equal(
+      bootstrapResult.res.status,
+      200,
+      bootstrapResult.data.error || 'bootstrap export should succeed'
+    );
     createdProjects.push(bootstrapResult.data.projectPath);
     assert.ok(bootstrapResult.data.bootstrap !== null, 'bootstrap result should be present');
-    assertProjectFiles(bootstrapResult.data.projectPath, ['package.json', 'app/page.tsx', 'node_modules']);
+    assertProjectFiles(bootstrapResult.data.projectPath, [
+      'package.json',
+      'app/page.tsx',
+      'node_modules',
+    ]);
 
     console.log('Scaffold export smoke tests passed');
   } finally {
     await stopProcess(app);
     fs.rmSync(tmp, { recursive: true, force: true });
     for (const projectPath of createdProjects) {
-      try { fs.rmSync(projectPath, { recursive: true, force: true }); } catch { /* node_modules may need a moment */ }
+      try {
+        fs.rmSync(projectPath, { recursive: true, force: true });
+      } catch {
+        /* node_modules may need a moment */
+      }
     }
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

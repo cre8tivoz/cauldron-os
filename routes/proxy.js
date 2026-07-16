@@ -3,11 +3,12 @@
  * Route handlers for proxy.
  */
 
-
 function registerProxyRoutes(app, deps) {
   const {
     CLOUD_TIMEOUT_MS,
-    GEMINI_BASE_URL, normaliseOpenAICompatibleChatUrl, buildChatPayload,
+    GEMINI_BASE_URL,
+    normaliseOpenAICompatibleChatUrl,
+    buildChatPayload,
     inferProviderFromModel,
   } = deps;
 
@@ -15,7 +16,14 @@ function registerProxyRoutes(app, deps) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), CLOUD_TIMEOUT_MS);
     try {
-      const { model, messages = [], temperature = 0.55, stream = false, base_url: baseUrl = '', provider: explicitProvider = '' } = req.body || {};
+      const {
+        model,
+        messages = [],
+        temperature = 0.55,
+        stream = false,
+        base_url: baseUrl = '',
+        provider: explicitProvider = '',
+      } = req.body || {};
       if (!model) return res.status(400).json({ error: { message: 'model is required' } });
       if (!Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: { message: 'messages array is required' } });
@@ -27,15 +35,18 @@ function registerProxyRoutes(app, deps) {
 
       const provider = explicitProvider || inferProviderFromModel(model);
       if (!['gemini', 'openai'].includes(provider)) {
-        return res.status(501).json({ error: { message: `${provider} routing is not implemented yet` } });
+        return res
+          .status(501)
+          .json({ error: { message: `${provider} routing is not implemented yet` } });
       }
 
-      const targetUrl = provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
+      const targetUrl =
+        provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
       const upstream = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         signal: controller.signal,
         body: JSON.stringify(buildChatPayload({ model, messages, temperature, stream })),
@@ -47,7 +58,9 @@ function registerProxyRoutes(app, deps) {
       res.send(text);
     } catch (err) {
       const status = err.name === 'AbortError' ? 504 : 500;
-      res.status(status).json({ error: { message: 'Chat completion proxy failed', details: err.message } });
+      res
+        .status(status)
+        .json({ error: { message: 'Chat completion proxy failed', details: err.message } });
     } finally {
       clearTimeout(timeout);
     }

@@ -12,17 +12,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- **Windows Quick Start**: Updated the Batch and PowerShell launchers for v0.40, Node.js 18+ validation, dependency repair, package-driven startup, and cloud-or-local model guidance.
-- **Windows Scaffold Bootstrap**: Use `npm.cmd` when automatically installing generated scaffold dependencies on Windows.
-- **Windows CI**: Run the full smoke suite on `windows-latest` for every pull request and main-branch update.
+## [0.50.0] — 2026-07-16 — Verification, launch checklist, and design package export
+
+### Added
+
+- **Deterministic build verification**: Added `/api/build/verify` plus optional verification events on build refine/generate. Cauldron now checks manifest integrity, static references, declared commands, and accessibility heuristics before handoff.
+- **Verification UI + fix pass**: The Build and Export stages now show verification state, per-check results, and a direct \"fix from findings\" loop for active build workspaces.
+- **Launch checklist export**: Every handoff now includes `launch-checklist.md` with scaffold commands, verification results, warnings, human follow-ups, and a clear success check.
+- **Optional design package export**: Handoffs can now include `docs/design.md` and `docs/design.html`, derived from the selected design reference and prototype output.
+- **Smoke coverage**: Added `verification-smoke.js` and `design-system-export-smoke.js`, and extended handoff/scaffold export coverage for the new files.
 
 ### Changed
-- Simplified the README start path and first-blueprint walkthrough to reduce setup friction and cognitive overload.
+
+- Version bumped to `0.50.0` across package metadata, the UI version ribbon, README, and architecture/interface docs.
+- Handoff manifests now support additive `verification` and `exports.designPackage` fields without changing `schemaVersion`.
+- README and release docs now describe the verification gate, launch checklist, and optional design package flow.
+
+### Fixed
+
+- Replaced the stale PUBLIC_INTERFACES note that still claimed `/api/build/generate` and `/api/build/refine` were not wired.
 
 ## [0.40.0] — 2026-06-04 — Blueprint Review, Multi-Agent Handoffs, Community, and Quality
 
 ### Added
+
 - **Blueprint Version History & Diffing**: Save blueprint snapshots, restore earlier versions, and inspect structured line-level additions/removals before moving into prototype generation.
 - **Multi-Agent Build Orchestration**: Select multiple detected build agents, create scoped handoff packages, and coordinate them through a shared root `cauldron.project.json` manifest.
 - **Community Catalog**: Browse curated community DESIGN.md systems and scaffold starter guidance from the Taste Engine. Imported design systems are stored as local runtime data and become selectable immediately.
@@ -30,12 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Release QA Assets**: Captured local-only desktop/mobile screenshots and walkthrough evidence under the ignored `test-images-codex/` directory.
 
 ### Changed
+
 - Version bumped to `0.40.0` across package metadata, runtime health/status copy, the UI version ribbon, README, and current architecture/interface docs.
 - README now documents the actual 7-stage pipeline and the v0.40 feature set.
 - Prototype generation now reports a third progress stage for local quality scoring.
 - The test runner now includes community marketplace and quality scorer smoke coverage.
 
 ### Notes
+
 - Community design-system imports live under `data/community/design-systems/` or `CAULDRON_DATA_DIR`; runtime imports are not source-controlled.
 - Community scaffold starters currently layer prompt guidance onto supported base scaffolds rather than introducing new deterministic scaffold writers.
 - Release tag `v0.40.0` should be created from the merged release commit after Phase 5 review.
@@ -43,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.30.0] — 2026-06-03 — 5-Phase Codex Sprint (v0.30)
 
 ### Added
+
 - **Design Systems Catalog**: 150+ design systems imported from Open Design (nexu-io). Bulk import script (`scripts/import-design-systems.js`) and validation script (`scripts/validate-design-systems.js`). Wired into the frontend Design Reference dropdown.
 - **BYOK Build Agent Handoff**: Detect installed agent CLIs (Cursor, Claude Code, Codex, Hermes, OpenCode) via `which`. Generate handoff packages with `cauldron.project.json` manifest. All detected agents support automated launch — Cursor/OpenCode open the project directory; Claude Code, Codex, and Hermes run the agent prompt in the project directory.
 - **Critique & Review Loop**: After prototype generation, give natural-language feedback and regenerate in-place. Quick-action buttons: "Make it bolder", "Tighter spacing", "Warmer palette", "More accessible". Iteration history with restore. 3-iteration cap per session with token cost estimates.
@@ -51,12 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Version bump**: `package.json` → v0.30.0 across all surfaces.
 
 ### Changed
+
 - `createHandoffPackage()` is now async to support scaffold bootstrap.
 - Build agent launch: Claude Code, Codex, and Hermes changed from manual-prompt to automated run-prompt (all 5 agents now auto-launch).
 - Critique iterations capped at 3 per session with token cost estimates shown in status bar.
 - README rewritten with v0.30 features, 8-stage pipeline, and updated screenshots.
 
 ### Fixed
+
 - Handoff smoke test: `/api/handoff` route now properly awaits async `createHandoffPackage()`.
 - Scaffold smoke test: updated for async `createHandoffPackage()`.
 - Removed `build-status-smoke.js` and `private-records-smoke.js` from `npm test` runner (require external server).
@@ -66,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.260.0] — 2026-06-03 — Refactor & Polish (Sprint 5)
 
 ### Added
+
 - **Blueprint/Prototype Split**: Separate `generate-prototype` endpoint, editable blueprint UI, and refined handoff flow. Build now uses blueprint output for better consistency.
 - **Route Extraction Refactor** (Phase 1+2): All routes extracted from monolithic `server.js` into `routes/` barrel (build, drafts, generation, history, models-design, projects, proxy, research-history, spa-catchall, status, templates, workspace-preview). `server.js` slimmed from ~2,200 LOC to focused composition root.
 - **Pipeline Activity Log**: NDJSON streaming throughout generation pipeline — real-time status updates pushed to frontend for visibility into each stage.
@@ -75,22 +94,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Model Label Polish**: Better model labels displayed in provider/model navigation panel.
 
 ### Changed
+
 - **Version bump**: `package.json` → v0.30.0, startup banner → "Cauldron OS v0.30 (Refactor & Polish Sprint 5)"
 - **Design Systems Trimmed**: Refero catalog cleaned up — orphan entries removed, replaced with working API results.
 - **Frontend UI**: Updated version badge from v0.250 to v0.30 across all surfaces
 
 ### Fixed
+
 - Design system injection: fetch content now properly injected into system prompt during generation
 - Handoff/export flow post-split: prototype HTML correctly saved, build uses blueprint output, UI button states consistent
 
 ## [0.250.0] — 2026-05-16 — Polish & Release (Sprint 4)
 
 ### Added
+
 - **7-Stage Pipeline UI**: Build stage added between Prototype and Export, making the full pipeline: Brain Dump → Interrogate → Design System → Blueprint → Prototype → Build → Export.
 - **Build Stage Frontend**: Start build workspace, file listing with preview links, workspace iframe preview, handoff to export flow.
 - **Workspace Preview Server**: `/workspace-preview/:sessionId/` middleware for serving built files from sandboxed workspaces.
 
 ### Changed
+
 - **Version bump**: `package.json` → v0.250.0, startup banner → "Cauldron OS v0.250"
 - **Rebranded agent**: System prompt changed from "Private Cauldron" to "Cauldron OS"
 - **Version consistency**: Frontend UI ribbon changed from "v3.0" to "v0.250"
@@ -102,12 +125,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **All smoke tests updated**: Model version strings, frontend DOM checks, build API endpoint verification
 
 ### Fixed
+
 - Stale frontend static smoke test (checked for old DOM IDs that no longer exist)
 - Cloud model version string test (gemini-3.1-flash-lite → gemini-3.1-flash-lite-preview)
 
 ## [0.240.0] — 2026-05-16 — Unification Sprint 1
 
 ### Added
+
 - **Database schema merge**: `research_history` and `project_status_overrides` tables merged from private build into public `db/index.js`.
   - `research_history` tracks URL research sweeps with findings, favorites, and reuse counts.
   - `project_status_overrides` stores manual status overrides for build projects.
@@ -130,6 +155,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Status Monitoring**: Auto-detection of running/stalled/completed/failed projects with manual status overrides.
 
 ### Changed
+
 - **Version bump**: `package.json` → v0.240.0, startup banner → "Cauldron OS v0.240"
 - **README.md**: Banner and version references updated to v0.240
 - **CHANGELOG.md**: Previous v2.x history archived to `docs/history/CHANGELOG-2.x.md`
@@ -138,8 +164,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Handoff flow**: Enhanced to copy build workspace files and save HTML prototypes
 
 ### Removed
+
 - Public vanilla JS + Tailwind CDN frontend (replaced by AlpineJS SPA)
 
 ---
 
-*Archived history follows below:*
+_Archived history follows below:_

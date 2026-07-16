@@ -13,7 +13,8 @@ function waitForServer(url, timeoutMs = 15000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -23,13 +24,18 @@ function waitForServer(url, timeoutMs = 15000) {
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-community-'));
   const probe = http.createServer((req, res) => res.end('ok'));
-  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const appPort = probe.address().port + 1;
-  await new Promise(resolve => probe.close(resolve));
+  await new Promise((resolve) => probe.close(resolve));
 
   const app = spawn(process.execPath, ['server.js'], {
     cwd: path.join(__dirname, '..'),
-    env: { ...process.env, PORT: String(appPort), CAULDRON_DATA_DIR: tmp, CAULDRON_COMMUNITY_OFFLINE: '1' },
+    env: {
+      ...process.env,
+      PORT: String(appPort),
+      CAULDRON_DATA_DIR: tmp,
+      CAULDRON_COMMUNITY_OFFLINE: '1',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
@@ -42,7 +48,10 @@ function waitForServer(url, timeoutMs = 15000) {
     assert.strictEqual(catalog.success, true);
     assert.ok(Array.isArray(catalog.designSystems), 'community design systems should be listed');
     assert.ok(Array.isArray(catalog.templates), 'community scaffold starters should be listed');
-    assert.ok(catalog.submitUrl.includes('witchdaddylabs/cauldron-community'), 'submit URL should point to community repo');
+    assert.ok(
+      catalog.submitUrl.includes('witchdaddylabs/cauldron-community'),
+      'submit URL should point to community repo'
+    );
 
     const importRes = await fetch(`http://127.0.0.1:${appPort}/api/community/import`, {
       method: 'POST',
@@ -58,8 +67,10 @@ function waitForServer(url, timeoutMs = 15000) {
     const designSystemsRes = await fetch(`http://127.0.0.1:${appPort}/api/design-systems`);
     const designSystems = await designSystemsRes.json();
     assert.ok(
-      designSystems.systems.some(system => system.id === 'community-neon-command' && system.source === 'community'),
-      'imported community system should be selectable immediately',
+      designSystems.systems.some(
+        (system) => system.id === 'community-neon-command' && system.source === 'community'
+      ),
+      'imported community system should be selectable immediately'
     );
 
     const referenceRes = await fetch(`http://127.0.0.1:${appPort}/api/design-reference`, {
@@ -69,7 +80,11 @@ function waitForServer(url, timeoutMs = 15000) {
     });
     const reference = await referenceRes.json();
     assert.strictEqual(referenceRes.status, 200, reference.details || reference.error);
-    assert.match(reference.content || '', /Neon Command/i, 'imported design markdown should be returned');
+    assert.match(
+      reference.content || '',
+      /Neon Command/i,
+      'imported design markdown should be returned'
+    );
 
     const templateRes = await fetch(`http://127.0.0.1:${appPort}/api/community/import`, {
       method: 'POST',
@@ -85,7 +100,7 @@ function waitForServer(url, timeoutMs = 15000) {
   } finally {
     app.kill('SIGTERM');
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 # Cauldron OS Architecture
 
-**Version:** v0.40
+**Version:** v0.50
 **Core Principle:** Local-first, design-aware, multi-agent build pipeline.  
 **Tagline:** Sewer-to-ship. Brain dump to handoff. One OS.
 
@@ -8,7 +8,7 @@
 
 ## System Overview
 
-Cauldron OS is a Node.js/Express server that runs a complete project-building pipeline — from raw idea to deployable code. It combines a structured 7-stage AlpineJS SPA frontend with an Express API backend, an XML-tool-calling agent system, a design intelligence layer (Master Brain), and an OpenCode-based handoff flow.
+Cauldron OS is a Node.js/Express server that runs a complete project-building pipeline — from raw idea to deployable code. It combines a structured 7-stage AlpineJS SPA frontend with an Express API backend, an XML-tool-calling agent system, a design intelligence layer (Master Brain), deterministic verification, and a build-agent handoff flow.
 
 ```
 User Idea → 7-Stage SPA → API Backend → Master Brain Prompt Enrichment
@@ -16,6 +16,7 @@ User Idea → 7-Stage SPA → API Backend → Master Brain Prompt Enrichment
 ```
 
 Two LLM interaction modes exist side-by-side:
+
 - **Blueprint Mode** — single-turn generation (prompt → blueprint markdown + HTML prototype)
 - **Agent Build Mode** — multi-turn XML tool loop (prompt → model writes/edits/runs files via `<action>` blocks)
 
@@ -28,6 +29,7 @@ Two LLM interaction modes exist side-by-side:
 The frontend is a single-page application built with AlpineJS. No bundler. Files served statically by Express.
 
 **Files:**
+
 - `public/index.html` — app shell, stage navigation, settings modals
 - `public/scripts/app.js` — Alpine component (`cauldronApp()`), all app logic
 - `public/styles/tokens.css` — design tokens (colors, spacing, fonts, radii)
@@ -39,17 +41,18 @@ The frontend is a single-page application built with AlpineJS. No bundler. Files
 dump → interrogate → system → blueprint → prototype → build → export
 ```
 
-| Stage | ID | Purpose |
-|-------|----|---------|
-| Brain Dump | `dump` | Raw idea entry + reference URL input |
-| Interrogate | `interrogate` | Annoying PM Mode — clarifies idea before generation |
-| Design System | `system` | Select design reference / research DNA |
-| Blueprint | `blueprint` | Generated spec with PRD, schema, architecture |
-| Prototype | `prototype` | Live HTML+AlpineJS preview in iframe |
-| Build | `build` | Agent-driven build with SSE streaming to workspace |
-| Export | `export` | Save draft, handoff to OpenCode, download files |
+| Stage         | ID            | Purpose                                                                    |
+| ------------- | ------------- | -------------------------------------------------------------------------- |
+| Brain Dump    | `dump`        | Raw idea entry + reference URL input                                       |
+| Interrogate   | `interrogate` | Annoying PM Mode — clarifies idea before generation                        |
+| Design System | `system`      | Select design reference / research DNA                                     |
+| Blueprint     | `blueprint`   | Generated spec with PRD, schema, architecture                              |
+| Prototype     | `prototype`   | Live HTML+AlpineJS preview in iframe                                       |
+| Build         | `build`       | Agent-driven build, workspace inspection, and verification                 |
+| Export        | `export`      | Save draft, handoff package, launch checklist, and optional design package |
 
 **Stage state tracking:**
+
 ```javascript
 get completedStages() {
   const complete = new Set()
@@ -66,6 +69,7 @@ get completedStages() {
 
 **Per-stage model routing:**
 Each stage can use a different provider/model. Stored in localStorage as `stageModels`:
+
 ```javascript
 stageModels: {
   interrogate: { provider: 'gemini',  cloudModel: '' },
@@ -74,12 +78,13 @@ stageModels: {
 ```
 
 **Key frontend functions:**
+
 - `detectURLs(text)` — regex finds `https?://...` in brain dump
 - `triggerResearch(mode)` — POST /api/research-url with `fast` or `deep` mode
 - `interrogateIdea()` — POST /api/clarify → opens Annoying PM modal
 - `generateBlueprint()` — builds clarified prompt → POST /api/generate → renders markdown + iframe
 - `refineBlueprint()` — POST /api/refine with refinement text
-- `startAgentBuild()` — POST /api/build/start → /api/build/generate with SSE
+- `runVerification()` — POST /api/build/verify for workspace or exported project checks
 - `parseBlueprint(text)` — extracts ` ```html ``` ` block from markdown
 - `renderPreviewHTML(html)` — writes into preview iframe with AlpineJS CDN injection
 - `handoff()` — POST /api/handoff → creates `projects/{name}/`
@@ -91,6 +96,7 @@ stageModels: {
 Express server on port 3000 (default). Single file (~790 LOC) — intentionally kept unified for simplicity.
 
 **Imports:**
+
 ```
 express, path, fs, child_process, https, http, crypto, playwright
 db, xml-parser, workspace, tools, agent-loop
@@ -100,73 +106,73 @@ db, xml-parser, workspace, tools, agent-loop
 
 #### Core Pipeline Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/generate` | POST | Single-turn blueprint generation (Ollama or Cloud) |
-| `/api/refine` | POST | Refine existing blueprint |
-| `/api/clarify` | POST | Annoying PM Mode — generates clarifying questions |
-| `/api/research-url` | POST | URL research (fast=regex, deep=Playwright) |
-| `/api/handoff` | POST | Save blueprint + prototype + OpenCode stub to `projects/` |
-| `/api/health` | GET | `{ status: 'ok', service: 'Cauldron OS v0.40.0' }` |
+| Route               | Method | Purpose                                                   |
+| ------------------- | ------ | --------------------------------------------------------- |
+| `/api/generate`     | POST   | Single-turn blueprint generation (Ollama or Cloud)        |
+| `/api/refine`       | POST   | Refine existing blueprint                                 |
+| `/api/clarify`      | POST   | Annoying PM Mode — generates clarifying questions         |
+| `/api/research-url` | POST   | URL research (fast=regex, deep=Playwright)                |
+| `/api/handoff`      | POST   | Save blueprint + prototype + OpenCode stub to `projects/` |
+| `/api/health`       | GET    | `{ status: 'ok', service: 'Cauldron OS v0.50.0' }`        |
 
 #### Build API (XML Agent System)
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/build/start` | POST | Create build session + workspace directory |
-| `/api/build/generate` | POST | SSE — multi-turn agent build (local or cloud) |
-| `/api/build/refine` | POST | SSE — continue/refine an existing build session |
-| `/api/build/stop` | POST | Abort an active build (aborts AbortController) |
-| `/api/build/files/:sessionId` | GET | List files in build workspace |
-| `/api/build/file/:sessionId` | GET | Read file content from build workspace |
-| `/api/build/status/:sessionId` | GET | Build session metadata + file summary |
+| Route                          | Method | Purpose                                         |
+| ------------------------------ | ------ | ----------------------------------------------- |
+| `/api/build/start`             | POST   | Create build session + workspace directory      |
+| `/api/build/generate`          | POST   | SSE — multi-turn agent build (local or cloud)   |
+| `/api/build/refine`            | POST   | SSE — continue/refine an existing build session |
+| `/api/build/stop`              | POST   | Abort an active build (aborts AbortController)  |
+| `/api/build/files/:sessionId`  | GET    | List files in build workspace                   |
+| `/api/build/file/:sessionId`   | GET    | Read file content from build workspace          |
+| `/api/build/status/:sessionId` | GET    | Build session metadata + file summary           |
 
 #### Data Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/drafts` | GET/POST | List / create saved drafts |
-| `/api/drafts/:id` | GET | Load draft by ID |
-| `/api/drafts/:id/export.md` | GET | Download draft as markdown |
-| `/api/drafts/:id` | DELETE | Delete draft |
-| `/api/history` | GET | Session history |
-| `/api/history/cleanup` | POST | Purge old sessions |
-| `/api/stats` | GET | Dashboard statistics |
+| Route                       | Method   | Purpose                    |
+| --------------------------- | -------- | -------------------------- |
+| `/api/drafts`               | GET/POST | List / create saved drafts |
+| `/api/drafts/:id`           | GET      | Load draft by ID           |
+| `/api/drafts/:id/export.md` | GET      | Download draft as markdown |
+| `/api/drafts/:id`           | DELETE   | Delete draft               |
+| `/api/history`              | GET      | Session history            |
+| `/api/history/cleanup`      | POST     | Purge old sessions         |
+| `/api/stats`                | GET      | Dashboard statistics       |
 
 #### Research Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/research-history` | GET | List research records (searchable, filterable by favorite) |
-| `/api/research-history/:id/favorite` | POST | Toggle favorite on research record |
+| Route                                | Method | Purpose                                                    |
+| ------------------------------------ | ------ | ---------------------------------------------------------- |
+| `/api/research-history`              | GET    | List research records (searchable, filterable by favorite) |
+| `/api/research-history/:id/favorite` | POST   | Toggle favorite on research record                         |
 
 #### Project / Status Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/templates` | GET | Available scaffold templates |
-| `/api/build-status` | GET | Full project status dashboard |
-| `/api/projects/:name/status` | POST/DELETE | Set / clear manual status overrides |
-| `/api/projects/:name/resume` | POST | Resume stalled build via OpenCode |
-| `/api/projects/:name/open-visible` | POST | Open project in visible Terminal window |
-| `/api/projects/import` | POST | Import existing project folders as drafts |
+| Route                              | Method      | Purpose                                   |
+| ---------------------------------- | ----------- | ----------------------------------------- |
+| `/api/templates`                   | GET         | Available scaffold templates              |
+| `/api/build-status`                | GET         | Full project status dashboard             |
+| `/api/projects/:name/status`       | POST/DELETE | Set / clear manual status overrides       |
+| `/api/projects/:name/resume`       | POST        | Resume stalled build via OpenCode         |
+| `/api/projects/:name/open-visible` | POST        | Open project in visible Terminal window   |
+| `/api/projects/import`             | POST        | Import existing project folders as drafts |
 
 #### Model Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/api/cloud-models` | GET | Available cloud providers and models |
-| `/api/ollama-models` | GET | Auto-detected local Ollama models |
-| `/api/design-systems` | GET | Available brand design references |
-| `/api/design-reference` | POST | Pre-fetch design system content into cache |
-| `/api/chat/completions` | POST | OpenAI-compatible chat proxy |
+| Route                   | Method | Purpose                                    |
+| ----------------------- | ------ | ------------------------------------------ |
+| `/api/cloud-models`     | GET    | Available cloud providers and models       |
+| `/api/ollama-models`    | GET    | Auto-detected local Ollama models          |
+| `/api/design-systems`   | GET    | Available brand design references          |
+| `/api/design-reference` | POST   | Pre-fetch design system content into cache |
+| `/api/chat/completions` | POST   | OpenAI-compatible chat proxy               |
 
 #### Static Middleware
 
-| Route | Purpose |
-|-------|---------|
+| Route                             | Purpose                                      |
+| --------------------------------- | -------------------------------------------- |
 | `/workspace-preview/:sessionId/*` | Serve build workspace files for live preview |
-| `/research-assets/*` | Serve research screenshots |
+| `/research-assets/*`              | Serve research screenshots                   |
 
 ### 2.2 Prompt Building (Master Brain)
 
@@ -181,19 +187,20 @@ The system prompt is assembled as a stack:
 ```
 
 **Base prompts** (`APP_SYSTEM_PROMPT` / `SITE_SYSTEM_PROMPT`) bake in the `DESIGN_GUIDE` which enforces:
+
 - Anti-patterns (no Inter/Roboto default, no pure black, no nested cards, no placeholder code)
 - Mandates (high-contrast typography, generous spacing, component states, premium aesthetic)
 
 ```javascript
 function getSystemPrompt(projectType, designReference) {
-  let base = projectType === 'site' ? SITE_SYSTEM_PROMPT : APP_SYSTEM_PROMPT
+  let base = projectType === 'site' ? SITE_SYSTEM_PROMPT : APP_SYSTEM_PROMPT;
   if (designReference && designReference !== 'none') {
-    const designContent = designSystemCache.get(designReference)
+    const designContent = designSystemCache.get(designReference);
     if (designContent) {
-      base = `# Design Reference: ${name}\n\n${designContent}\n\n---\n\n${base}`
+      base = `# Design Reference: ${name}\n\n${designContent}\n\n---\n\n${base}`;
     }
   }
-  return base
+  return base;
 }
 ```
 
@@ -266,19 +273,20 @@ async function* generateWithTools({ prompt, model, systemPrompt, sessionId, ... 
 
 Seven tools registered in `toolDefinitions` array:
 
-| Tool | Description | Params |
-|------|-------------|--------|
-| `write_file` | Write file with auto-create dirs | `path`, `content` |
-| `read_file` | Read file content | `path` |
-| `edit_file` | Find-and-replace editing | `path`, `old_string`, `new_string`, `replace_all` |
-| `delete_file` | Delete file | `path` |
-| `list_files` | Recursive workspace listing | _(none)_ |
-| `run_bash` | Execute shell commands | `command`, `timeout` |
-| `read_result` | Read result file | `path` |
+| Tool          | Description                      | Params                                            |
+| ------------- | -------------------------------- | ------------------------------------------------- |
+| `write_file`  | Write file with auto-create dirs | `path`, `content`                                 |
+| `read_file`   | Read file content                | `path`                                            |
+| `edit_file`   | Find-and-replace editing         | `path`, `old_string`, `new_string`, `replace_all` |
+| `delete_file` | Delete file                      | `path`                                            |
+| `list_files`  | Recursive workspace listing      | _(none)_                                          |
+| `run_bash`    | Execute shell commands           | `command`, `timeout`                              |
+| `read_result` | Read result file                 | `path`                                            |
 
 Each tool has `{ name, description, params[], run(ctx, args) }` structure.
 
 `toolsSystemPrompt()` generates XML schema documentation for the model:
+
 ```xml
 <action name="write_file">
   <path>src/index.html</path>
@@ -291,7 +299,7 @@ Each tool has `{ name, description, params[], run(ctx, args) }` structure.
 Parses raw LLM output for `<action name="...">` blocks:
 
 ```javascript
-findNextAction(text, fromIndex)
+findNextAction(text, fromIndex);
 // Returns: { name, args: { path, content, command, ... }, raw, start, end }
 //       or: 'incomplete' (block started, no </action> yet)
 //       or: null (no action found)
@@ -306,17 +314,19 @@ findNextAction(text, fromIndex)
 All file operations sandboxed to `data/workspaces/<sessionId>/`:
 
 ```javascript
-const BASE_WORKSPACE = path.resolve(__dirname, '..', 'data', 'workspaces')
+const BASE_WORKSPACE = path.resolve(__dirname, '..', 'data', 'workspaces');
 ```
 
 **Path traversal protection:**
+
 ```javascript
 if (filePath.includes('..')) {
-  throw new Error(`Security: Path traversal detected in "${filePath}"`)
+  throw new Error(`Security: Path traversal detected in "${filePath}"`);
 }
 ```
 
 **Public API:**
+
 - `ensureWorkspace(sessionId)` — create sandbox dir
 - `workspaceDir(sessionId)` — absolute path
 - `wsWriteFile(sessionId, path, content)` — write with auto-create dirs
@@ -349,11 +359,12 @@ if (filePath.includes('..')) {
 ### 4.2 Build Session State
 
 ```javascript
-const activeBuildControllers = new Map()  // sessionId → AbortController
-const buildSessions = new Map()            // sessionId → metadata
+const activeBuildControllers = new Map(); // sessionId → AbortController
+const buildSessions = new Map(); // sessionId → metadata
 ```
 
 Session metadata:
+
 ```javascript
 {
   sessionId, prompt, model, designReference,
@@ -365,18 +376,19 @@ Session metadata:
 
 ### 4.3 SSE Event Types
 
-| Event | Payload | When |
-|-------|---------|------|
-| `token` | `{ text }` | Streamed model token |
-| `action` | `{ tool, path, status }` | Tool execution started |
-| `result` | `{ tool, path, status, output }` | Tool execution completed |
-| `filechange` | `{ path }` | File created/modified |
-| `done` | `{ files, actions, duration, draftId }` | Build completed |
-| `error` | `{ message }` | Build failed |
+| Event        | Payload                                 | When                     |
+| ------------ | --------------------------------------- | ------------------------ |
+| `token`      | `{ text }`                              | Streamed model token     |
+| `action`     | `{ tool, path, status }`                | Tool execution started   |
+| `result`     | `{ tool, path, status, output }`        | Tool execution completed |
+| `filechange` | `{ path }`                              | File created/modified    |
+| `done`       | `{ files, actions, duration, draftId }` | Build completed          |
+| `error`      | `{ message }`                           | Build failed             |
 
 ### 4.4 Workspace Preview
 
 `/workspace-preview/:sessionId/*` serves files from `data/workspaces/<sessionId>/`:
+
 - `GET /workspace-preview/:sessionId/` → serves `index.html` if present
 - `GET /workspace-preview/:sessionId/src/app.js` → serves nested files
 - CORS headers set for iframe embedding
@@ -472,6 +484,7 @@ CREATE TABLE project_status_overrides (
 ### 6.3 URL Research Sweep
 
 Two modes:
+
 - **Fast mode** (default): `http.get` → regex analysis of raw HTML
   - Extracts: Google Fonts families, CSS custom properties, hex/rgb/hsl colors, structure notes (flex/grid/containers)
 - **Deep mode** (`mode=deep`): Playwright headless Chromium
@@ -495,9 +508,11 @@ Two modes:
 **150+ selectable entries** in `DESIGN_SYSTEMS`:
 
 ### Imported Open Design Catalog
+
 150 local `DESIGN.md` systems live under `design-systems/{handle}/DESIGN.md` and are indexed by `design-systems/catalog.json`.
 
 ### Refero Styles (refero.design)
+
 Refero styles are represented as prompt-guidance entries and can also be searched live through `/api/refero-search`.
 
 Refero search proxies `https://styles.refero.design/api/styles`; curated Refero prompt entries also keep UUID metadata for future style-detail use.
@@ -508,12 +523,12 @@ Refero search proxies `https://styles.refero.design/api/styles`; curated Refero 
 
 Four template types guide generation output:
 
-| ID | Name | Project Type | Files |
-|----|------|-------------|-------|
-| `static-html` | Static HTML/CSS | site | index.html, styles.css, README.md, blueprint.md, cauldron.project.json |
-| `html-alpine` | HTML + AlpineJS | prototype | index.html, styles.css, README.md, blueprint.md, cauldron.project.json |
-| `react-vite-tailwind` | React + Vite + Tailwind | app | package.json, index.html, src/App.jsx, src/main.jsx, src/styles.css, ... |
-| `next-app-router` | Next.js App Router | app | package.json, app/page.tsx, app/layout.tsx, app/globals.css, ... |
+| ID                    | Name                    | Project Type | Files                                                                    |
+| --------------------- | ----------------------- | ------------ | ------------------------------------------------------------------------ |
+| `static-html`         | Static HTML/CSS         | site         | index.html, styles.css, README.md, blueprint.md, cauldron.project.json   |
+| `html-alpine`         | HTML + AlpineJS         | prototype    | index.html, styles.css, README.md, blueprint.md, cauldron.project.json   |
+| `react-vite-tailwind` | React + Vite + Tailwind | app          | package.json, index.html, src/App.jsx, src/main.jsx, src/styles.css, ... |
+| `next-app-router`     | Next.js App Router      | app          | package.json, app/page.tsx, app/layout.tsx, app/globals.css, ...         |
 
 Template guidance is injected into the system prompt via `formatTemplateForPrompt()`.
 
@@ -555,20 +570,23 @@ projects/{projectName}/
 
 `GET /api/build-status` auto-classifies every project in `projects/`:
 
-| Status | Criteria |
-|--------|----------|
-| `running` | Active process detected (opencode, npm run dev, next dev, vite, astro) |
-| `stalled` | Log tail contains error keywords |
-| `completed` | Log tail contains build completion keywords |
-| `needs_review` | Package.json present, no errors, needs manual check |
-| `unknown` | Has log but no clear signal |
-| (override) | Manual via `POST /api/projects/:name/status` |
+| Status         | Criteria                                                               |
+| -------------- | ---------------------------------------------------------------------- |
+| `running`      | Active process detected (opencode, npm run dev, next dev, vite, astro) |
+| `stalled`      | Log tail contains error keywords                                       |
+| `completed`    | Log tail contains build completion keywords                            |
+| `needs_review` | Package.json present, no errors, needs manual check                    |
+| `unknown`      | Has log but no clear signal                                            |
+| (override)     | Manual via `POST /api/projects/:name/status`                           |
 
 Uses `ps -axo pid,ppid,stat,etime,command` for process detection on macOS/Linux.
 
 `project_status_overrides` table allows manual status correction:
+
 ```javascript
-{ project_name, status, note, updated_at }
+{
+  (project_name, status, note, updated_at);
+}
 ```
 
 ---
@@ -737,28 +755,33 @@ erDiagram
 ## 13. Extension Points
 
 ### Adding a New Design System
+
 1. Create `design-systems/{handle}/DESIGN.md`
 2. Add the entry to `design-systems/catalog.json`
 3. Run `node scripts/validate-design-systems.js`
 4. Refero styles still live as prompt-guidance entries in `server.js`
 
 ### Adding a New Template
+
 1. Add entry to `TEMPLATES` array in `server.js`
 2. Define `{ id, name, projectType, scaffold, files, promptBias }`
 3. Template guidance auto-injects into system prompt on `/api/generate`
 
 ### Adding a New Tool
+
 1. Add definition to `toolDefinitions[]` in `lib/tools.js`
 2. Define `{ name, description, params[], run(ctx, args) }`
 3. `toolsSystemPrompt()` auto-generates the XML documentation
 
 ### Adding a New Cloud Provider
+
 1. Add entry to `CLOUD_MODELS` in `server.js`
 2. Add provider URL constant
 3. Update `inferProviderFromModel()` for model prefix matching
 4. Update `callCloudModel()` if auth differs from Bearer token
 
 ### Adding a New Database Table
+
 1. Add `CREATE TABLE IF NOT EXISTS` in `db/index.js` `runMigrations()`
 2. Add CRUD functions + export them from `module.exports`
 
@@ -796,7 +819,7 @@ erDiagram
 ```
 cauldron-os/
 ├── server.js                    # Express API server (~2,200 LOC)
-├── package.json                 # v0.40.0
+├── package.json                 # v0.50.0
 ├── lib/
 │   ├── agent-loop.js            # Multi-turn agent controller (MAX_ROUNDS=40)
 │   ├── tools.js                 # 7 tool definitions + execution engine
@@ -836,19 +859,20 @@ cauldron-os/
 
 ## 17. Environment Variables
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PORT` | `3000` | Server listen port |
-| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Ollama API base URL |
-| `CAULDRON_DATA_DIR` | `./data` | Runtime data directory |
-| `CAULDRON_CLARIFY_NUM_PREDICT` | `2048` | Max tokens for clarify output |
-| `CAULDRON_BLUEPRINT_NUM_PREDICT` | `8192` | Max tokens for blueprint output |
+| Variable                         | Default                  | Purpose                         |
+| -------------------------------- | ------------------------ | ------------------------------- |
+| `PORT`                           | `3000`                   | Server listen port              |
+| `OLLAMA_BASE_URL`                | `http://127.0.0.1:11434` | Ollama API base URL             |
+| `CAULDRON_DATA_DIR`              | `./data`                 | Runtime data directory          |
+| `CAULDRON_CLARIFY_NUM_PREDICT`   | `2048`                   | Max tokens for clarify output   |
+| `CAULDRON_BLUEPRINT_NUM_PREDICT` | `8192`                   | Max tokens for blueprint output |
 
 ---
 
 ## 18. Dependencies
 
 **Runtime:**
+
 - `express` ^5.2.1 — HTTP server
 - `sql.js` ^1.14.1 — SQLite via WebAssembly
 - `playwright` ^1.59.1 — Deep research (headless Chromium)
@@ -857,4 +881,4 @@ cauldron-os/
 
 ---
 
-*Architecture document version: v0.40 — Written by Hermes Agent for Witch Daddy Labs*
+_Architecture document version: v0.50 — Written by Hermes Agent for Witch Daddy Labs_

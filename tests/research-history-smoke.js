@@ -43,7 +43,11 @@ const path = require('path');
     formatted: 'same site again',
   });
 
-  assert.strictEqual(second.id, first.id, 'same URL should reuse/cache the existing research record');
+  assert.strictEqual(
+    second.id,
+    first.id,
+    'same URL should reuse/cache the existing research record'
+  );
   assert.strictEqual(second.reuse_count, 2, 'reusing a URL increments reuse count');
 
   db.setResearchFavorite(first.id, true);
@@ -53,16 +57,24 @@ const path = require('path');
   assert.strictEqual(records[0].url, 'https://example.com/inspiration');
   assert.strictEqual(records[0].favorite, 1, 'favorite flag should be persisted');
   assert.strictEqual(records[0].reuse_count, 2, 'list should expose reuse count');
-  assert.deepStrictEqual(records[0].findings.fonts, ['Fraunces'], 'findings JSON should hydrate back into objects');
+  assert.deepStrictEqual(
+    records[0].findings.fonts,
+    ['Fraunces'],
+    'findings JSON should hydrate back into objects'
+  );
 
   const favoriteRecords = db.getResearchHistory({ favoriteOnly: true });
-  assert.strictEqual(favoriteRecords.length, 1, 'favorite-only filter should return favourited research');
+  assert.strictEqual(
+    favoriteRecords.length,
+    1,
+    'favorite-only filter should return favourited research'
+  );
 
   const count = db.countResearchHistory();
   assert.strictEqual(count, 1, 'research history count should count unique URL records');
 
   console.log('Research history smoke tests passed');
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

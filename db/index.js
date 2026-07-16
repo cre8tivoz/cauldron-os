@@ -65,9 +65,9 @@ function runMigrations() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  ensureColumn('drafts', 'prototype_html', 'TEXT DEFAULT \'\'');
-  ensureColumn('drafts', 'prototype_iterations_json', 'TEXT DEFAULT \'[]\'');
-  ensureColumn('drafts', 'blueprint_versions_json', 'TEXT DEFAULT \'[]\'');
+  ensureColumn('drafts', 'prototype_html', "TEXT DEFAULT ''");
+  ensureColumn('drafts', 'prototype_iterations_json', "TEXT DEFAULT '[]'");
+  ensureColumn('drafts', 'blueprint_versions_json', "TEXT DEFAULT '[]'");
 
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -118,7 +118,7 @@ function hasColumn(tableName, columnName) {
   const rows = db.exec(`PRAGMA table_info(${tableName})`);
   if (!rows[0]) return false;
   const nameIndex = rows[0].columns.indexOf('name');
-  return rows[0].values.some(row => row[nameIndex] === columnName);
+  return rows[0].values.some((row) => row[nameIndex] === columnName);
 }
 
 function ensureColumn(tableName, columnName, definition) {
@@ -134,7 +134,10 @@ function flush() {
   if (!database) return;
   fs.writeFileSync(DB_PATH, Buffer.from(database.export()));
   pendingDirty = false;
-  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
 }
 
 function save() {
@@ -148,11 +151,13 @@ function save() {
 }
 
 function sanitizeName(name) {
-  return String(name || 'untitled')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-') || 'untitled';
+  return (
+    String(name || 'untitled')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/-+/g, '-') || 'untitled'
+  );
 }
 
 function generateFilename(projectName) {
@@ -183,7 +188,15 @@ function hydrateResearchRow(row) {
   };
 }
 
-function upsertResearchRecord({ url, source = 'url-sweep', projectName = '', brainDump = '', findings = {}, formatted = '', draftId = null }) {
+function upsertResearchRecord({
+  url,
+  source = 'url-sweep',
+  projectName = '',
+  brainDump = '',
+  findings = {},
+  formatted = '',
+  draftId = null,
+}) {
   if (!url) throw new Error('url is required');
   const db = requireDb();
   const normalisedUrl = normalizeUrl(url);
@@ -191,7 +204,8 @@ function upsertResearchRecord({ url, source = 'url-sweep', projectName = '', bra
 
   const existing = getResearchByUrl(normalisedUrl);
   if (existing) {
-    db.run(`
+    db.run(
+      `
       UPDATE research_history
       SET source = ?, project_name = ?, brain_dump = ?, findings_json = ?, formatted = ?,
           reuse_count = reuse_count + 1,
@@ -199,15 +213,20 @@ function upsertResearchRecord({ url, source = 'url-sweep', projectName = '', bra
           last_used_at = CURRENT_TIMESTAMP,
           draft_id = COALESCE(?, draft_id)
       WHERE id = ?
-    `, [source, projectName, brainDump, findingsJson, formatted, draftId, existing.id]);
+    `,
+      [source, projectName, brainDump, findingsJson, formatted, draftId, existing.id]
+    );
     save();
     return getResearchById(existing.id);
   }
 
-  db.run(`
+  db.run(
+    `
     INSERT INTO research_history (url, source, project_name, brain_dump, findings_json, formatted, draft_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `, [normalisedUrl, source, projectName, brainDump, findingsJson, formatted, draftId]);
+  `,
+    [normalisedUrl, source, projectName, brainDump, findingsJson, formatted, draftId]
+  );
   const id = db.exec('SELECT last_insert_rowid() AS id')[0].values[0][0];
   save();
   return getResearchById(id);
@@ -230,7 +249,7 @@ function normaliseBlueprintVersions(versions = [], currentBlueprint = '') {
   const seen = new Set();
   const normalised = Array.isArray(versions) ? versions : [];
   const mapped = normalised
-    .filter(version => version && typeof version === 'object')
+    .filter((version) => version && typeof version === 'object')
     .map((version, index) => {
       const blueprint = String(version.blueprint || version.content || '');
       const id = String(version.id || `blueprint-version-${index + 1}`);
@@ -238,13 +257,15 @@ function normaliseBlueprintVersions(versions = [], currentBlueprint = '') {
         id,
         version: Number(version.version) || index + 1,
         blueprint,
-        summary: String(version.summary || (index === 0 ? 'Baseline blueprint' : 'Blueprint update')),
+        summary: String(
+          version.summary || (index === 0 ? 'Baseline blueprint' : 'Blueprint update')
+        ),
         modelUsed: version.modelUsed ? String(version.modelUsed) : '',
         providerUsed: version.providerUsed ? String(version.providerUsed) : '',
         createdAt: version.createdAt || new Date().toISOString(),
       };
     })
-    .filter(version => {
+    .filter((version) => {
       const key = `${version.version}:${version.blueprint}`;
       if (!version.blueprint || seen.has(key)) return false;
       seen.add(key);
@@ -288,36 +309,47 @@ function createDraft({
   const normalisedBlueprintVersions = normaliseBlueprintVersions(blueprintVersions, blueprint);
 
   fs.writeFileSync(markdownPath, blueprint, 'utf8');
-  fs.writeFileSync(metaPath, JSON.stringify({
-    projectName,
-    brainDump,
-    designReference,
-    generationMode,
-    modelUsed,
-    prototypeHtml,
-    prototypeIterations: normalisedIterations,
-    blueprintVersions: normalisedBlueprintVersions,
-    createdAt: new Date().toISOString(),
-  }, null, 2), 'utf8');
+  fs.writeFileSync(
+    metaPath,
+    JSON.stringify(
+      {
+        projectName,
+        brainDump,
+        designReference,
+        generationMode,
+        modelUsed,
+        prototypeHtml,
+        prototypeIterations: normalisedIterations,
+        blueprintVersions: normalisedBlueprintVersions,
+        createdAt: new Date().toISOString(),
+      },
+      null,
+      2
+    ),
+    'utf8'
+  );
 
-  db.run(`
+  db.run(
+    `
     INSERT INTO drafts (
       project_name, brain_dump, blueprint, design_reference, generation_mode, model_used,
       prototype_html, prototype_iterations_json, blueprint_versions_json, file_path, updated_at
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `, [
-    projectName,
-    brainDump,
-    blueprint,
-    designReference,
-    generationMode,
-    modelUsed,
-    prototypeHtml || '',
-    JSON.stringify(normalisedIterations),
-    JSON.stringify(normalisedBlueprintVersions),
-    markdownPath,
-  ]);
+  `,
+    [
+      projectName,
+      brainDump,
+      blueprint,
+      designReference,
+      generationMode,
+      modelUsed,
+      prototypeHtml || '',
+      JSON.stringify(normalisedIterations),
+      JSON.stringify(normalisedBlueprintVersions),
+      markdownPath,
+    ]
+  );
 
   const id = db.exec('SELECT last_insert_rowid() AS id')[0].values[0][0];
   save();
@@ -360,9 +392,11 @@ function getAllDrafts(limit = 50, offset = 0, searchQuery = '') {
     stmt.bind([safeLimit, safeOffset]);
   }
 
-  return rowsFromStatement(stmt).map(row => ({
+  return rowsFromStatement(stmt).map((row) => ({
     ...row,
-    preview: row.brain_dump ? `${row.brain_dump.slice(0, 140)}${row.brain_dump.length > 140 ? '…' : ''}` : '',
+    preview: row.brain_dump
+      ? `${row.brain_dump.slice(0, 140)}${row.brain_dump.length > 140 ? '…' : ''}`
+      : '',
   }));
 }
 
@@ -394,7 +428,9 @@ function getDraftById(id) {
 
 function getDraftByProjectName(projectName) {
   const db = requireDb();
-  const stmt = db.prepare('SELECT * FROM drafts WHERE project_name = ? ORDER BY updated_at DESC LIMIT 1');
+  const stmt = db.prepare(
+    'SELECT * FROM drafts WHERE project_name = ? ORDER BY updated_at DESC LIMIT 1'
+  );
   stmt.bind([String(projectName || '')]);
 
   try {
@@ -421,20 +457,31 @@ function deleteDraft(id) {
   return true;
 }
 
-function createSession({ sessionId, brainDump = '', urlResearch = null, designReference = 'none', generationMode = 'local', modelUsed = null, draftId = null }) {
+function createSession({
+  sessionId,
+  brainDump = '',
+  urlResearch = null,
+  designReference = 'none',
+  generationMode = 'local',
+  modelUsed = null,
+  draftId = null,
+}) {
   const db = requireDb();
-  db.run(`
+  db.run(
+    `
     INSERT OR REPLACE INTO sessions (session_id, brain_dump, url_research, design_reference, generation_mode, model_used, draft_id, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-  `, [
-    sessionId || generateSessionId(),
-    brainDump,
-    urlResearch ? JSON.stringify(urlResearch) : null,
-    designReference,
-    generationMode,
-    modelUsed,
-    draftId,
-  ]);
+  `,
+    [
+      sessionId || generateSessionId(),
+      brainDump,
+      urlResearch ? JSON.stringify(urlResearch) : null,
+      designReference,
+      generationMode,
+      modelUsed,
+      draftId,
+    ]
+  );
   save();
 }
 
@@ -492,7 +539,9 @@ function getResearchHistory({ limit = 50, offset = 0, q = '', favoriteOnly = fal
 
   if (favoriteOnly) clauses.push('favorite = 1');
   if (q) {
-    clauses.push('(LOWER(url) LIKE LOWER(?) OR LOWER(project_name) LIKE LOWER(?) OR LOWER(brain_dump) LIKE LOWER(?) OR LOWER(formatted) LIKE LOWER(?))');
+    clauses.push(
+      '(LOWER(url) LIKE LOWER(?) OR LOWER(project_name) LIKE LOWER(?) OR LOWER(brain_dump) LIKE LOWER(?) OR LOWER(formatted) LIKE LOWER(?))'
+    );
     const pattern = `%${q}%`;
     params.push(pattern, pattern, pattern, pattern);
   }
@@ -511,16 +560,29 @@ function getResearchHistory({ limit = 50, offset = 0, q = '', favoriteOnly = fal
 
 function setResearchFavorite(id, favorite = true) {
   const db = requireDb();
-  db.run('UPDATE research_history SET favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [favorite ? 1 : 0, Number(id)]);
+  db.run('UPDATE research_history SET favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
+    favorite ? 1 : 0,
+    Number(id),
+  ]);
   const changed = db.getRowsModified();
   save();
   return changed > 0;
 }
 
-const VALID_PROJECT_STATUSES = new Set(['running', 'stalled', 'failed', 'needs_review', 'completed', 'unknown']);
+const VALID_PROJECT_STATUSES = new Set([
+  'running',
+  'stalled',
+  'failed',
+  'needs_review',
+  'completed',
+  'unknown',
+]);
 
 function normaliseProjectStatus(status) {
-  const value = String(status || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+  const value = String(status || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, '_');
   if (value === 'done') return 'completed';
   return VALID_PROJECT_STATUSES.has(value) ? value : 'unknown';
 }
@@ -529,21 +591,26 @@ function setProjectStatusOverride(projectName, status, note = 'manual') {
   const name = sanitizeName(projectName);
   const normalised = normaliseProjectStatus(status);
   const db = requireDb();
-  db.run(`
+  db.run(
+    `
     INSERT INTO project_status_overrides (project_name, status, note, updated_at)
     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(project_name) DO UPDATE SET
       status = excluded.status,
       note = excluded.note,
       updated_at = CURRENT_TIMESTAMP
-  `, [name, normalised, note]);
+  `,
+    [name, normalised, note]
+  );
   save();
   return getProjectStatusOverride(name);
 }
 
 function clearProjectStatusOverride(projectName) {
   const db = requireDb();
-  db.run('DELETE FROM project_status_overrides WHERE project_name = ?', [sanitizeName(projectName)]);
+  db.run('DELETE FROM project_status_overrides WHERE project_name = ?', [
+    sanitizeName(projectName),
+  ]);
   const changed = db.getRowsModified();
   save();
   return changed > 0;
@@ -599,7 +666,7 @@ function purgeOldDays(daysOld = 90) {
 
   const stmt = db.prepare('SELECT id FROM drafts WHERE updated_at < ?');
   stmt.bind([cutoffIso]);
-  const oldDrafts = rowsFromStatement(stmt).map(row => row.id);
+  const oldDrafts = rowsFromStatement(stmt).map((row) => row.id);
   oldDrafts.forEach(deleteDraft);
 
   db.run('DELETE FROM sessions WHERE created_at < ?', [cutoffIso]);

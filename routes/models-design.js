@@ -8,8 +8,6 @@
  * - GET /api/refero-search: cached Refero style proxy.
  */
 
-
-
 // ─── Refero Deep Search cache ────────────────────────────────────────────────
 const REFERO_API_URL = 'https://styles.refero.design/api/styles';
 const REFERO_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -17,8 +15,11 @@ let referoCache = { timestamp: 0, data: [] };
 
 function registerModelsDesignRoutes(app, deps) {
   const {
-    OLLAMA_BASE_URL, OLLAMA_TAGS_URL,
-    DESIGN_SYSTEMS, designSystemCache, ensureDesignSystem,
+    OLLAMA_BASE_URL,
+    OLLAMA_TAGS_URL,
+    DESIGN_SYSTEMS,
+    designSystemCache,
+    ensureDesignSystem,
     CLOUD_MODELS,
   } = deps;
 
@@ -34,16 +35,24 @@ function registerModelsDesignRoutes(app, deps) {
       if (!response.ok) throw new Error(`Ollama ${response.status}`);
       const data = await response.json();
       const models = Array.isArray(data.models)
-        ? data.models.map(model => ({
-            name: model.name,
-            label: model.name,
-            size: model.size || null,
-            modifiedAt: model.modified_at || null,
-          })).filter(model => model.name)
+        ? data.models
+            .map((model) => ({
+              name: model.name,
+              label: model.name,
+              size: model.size || null,
+              modifiedAt: model.modified_at || null,
+            }))
+            .filter((model) => model.name)
         : [];
       res.json({ success: true, baseUrl: OLLAMA_BASE_URL, models });
     } catch (err) {
-      res.status(503).json({ success: false, baseUrl: OLLAMA_BASE_URL, models: [], error: 'Unable to detect Ollama models', details: err.message });
+      res.status(503).json({
+        success: false,
+        baseUrl: OLLAMA_BASE_URL,
+        models: [],
+        error: 'Unable to detect Ollama models',
+        details: err.message,
+      });
     } finally {
       clearTimeout(timeout);
     }
@@ -52,22 +61,26 @@ function registerModelsDesignRoutes(app, deps) {
   app.get('/api/design-systems', (req, res) => {
     const list = Object.entries(DESIGN_SYSTEMS)
       .filter(([key]) => key !== 'none')
-      .map(([key, val]) => ({ id: key, name: val.name, source: val.source || (val.__refero ? 'refero' : 'remote') }))
+      .map(([key, val]) => ({
+        id: key,
+        name: val.name,
+        source: val.source || (val.__refero ? 'refero' : 'remote'),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
     res.json({ systems: list });
   });
 
   app.post('/api/design-reference', async (req, res) => {
     const { system } = req.body;
-  
+
     if (!system || !DESIGN_SYSTEMS[system]) {
       return res.status(400).json({ error: 'Invalid design system' });
     }
-  
+
     if (designSystemCache.has(system)) {
       return res.json({ cached: true, system });
     }
-  
+
     const content = await ensureDesignSystem(system);
     res.json({ cached: false, system, content });
   });
@@ -110,13 +123,13 @@ function registerModelsDesignRoutes(app, deps) {
 
       const lowerQuery = query.toLowerCase();
       const results = allStyles
-        .filter(s => s.siteName && s.siteName.toLowerCase().includes(lowerQuery))
-        .map(s => ({
+        .filter((s) => s.siteName && s.siteName.toLowerCase().includes(lowerQuery))
+        .map((s) => ({
           id: s.id,
           siteName: s.siteName,
           screenshotUrl: s.screenshotUrl || null,
           thumbnailUrl: s.thumbnailUrl || null,
-          colors: Array.isArray(s.colors) ? s.colors.map(c => c.hex || c) : [],
+          colors: Array.isArray(s.colors) ? s.colors.map((c) => c.hex || c) : [],
           colorScheme: s.colorScheme || 'unknown',
           url: s.url || null,
         }));

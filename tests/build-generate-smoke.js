@@ -12,7 +12,7 @@ const PORT = 3420;
 const OLLAMA_PORT = 3421;
 
 function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function waitForHealth() {
@@ -38,10 +38,12 @@ function createFakeOllamaServer() {
   const requests = [];
   const server = http.createServer((req, res) => {
     let raw = '';
-    req.on('data', chunk => raw += chunk);
+    req.on('data', (chunk) => (raw += chunk));
     req.on('end', () => {
       let body = {};
-      try { body = JSON.parse(raw || '{}'); } catch {}
+      try {
+        body = JSON.parse(raw || '{}');
+      } catch {}
       requests.push(body);
 
       if (req.url === '/api/chat') {
@@ -58,7 +60,7 @@ function createFakeOllamaServer() {
     });
   });
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     server.listen(OLLAMA_PORT, '127.0.0.1', () => resolve({ server, requests }));
   });
 }
@@ -78,8 +80,11 @@ function createFakeOllamaServer() {
 
   let output = '';
   let stderr = '';
-  child.stdout.on('data', d => output += d.toString());
-  child.stderr.on('data', d => { output += d.toString(); stderr += d.toString(); });
+  child.stdout.on('data', (d) => (output += d.toString()));
+  child.stderr.on('data', (d) => {
+    output += d.toString();
+    stderr += d.toString();
+  });
 
   try {
     await waitForHealth();

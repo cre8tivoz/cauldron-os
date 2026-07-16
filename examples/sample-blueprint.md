@@ -11,6 +11,7 @@
 **App Concept:** FocusFlow is a minimalist Pomodoro timer with integrated task sequencing and ambient soundscapes. It helps deep workers maintain flow state through structured intervals and environmental audio.
 
 **Core Features:**
+
 - Timer with 25/5, 50/10, custom intervals
 - Task queue with micro-checklist per session
 - Ambient mixer: rain, café, white noise, synth drones
@@ -86,27 +87,32 @@
 ## Architecture Notes
 
 **Frontend:**
+
 - Next.js 14 App Router (TypeScript, Tailwind CSS)
 - Shadcn/ui components (Cursor-style dark theme)
 - Zustand for lightweight state
 - Vercel Analytics + Sentry
 
 **Backend / APIs:**
+
 - Next.js route handlers (API routes)
 - PostgreSQL via Supabase or Neon
 - Server actions for mutations where possible
 
 **Database:**
+
 - Single DB: `focusflow_prod`
 - Tables as above
 - Indexes: `user_id`, `created_at` for history queries
 
 **Hosting / deployment:**
+
 - Vercel (frontend + serverless functions)
 - Supabase (PostgreSQL + Auth + Storage)
 - Cloudflare R2 for audio files (low-cost)
 
 **Integrations:**
+
 - Optional: Notion API for task import
 - Optional: Slack webhook for "session complete" notifications
 
@@ -132,31 +138,58 @@
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>FocusFlow — Deep Work Timer</title>
-  <style>
-    /* Preview styles — actual implementation uses Tailwind + shadcn */
-    body { font-family: -apple-system, sans-serif; background: #0d0d0f; color: #d9d9dd; padding: 2rem; }
-    .timer { font-size: 4rem; font-weight: 600; color: #b794f6; margin: 2rem 0; }
-    .task-list { list-style: none; padding: 0; }
-    .task { padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 0.5rem; border-radius: 2px; }
-    .btn { background: #1a1a1d; color: #b794f6; border: 1px solid rgba(183,148,246,0.3); padding: 0.75rem 1.5rem; cursor: pointer; }
-    .btn:hover { border-color: rgba(183,148,246,0.6); transform: translateY(-1px); }
-  </style>
-</head>
-<body>
-  <h1>FocusFlow</h1>
-  <div class="timer">25:00</div>
-  <button class="btn">Start Session</button>
-  <ul class="task-list">
-    <li class="task">Write Cauldron OS README</li>
-    <li class="task">Design DB schema for focus sessions</li>
-  </ul>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>FocusFlow — Deep Work Timer</title>
+    <style>
+      /* Preview styles — actual implementation uses Tailwind + shadcn */
+      body {
+        font-family: -apple-system, sans-serif;
+        background: #0d0d0f;
+        color: #d9d9dd;
+        padding: 2rem;
+      }
+      .timer {
+        font-size: 4rem;
+        font-weight: 600;
+        color: #b794f6;
+        margin: 2rem 0;
+      }
+      .task-list {
+        list-style: none;
+        padding: 0;
+      }
+      .task {
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 0.5rem;
+        border-radius: 2px;
+      }
+      .btn {
+        background: #1a1a1d;
+        color: #b794f6;
+        border: 1px solid rgba(183, 148, 246, 0.3);
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+      }
+      .btn:hover {
+        border-color: rgba(183, 148, 246, 0.6);
+        transform: translateY(-1px);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>FocusFlow</h1>
+    <div class="timer">25:00</div>
+    <button class="btn">Start Session</button>
+    <ul class="task-list">
+      <li class="task">Write Cauldron OS README</li>
+      <li class="task">Design DB schema for focus sessions</li>
+    </ul>
+  </body>
 </html>
 ```
 
 ---
 
-*End of blueprint.*
+_End of blueprint._

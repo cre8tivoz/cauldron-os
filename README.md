@@ -1,7 +1,7 @@
 # Cauldron OS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.40-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.50-blue.svg)](CHANGELOG.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![GitHub](https://img.shields.io/badge/github-witchdaddylabs-181717.svg)](https://github.com/witchdaddylabs)
 
@@ -11,11 +11,11 @@
 
 </div>
 
-> **Bring the messy idea. Cauldron OS 0.40 brings the structure, taste, critique, build agents, and next steps.**
+> **Bring the messy idea. Cauldron OS 0.50 adds verification, launch checklists, and design-package exports before handoff.**
 
-Cauldron OS 0.40 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, a live HTML + AlpineJS prototype preview, critique-driven iteration, and build-agent handoff with real scaffold generation.
+Cauldron OS 0.50 is a local-first workshop for AI-assisted builders. Drop in a rough app or website idea, choose a model or design reference, and Cauldron turns the mess into a structured product blueprint with architecture notes, schema ideas, exportable docs, a live HTML + AlpineJS prototype preview, critique-driven iteration, deterministic build verification, and build-agent handoff with real scaffold generation.
 
-New in **0.40**: blueprint version history with line-level diffs, multi-agent handoff packages, a Community catalog for DESIGN.md systems and scaffold guidance, and deterministic prototype quality scoring with Annoying PM notes before critique.
+New in **0.50**: deterministic build verification, generated `launch-checklist.md` runbooks, and optional `docs/design.md` / `docs/design.html` exports that derive from the selected design reference and actual prototype output.
 
 It is built for hobbyists, indie builders, designers, enthusiasts, and developers who want better AI output than "make me a nice dashboard".
 
@@ -67,7 +67,7 @@ npm start
 
 ---
 
-## What Cauldron does (v0.40 — 7-Stage Pipeline)
+## What Cauldron does (v0.50 — 7-Stage Pipeline)
 
 1. **You brain-dump the idea**<br>
    Write naturally. Messy is fine. Paste reference URLs if you have them.
@@ -84,11 +84,11 @@ npm start
 5. **You get a live prototype preview + critique loop**<br>
    Cauldron generates an HTML + AlpineJS prototype so you can see and click through the shape of the idea. A local quality pass scores accessibility, hierarchy, spacing, contrast, and semantic HTML before you critique it. Give natural-language feedback ("make the header bolder", "tighter spacing") and Cauldron regenerates the prototype in-place. Up to 3 critique iterations per session, with full iteration history and restore.
 
-6. **Build-agent handoff**<br>
-   Generate one or more scoped handoff packages with blueprint, prototype, design tokens, and `cauldron.project.json` manifests — then launch detected agent CLIs (Cursor, Claude Code, Codex, Hermes, OpenCode) or save packages for later.
+6. **Build + verification**<br>
+   Create one or more scoped handoff packages, run deterministic verification against a workspace or exported project, and see whether the result is `PASS`, `PASS WITH WARNINGS`, or `BLOCKED` before you hand it off.
 
 7. **Export and handoff**<br>
-   Drafts and history are stored locally. Export Markdown/JSON, download the prototype HTML, or generate a runnable Next.js, Astro, static HTML, or AlpineJS scaffold for a coding agent.
+   Drafts and history are stored locally. Export Markdown/JSON, download the prototype HTML, or generate a runnable Next.js, Astro, static HTML, or AlpineJS scaffold with `launch-checklist.md`, `cauldron.project.json`, and an optional design package for a coding agent.
 
 ---
 
@@ -120,6 +120,7 @@ npm start
 - Export blueprints as Markdown or JSON
 - Save and download blueprints with one click
 - **One-Click Downloads**: Download the generated raw HTML + AlpineJS `prototype.html` directly to your machine
+- **Build verification**: Run manifest, static, command, and accessibility checks before handoff, with explicit `PASS`, `PASS WITH WARNINGS`, and `BLOCKED` outcomes
 - Create project folders with blueprint + agent stub for your preferred coding tool
 - **Keyboard shortcuts**: Cmd/Ctrl+Enter to generate, Cmd/Ctrl+S to save, Cmd/Ctrl+Shift+P/N to move stages
 
@@ -127,6 +128,7 @@ npm start
 
 - Expanded Design Reference dropdown with 150+ local `DESIGN.md` systems imported from Open Design, plus Refero style search for live inspiration
 - **Community catalog** — Import curated community DESIGN.md references and apply community scaffold guidance without committing runtime imports (v0.40)
+- **Design-package export** — Optionally generate `docs/design.md` and `docs/design.html` from the chosen design reference plus actual prototype output (v0.50)
 - **Refero Style Search** — Search the live Refero design directory for inspiration (results cached for 5 minutes)
 - Dedicated one-URL cloner target field plus Brain Dump URL detection
 - **Deep URL research mode** — Uses Playwright to extract CSS variables, fonts, colours, and layout patterns from reference sites
@@ -138,6 +140,7 @@ npm start
 - **BYOK Build Agent Handoff** — Detect installed agent CLIs (Cursor, Claude Code, Codex, Hermes, OpenCode) and launch builds directly from the pipeline. Handoff includes blueprint, prototype, design tokens, and a `cauldron.project.json` manifest
 - **Multi-agent orchestration** — Select multiple build agents and generate scoped packages under a shared root manifest (v0.40)
 - **Prototype quality scoring** — Score accessibility, visual hierarchy, spacing, color contrast, and semantic HTML before critique (v0.40)
+- **Launch checklist export** — Every handoff now includes `launch-checklist.md` with commands, verification results, warnings, and human next steps (v0.50)
 - **Scaffold Export** — Generate real project scaffolds: Next.js with TypeScript, Astro, static HTML, or AlpineJS. Each scaffold is a runnable project skeleton wired to your blueprint
 - **XML Tool Agent System** — Multi-turn build agent that writes, edits, and runs code in a sandboxed workspace
 - **Workspace preview** — Live HTML preview of built files via `/workspace-preview/`
@@ -167,10 +170,10 @@ npm start
 
 Cauldron auto-detects local Ollama models from `/api/tags` on startup and fills the Local Ollama Model dropdown. Defaults remain available as fallbacks for **blueprint generation**:
 
-| Project Type | Default Local Model | Best For |
-|--------------|---------------------|----------|
-| App / product blueprint | `qwen3.5:9b` | Architecture, state, schema, full-stack planning |
-| Static site / landing page | `gemma4:e4b` | Layout, visual hierarchy, static markup |
+| Project Type               | Default Local Model | Best For                                         |
+| -------------------------- | ------------------- | ------------------------------------------------ |
+| App / product blueprint    | `qwen3.5:9b`        | Architecture, state, schema, full-stack planning |
+| Static site / landing page | `gemma4:e4b`        | Layout, visual hierarchy, static markup          |
 
 These small models (9b–E4B) produce solid blueprints and prototypes, making them viable for generation-only workflows. However, if you want **strong Annoying PM / Interrogate Idea questions** from a local model, you will want a larger model such as **Gemma 4:26b** or **Qwen 3.5/3.6:27b**. Smaller models tend to ask very basic questions during the clarify phase. For the best interrogate experience, use cloud models (OpenAI, Gemini) which produce sharp, specific, jaded-PM-tier questions in seconds.
 
@@ -178,11 +181,11 @@ You can change the selected model in the UI. This makes cloned installs portable
 
 ### Cloud models
 
-Cloud Cauldron supports user-provided API keys stored in your browser localStorage. Every pipeline stage follows the provider you've selected, so one key runs the whole pipeline — pick Gemini and blueprint *and* prototype generation both run on Gemini, no surprise hops to another provider.
+Cloud Cauldron supports user-provided API keys stored in your browser localStorage. Every pipeline stage follows the provider you've selected, so one key runs the whole pipeline — pick Gemini and blueprint _and_ prototype generation both run on Gemini, no surprise hops to another provider.
 
-| Provider | Default / Available Models |
-|----------|----------------------------|
-| OpenAI | `gpt-5.4` |
+| Provider         | Default / Available Models                        |
+| ---------------- | ------------------------------------------------- |
+| OpenAI           | `gpt-5.4`                                         |
 | Google AI Studio | `gemini-3.1-flash-lite`, `gemini-3.1-pro-preview` |
 
 Google routing now follows the currently available 3.1 choices. Flash Lite is the preferred lightweight architecture model; Pro Preview is available as the heavier fallback.
@@ -193,11 +196,11 @@ Google routing now follows the currently available 3.1 choices. Flash Lite is th
 
 Cauldron's prompt builder adds three design-aware upgrades before generation:
 
-| Module | What it does |
-|--------|--------------|
-| Impeccable Taste | Adds design anti-patterns and premium UI mandates |
-| Design Reference Selector | Pulls brand DNA from local Open Design `DESIGN.md` systems and Refero style references |
-| URL Research Sweep | Scrapes the dedicated reference URL or first Brain Dump URL for CSS variables, fonts, colours, and layout patterns |
+| Module                    | What it does                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Impeccable Taste          | Adds design anti-patterns and premium UI mandates                                                                  |
+| Design Reference Selector | Pulls brand DNA from local Open Design `DESIGN.md` systems and Refero style references                             |
+| URL Research Sweep        | Scrapes the dedicated reference URL or first Brain Dump URL for CSS variables, fonts, colours, and layout patterns |
 
 This means the model gets more than "build me an app". It gets taste, constraints, references, and context.
 
@@ -234,13 +237,13 @@ cauldron-os/
 
 Copy [`.env.example`](.env.example) for the full list. Cauldron reads these straight from the process environment — it doesn't auto-load a `.env` file yet, so export them (or use your own loader) before `npm start`. The ones you'll actually reach for:
 
-| Variable | Default | What it does |
-|----------|---------|--------------|
-| `PORT` | `3000` | Port the server listens on (`PORT=4000 npm start`) |
-| `CAULDRON_HOST` | `127.0.0.1` | Network interface to bind — see below |
-| `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | Where Cauldron looks for your local Ollama |
-| `CAULDRON_DATA_DIR` | `./data` | Where drafts, the local DB, and research assets live |
-| `CAULDRON_COMMUNITY_OFFLINE` | `0` | Set to `1` to skip remote community-catalog fetches |
+| Variable                     | Default                  | What it does                                         |
+| ---------------------------- | ------------------------ | ---------------------------------------------------- |
+| `PORT`                       | `3000`                   | Port the server listens on (`PORT=4000 npm start`)   |
+| `CAULDRON_HOST`              | `127.0.0.1`              | Network interface to bind — see below                |
+| `OLLAMA_BASE_URL`            | `http://127.0.0.1:11434` | Where Cauldron looks for your local Ollama           |
+| `CAULDRON_DATA_DIR`          | `./data`                 | Where drafts, the local DB, and research assets live |
+| `CAULDRON_COMMUNITY_OFFLINE` | `0`                      | Set to `1` to skip remote community-catalog fetches  |
 
 ### Network access
 

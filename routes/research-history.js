@@ -3,8 +3,7 @@
  * Route handlers for research history.
  */
 
-
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+const { normaliseLimitOffset, sendMarkdownDownload } = require('./_helpers');
 
 function registerResearchHistoryRoutes(app, deps) {
   const { db } = deps;
@@ -21,7 +20,9 @@ function registerResearchHistoryRoutes(app, deps) {
       res.json({ success: true, research, total: db.countResearchHistory() });
     } catch (err) {
       console.error('[Cauldron] Research history error:', err);
-      res.status(500).json({ success: false, error: 'Failed to fetch research history', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch research history', details: err.message });
     }
   });
 
@@ -32,7 +33,11 @@ function registerResearchHistoryRoutes(app, deps) {
       res.json({ success: true });
     } catch (err) {
       console.error('[Cauldron] Research favorite error:', err);
-      res.status(500).json({ success: false, error: 'Failed to update research favorite', details: err.message });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update research favorite',
+        details: err.message,
+      });
     }
   });
 }

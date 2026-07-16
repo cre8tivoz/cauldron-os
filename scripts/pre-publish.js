@@ -38,7 +38,7 @@ const OPTIONAL_ASSETS = [
 const FORBIDDEN = [
   '.DS_Store',
   '*.backup',
-  'projects/',         // should be gitignored
+  'projects/', // should be gitignored
   'design-systems/**/LICENSE', // but .gitkeep is fine
 ];
 
@@ -50,7 +50,7 @@ let warnings = 0;
 
 // Check required files
 console.log('📦 Required files:');
-REQUIRED_FILES.forEach(file => {
+REQUIRED_FILES.forEach((file) => {
   const full = path.join(ROOT, file);
   if (fs.existsSync(full)) {
     console.log(`  ✓ ${file}`);
@@ -62,7 +62,7 @@ REQUIRED_FILES.forEach(file => {
 
 // Check optional assets
 console.log('\n🎨 Assets (optional but recommended):');
-OPTIONAL_ASSETS.forEach(file => {
+OPTIONAL_ASSETS.forEach((file) => {
   const full = path.join(ROOT, file);
   if (fs.existsSync(full)) {
     console.log(`  ✓ ${file}`);
@@ -75,7 +75,7 @@ OPTIONAL_ASSETS.forEach(file => {
 // Check for forbidden patterns
 console.log('\n🚫 Checking for forbidden files:');
 let forbiddenFound = false;
-FORBIDDEN.forEach(pattern => {
+FORBIDDEN.forEach((pattern) => {
   // Simple glob matching (naive)
   if (pattern.endsWith('/')) {
     const dir = path.join(ROOT, pattern.slice(0, -1));
@@ -97,7 +97,7 @@ if (!forbiddenFound) console.log('  ✓ No forbidden files detected');
 
 // Validate JSON files
 console.log('\n🔍 Validating JSON config files:');
-['package.json'].forEach(file => {
+['package.json'].forEach((file) => {
   try {
     const content = fs.readFileSync(path.join(ROOT, file), 'utf-8');
     JSON.parse(content);

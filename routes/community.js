@@ -24,7 +24,9 @@ function registerCommunityRoutes(app, deps) {
     const id = String(req.body?.id || '').trim();
 
     if (!id || !['design-system', 'template'].includes(type)) {
-      return res.status(400).json({ success: false, error: 'Provide type design-system or template with id' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Provide type design-system or template with id' });
     }
 
     try {
@@ -53,14 +55,17 @@ function registerCommunityRoutes(app, deps) {
       }
 
       const item = getCommunityTemplate(id);
-      if (!item) return res.status(404).json({ success: false, error: 'Unknown community template' });
+      if (!item)
+        return res.status(404).json({ success: false, error: 'Unknown community template' });
 
       const template = templateToPromptTemplate(item);
       return res.json({ success: true, type, template });
     } catch (err) {
       const status = err.statusCode || 500;
       console.error('[Cauldron] Community import failed:', err.message);
-      return res.status(status).json({ success: false, error: 'Community import failed', details: err.message });
+      return res
+        .status(status)
+        .json({ success: false, error: 'Community import failed', details: err.message });
     }
   });
 }

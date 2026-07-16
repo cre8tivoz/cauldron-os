@@ -3,10 +3,7 @@
  * Route handlers for drafts.
  */
 
-
-
-
-const { normaliseLimitOffset, sendMarkdownDownload } = require("./_helpers");
+const { normaliseLimitOffset, sendMarkdownDownload } = require('./_helpers');
 
 function registerDraftsRoutes(app, deps) {
   const { db } = deps;
@@ -18,7 +15,9 @@ function registerDraftsRoutes(app, deps) {
       res.json({ success: true, drafts, total: db.countDrafts() });
     } catch (err) {
       console.error('[Cauldron] Draft list error:', err);
-      res.status(500).json({ success: false, error: 'Failed to fetch drafts', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch drafts', details: err.message });
     }
   });
 
@@ -35,7 +34,9 @@ function registerDraftsRoutes(app, deps) {
         prototypeIterations = [],
       } = req.body;
       if (!projectName || !blueprint) {
-        return res.status(400).json({ success: false, error: 'projectName and blueprint are required' });
+        return res
+          .status(400)
+          .json({ success: false, error: 'projectName and blueprint are required' });
       }
 
       const result = db.createDraft({
@@ -71,7 +72,9 @@ function registerDraftsRoutes(app, deps) {
       res.json({ success: true, draft });
     } catch (err) {
       console.error('[Cauldron] Draft fetch error:', err);
-      res.status(500).json({ success: false, error: 'Failed to fetch draft', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch draft', details: err.message });
     }
   });
 
@@ -79,11 +82,17 @@ function registerDraftsRoutes(app, deps) {
     try {
       const draft = db.getDraftById(req.params.id);
       if (!draft) return res.status(404).json({ success: false, error: 'Draft not found' });
-      const safeName = String(draft.project_name || 'cauldron-draft').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'cauldron-draft';
+      const safeName =
+        String(draft.project_name || 'cauldron-draft')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'cauldron-draft';
       sendMarkdownDownload(res, `${safeName}.md`, draft.blueprint || '');
     } catch (err) {
       console.error('[Cauldron] Draft export error:', err);
-      res.status(500).json({ success: false, error: 'Failed to export draft', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to export draft', details: err.message });
     }
   });
 
@@ -94,7 +103,9 @@ function registerDraftsRoutes(app, deps) {
       res.json({ success: true });
     } catch (err) {
       console.error('[Cauldron] Delete draft error:', err);
-      res.status(500).json({ success: false, error: 'Failed to delete draft', details: err.message });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to delete draft', details: err.message });
     }
   });
 }

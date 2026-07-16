@@ -14,7 +14,8 @@ function waitForServer(url, timeoutMs = 15000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -24,9 +25,9 @@ function waitForServer(url, timeoutMs = 15000) {
 (async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-build-agents-'));
   const probe = http.createServer((req, res) => res.end('ok'));
-  await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => probe.listen(0, '127.0.0.1', resolve));
   const appPort = probe.address().port + 1;
-  await new Promise(resolve => probe.close(resolve));
+  await new Promise((resolve) => probe.close(resolve));
 
   const app = spawn(process.execPath, ['server.js'], {
     cwd: path.join(__dirname, '..'),
@@ -41,10 +42,22 @@ function waitForServer(url, timeoutMs = 15000) {
     const agentsData = await agentsRes.json();
     assert.strictEqual(agentsRes.status, 200);
     assert.strictEqual(agentsData.success, true);
-    assert.ok(Array.isArray(agentsData.agents), 'build agents response should include agents array');
-    assert.ok(agentsData.agents.find(agent => agent.id === 'handoff' && agent.available), 'handoff agent should always be available');
-    assert.ok(agentsData.agents.find(agent => agent.id === 'cursor'), 'cursor detection entry should exist');
-    assert.ok(agentsData.agents.find(agent => agent.id === 'opencode'), 'opencode detection entry should exist');
+    assert.ok(
+      Array.isArray(agentsData.agents),
+      'build agents response should include agents array'
+    );
+    assert.ok(
+      agentsData.agents.find((agent) => agent.id === 'handoff' && agent.available),
+      'handoff agent should always be available'
+    );
+    assert.ok(
+      agentsData.agents.find((agent) => agent.id === 'cursor'),
+      'cursor detection entry should exist'
+    );
+    assert.ok(
+      agentsData.agents.find((agent) => agent.id === 'opencode'),
+      'opencode detection entry should exist'
+    );
 
     const runRes = await fetch(`http://127.0.0.1:${appPort}/api/build-agents/run`, {
       method: 'POST',
@@ -75,10 +88,26 @@ function waitForServer(url, timeoutMs = 15000) {
     assert.strictEqual(manifest.files.agentPrompt, 'agent-prompt.md');
     assert.strictEqual(manifest.scaffold.templateId, 'html-alpine');
     assert.strictEqual(manifest.scaffold.entrypoint, 'index.html');
-    assert.ok(manifest.scaffold.files.some(file => file.path === 'index.html' && file.role === 'entry'), 'scaffold should include index.html entry metadata');
-    assert.ok(manifest.scaffold.files.some(file => file.path === 'app.js' && file.role === 'script'), 'html-alpine scaffold should include app.js script metadata');
+    assert.ok(
+      manifest.scaffold.files.some((file) => file.path === 'index.html' && file.role === 'entry'),
+      'scaffold should include index.html entry metadata'
+    );
+    assert.ok(
+      manifest.scaffold.files.some((file) => file.path === 'app.js' && file.role === 'script'),
+      'html-alpine scaffold should include app.js script metadata'
+    );
 
-    for (const file of ['blueprint.md', 'prototype.html', 'design-system.md', 'README.md', 'agent-prompt.md', '.cursorrules', 'index.html', 'styles.css', 'app.js']) {
+    for (const file of [
+      'blueprint.md',
+      'prototype.html',
+      'design-system.md',
+      'README.md',
+      'agent-prompt.md',
+      '.cursorrules',
+      'index.html',
+      'styles.css',
+      'app.js',
+    ]) {
       assert.ok(fs.existsSync(path.join(runData.projectPath, file)), `${file} should be written`);
     }
 
@@ -107,15 +136,21 @@ function waitForServer(url, timeoutMs = 15000) {
     assert.strictEqual(multiManifest.orchestration.mode, 'multi-agent');
     assert.strictEqual(multiManifest.orchestration.agents.length, 3);
 
-    const cursorResult = multiData.agentResults.find(result => result.agentId === 'cursor');
-    const codexResult = multiData.agentResults.find(result => result.agentId === 'codex');
+    const cursorResult = multiData.agentResults.find((result) => result.agentId === 'cursor');
+    const codexResult = multiData.agentResults.find((result) => result.agentId === 'codex');
     assert.ok(cursorResult, 'cursor scoped handoff should exist');
     assert.ok(codexResult, 'codex scoped handoff should exist');
     assert.match(cursorResult.scope.label, /Frontend UI/);
     assert.match(codexResult.scope.label, /Architecture/);
 
-    const cursorPrompt = fs.readFileSync(path.join(cursorResult.projectPath, 'agent-prompt.md'), 'utf8');
-    const codexPrompt = fs.readFileSync(path.join(codexResult.projectPath, 'agent-prompt.md'), 'utf8');
+    const cursorPrompt = fs.readFileSync(
+      path.join(cursorResult.projectPath, 'agent-prompt.md'),
+      'utf8'
+    );
+    const codexPrompt = fs.readFileSync(
+      path.join(codexResult.projectPath, 'agent-prompt.md'),
+      'utf8'
+    );
     assert.match(cursorPrompt, /visual implementation/i);
     assert.match(codexPrompt, /API\/data contracts/i);
     assert.match(cursorPrompt, /Multi-Agent Context/);
@@ -124,10 +159,16 @@ function waitForServer(url, timeoutMs = 15000) {
   } finally {
     await stopProcess(app);
     fs.rmSync(tmp, { recursive: true, force: true });
-    fs.rmSync(path.join(__dirname, '..', 'projects', 'agent-handoff-test'), { recursive: true, force: true });
-    fs.rmSync(path.join(__dirname, '..', 'projects', 'multi-agent-handoff-test'), { recursive: true, force: true });
+    fs.rmSync(path.join(__dirname, '..', 'projects', 'agent-handoff-test'), {
+      recursive: true,
+      force: true,
+    });
+    fs.rmSync(path.join(__dirname, '..', 'projects', 'multi-agent-handoff-test'), {
+      recursive: true,
+      force: true,
+    });
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });

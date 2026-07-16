@@ -2,9 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const {
-  normaliseSystemId,
-} = require('../lib/design-system-catalog');
+const { normaliseSystemId } = require('../lib/design-system-catalog');
 
 const ROOT = path.resolve(__dirname, '..');
 const CATALOG_PATH = path.join(ROOT, 'design-systems', 'catalog.json');
@@ -31,7 +29,10 @@ function main() {
   }
 
   if ((catalog.systems || []).length < MIN_EXPECTED) {
-    fail(`Expected at least ${MIN_EXPECTED} design systems, found ${(catalog.systems || []).length}.`, errors);
+    fail(
+      `Expected at least ${MIN_EXPECTED} design systems, found ${(catalog.systems || []).length}.`,
+      errors
+    );
   }
 
   const seen = new Set();
@@ -42,7 +43,8 @@ function main() {
     if (!system.path) fail(`Catalog entry ${system.id || '<unknown>'} missing path.`, errors);
 
     const normalised = normaliseSystemId(system.id);
-    if (system.id !== normalised) fail(`Catalog id "${system.id}" should be "${normalised}".`, errors);
+    if (system.id !== normalised)
+      fail(`Catalog id "${system.id}" should be "${normalised}".`, errors);
     if (seen.has(system.id)) fail(`Duplicate design-system id: ${system.id}`, errors);
     seen.add(system.id);
 
@@ -53,16 +55,18 @@ function main() {
     }
 
     const content = fs.readFileSync(designPath, 'utf8');
-    if (content.trim().length < 200) fail(`DESIGN.md for ${system.id} is suspiciously short.`, errors);
-    if (!/^#|\n##\s+/m.test(content)) warnings.push(`DESIGN.md for ${system.id} has no obvious markdown heading.`);
+    if (content.trim().length < 200)
+      fail(`DESIGN.md for ${system.id} is suspiciously short.`, errors);
+    if (!/^#|\n##\s+/m.test(content))
+      warnings.push(`DESIGN.md for ${system.id} has no obvious markdown heading.`);
   }
 
   if (errors.length) {
     console.error('\nDesign system validation failed:\n');
-    errors.forEach(error => console.error(`- ${error}`));
+    errors.forEach((error) => console.error(`- ${error}`));
     if (warnings.length) {
       console.error('\nWarnings:');
-      warnings.forEach(warning => console.error(`- ${warning}`));
+      warnings.forEach((warning) => console.error(`- ${warning}`));
     }
     process.exit(1);
   }

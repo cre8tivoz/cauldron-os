@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   lint:
@@ -34,7 +34,7 @@ jobs:
       - run: node server.js &
         env:
           PORT: 3000
-      - run: sleep 3  # wait for server startup
+      - run: sleep 3 # wait for server startup
       - run: |
           curl -s http://localhost:3000/api/health | grep -q '"status":"ok"' \
             && echo "✓ Health check passed" \
@@ -54,4 +54,5 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - run: npx playwright install chromium || true
       - run: npm test

@@ -4,8 +4,8 @@
 
 We maintain the latest version on `main`. That's the one.
 
-| Version | Supported |
-|---------|-----------|
+| Version | Supported             |
+| ------- | --------------------- |
 | 0.x     | ✅ Active development |
 
 Anything older doesn't exist yet, so this is straightforward.
@@ -39,12 +39,12 @@ Cauldron OS is **local-first** and **privacy-respecting** by default:
 
 ### Known risks
 
-| Risk | Severity | What we do about it |
-|------|----------|---------------------|
-| OLLAMA_URL injection (user-controlled) | Low | Cauldron only connects to localhost. Keep Ollama off your network interface. |
-| SSRF via research-url endpoint | Medium (local-only) | Risk is minimal in single-user context. For multi-user deployments, add a URL allowlist or block private IP ranges. |
-| Blueprint handoff folder permissions | Low | Projects are created with your current user's umask. Don't run Cauldron as root. |
-| API key leakage via browser localStorage | Low | localStorage is accessible to any script on localhost. Use this on a machine you trust. Clear keys when you're done. |
+| Risk                                     | Severity            | What we do about it                                                                                                  |
+| ---------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| OLLAMA_URL injection (user-controlled)   | Low                 | Cauldron only connects to localhost. Keep Ollama off your network interface.                                         |
+| SSRF via research-url endpoint           | Medium (local-only) | Risk is minimal in single-user context. For multi-user deployments, add a URL allowlist or block private IP ranges.  |
+| Blueprint handoff folder permissions     | Low                 | Projects are created with your current user's umask. Don't run Cauldron as root.                                     |
+| API key leakage via browser localStorage | Low                 | localStorage is accessible to any script on localhost. Use this on a machine you trust. Clear keys when you're done. |
 
 If you find something new, follow the reporting process above.
 

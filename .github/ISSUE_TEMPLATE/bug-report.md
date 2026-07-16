@@ -20,10 +20,11 @@ Steps to reproduce the behavior:
 What you expected to happen.
 
 **Environment:**
- - OS: [e.g. macOS 14.5]
- - Node version: [e.g. 18.17]
- - Ollama version: [e.g. 0.5.1]
- - Cauldron OS version: [e.g. 0.30.0]
+
+- OS: [e.g. macOS 14.5]
+- Node version: [e.g. 18.17]
+- Ollama version: [e.g. 0.5.1]
+- Cauldron OS version: [e.g. 0.30.0]
 
 **Additional context**
 Screenshots, console output, blueprint snippets, etc.

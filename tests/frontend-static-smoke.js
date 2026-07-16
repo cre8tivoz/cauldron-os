@@ -6,8 +6,8 @@ const html = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'index.html
 
 // New unified frontend structure
 assert.match(html, /x-data="cauldronApp/, 'AlpineJS app should be wired');
-assert.match(html, /aria-label="Version 0\.40"/, 'Release version ribbon should be current');
-assert.match(html, />v0\.40</, 'Release version text should be current');
+assert.match(html, /aria-label="Version 0\.50"/, 'Release version ribbon should be current');
+assert.match(html, /v0\.50/, 'Release version text should be current');
 assert.match(html, /Interrogate brief/, 'Interrogate button should exist');
 assert.match(html, /Blueprint next/, 'Blueprint button should exist');
 assert.match(html, /Build this/, 'Build stage button should exist');
@@ -18,7 +18,11 @@ assert.match(html, /agentResults/, 'Multi-agent result list should be rendered')
 assert.match(html, /Create handoff package/, 'Handoff package button should exist');
 assert.match(html, /Critique this prototype/, 'Prototype critique textarea should exist');
 assert.match(html, /Quality/, 'Prototype quality score badge should exist');
-assert.match(html, /Prototype PM notes before your critique/, 'Prototype quality suggestions should appear before user critique');
+assert.match(
+  html,
+  /Prototype PM notes before your critique/,
+  'Prototype quality suggestions should appear before user critique'
+);
 assert.match(html, /Prototype iterations/, 'Prototype iteration timeline should exist');
 assert.match(html, /Apply critique/, 'Prototype critique submit button should exist');
 assert.match(html, /Keyboard shortcuts/, 'Keyboard shortcuts should be discoverable');
@@ -27,21 +31,39 @@ assert.match(html, /pipeline-progress-track/, 'Pipeline progress bar should exis
 assert.match(html, /pipelineEmptyMessage/, 'Pipeline empty log message should be bound');
 assert.match(html, /stageProgressLabel\(stage\)/, 'Stage tabs should expose progress labels');
 assert.match(html, /dismissToast\(toast\.id\)/, 'Toasts should be dismissible');
-assert.match(html, /toast\.type === 'error' \? 'alert' : 'status'/, 'Toast roles should be accessible');
-assert.match(html, /pipelineView === 'preview' && previewMode === 'blueprint' && blueprint/, 'Blueprint preview should be gated to preview mode');
+assert.match(
+  html,
+  /toast\.type === 'error' \? 'alert' : 'status'/,
+  'Toast roles should be accessible'
+);
+assert.match(
+  html,
+  /pipelineView === 'preview' && previewMode === 'blueprint' && blueprint/,
+  'Blueprint preview should be gated to preview mode'
+);
 assert.match(html, /Version history/, 'Blueprint version history controls should exist');
 assert.match(html, /blueprint-diff/, 'Blueprint diff preview mode should be wired');
 assert.match(html, /stageModels/, 'Stage model routing should be configured');
 assert.match(html, /Brain dump →/, 'Pipeline subtitle should reference brain dump');
 assert.match(html, /selectedBuildAgentId/, 'Build agent selection state should be wired');
 assert.match(html, /selectedBuildAgentIds/, 'Multi-agent build selection state should be wired');
+assert.match(html, /Run verification/, 'Verification action should be visible');
+assert.match(html, /Include design package/, 'Design package export toggle should be visible');
 assert.match(html, /Design reference sources/, 'Design reference panel should expose source tabs');
-assert.match(html, />Community</, 'Community design reference tab should exist');
+assert.match(html, /Community\s*</, 'Community design reference tab should exist');
 assert.match(html, /Submit your own via PR/, 'Community contribution link should be visible');
-assert.match(html, /importCommunityDesignSystem\(system\)/, 'Community design-system import action should be wired');
+assert.match(
+  html,
+  /importCommunityDesignSystem\(system\)/,
+  'Community design-system import action should be wired'
+);
 assert.match(html, /useCommunityTemplate\(template\)/, 'Community scaffold action should be wired');
 assert.match(html, /:srcdoc="prototypeHtml"/, 'Prototype preview iframe should be present');
-assert.equal((html.match(/allow-same-origin/g) || []).length, 1, 'Only the workspace preview iframe should keep allow-same-origin; the prototype iframe must not');
+assert.equal(
+  (html.match(/allow-same-origin/g) || []).length,
+  1,
+  'Only the workspace preview iframe should keep allow-same-origin; the prototype iframe must not'
+);
 
 const appJs = fs.readFileSync(path.resolve(__dirname, '..', 'public', 'scripts', 'app.js'), 'utf8');
 assert.match(appJs, /\/api\/build-agents/, 'Build agent detection API should be called');
@@ -59,15 +81,31 @@ assert.match(appJs, /loadRecentDraft/, 'Latest draft empty-state action should f
 assert.match(appJs, /previousStep >= 0/, 'Pipeline entries should replace same-step rows');
 assert.match(appJs, /\/api\/blueprint-diff/, 'Blueprint diff API should be called');
 assert.match(appJs, /blueprintVersions/, 'Blueprint versions should be wired');
-assert.match(appJs, /this\.toasts = \[\.\.\.this\.toasts/, 'Toast stack should be capped through reassignment');
+assert.match(
+  appJs,
+  /this\.toasts = \[\.\.\.this\.toasts/,
+  'Toast stack should be capped through reassignment'
+);
 assert.match(appJs, /data\.providers \|\| data/, 'Cloud model response should normalize providers');
 assert.match(appJs, /\/api\/community/, 'Community catalog API should be called');
 assert.match(appJs, /selectedCommunityTemplate/, 'Community scaffold guidance should be stored');
-assert.match(appJs, /Community scaffold guidance/, 'Community scaffold guidance should feed blueprint prompts');
+assert.match(
+  appJs,
+  /Community scaffold guidance/,
+  'Community scaffold guidance should feed blueprint prompts'
+);
 
-assert.doesNotMatch(appJs, /apiKey:\s*this\.form\.apiKey/, 'modelPayload must not send the global key blindly — resolve per stage provider');
+assert.doesNotMatch(
+  appJs,
+  /apiKey:\s*this\.form\.apiKey/,
+  'modelPayload must not send the global key blindly — resolve per stage provider'
+);
 assert.match(appJs, /resolveKeyForProvider/, 'per-provider key resolver must exist');
-assert.equal((appJs.match(/finishPipelineProgress\(event\.label/g) || []).length, 2, 'both stream loops must stop progress on a server error event');
+assert.equal(
+  (appJs.match(/finishPipelineProgress\(event\.label/g) || []).length,
+  2,
+  'both stream loops must stop progress on a server error event'
+);
 assert.match(html, /Follow global/, 'per-stage provider select must offer Follow global');
 
 console.log('Frontend static smoke tests passed');

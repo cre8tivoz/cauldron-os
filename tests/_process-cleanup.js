@@ -3,7 +3,7 @@ function waitForExit(processHandle, timeoutMs = 2000) {
     return Promise.resolve();
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const timeout = setTimeout(resolve, timeoutMs);
     processHandle.once('exit', () => {
       clearTimeout(timeout);

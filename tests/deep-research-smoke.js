@@ -6,11 +6,13 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 function listen(server, port = 0) {
-  return new Promise(resolve => server.listen(port, '127.0.0.1', () => resolve(server.address().port)));
+  return new Promise((resolve) =>
+    server.listen(port, '127.0.0.1', () => resolve(server.address().port))
+  );
 }
 
 function close(server) {
-  return new Promise(resolve => server.close(resolve));
+  return new Promise((resolve) => server.close(resolve));
 }
 
 function waitForServer(url, timeoutMs = 15000) {
@@ -21,7 +23,8 @@ function waitForServer(url, timeoutMs = 15000) {
         const res = await fetch(url);
         if (res.ok) return resolve();
       } catch {}
-      if (Date.now() - started > timeoutMs) return reject(new Error(`Timed out waiting for ${url}`));
+      if (Date.now() - started > timeoutMs)
+        return reject(new Error(`Timed out waiting for ${url}`));
       setTimeout(tick, 250);
     };
     tick();
@@ -57,8 +60,8 @@ function waitForServer(url, timeoutMs = 15000) {
   });
 
   let output = '';
-  app.stdout.on('data', chunk => output += chunk.toString());
-  app.stderr.on('data', chunk => output += chunk.toString());
+  app.stdout.on('data', (chunk) => (output += chunk.toString()));
+  app.stderr.on('data', (chunk) => (output += chunk.toString()));
 
   try {
     await waitForServer(`http://127.0.0.1:${appPort}/api/health`);
@@ -69,26 +72,39 @@ function waitForServer(url, timeoutMs = 15000) {
       body: JSON.stringify({ url: fixtureUrl, mode: 'deep', projectName: 'deep-fixture' }),
     });
     const data = await res.json();
-    assert.strictEqual(res.status, 200, data.error || data.details || 'deep research request should succeed');
+    assert.strictEqual(
+      res.status,
+      200,
+      data.error || data.details || 'deep research request should succeed'
+    );
     assert.strictEqual(data.success, true);
     assert.strictEqual(data.findings.mode, 'deep');
     assert.ok(data.findings.screenshotPath, 'deep research should return a screenshot path');
     assert.ok(fs.existsSync(data.findings.screenshotPath), 'screenshot should exist on disk');
     assert.ok(data.findings.screenshotUrl, 'deep research should expose a screenshot URL');
-    assert.ok(data.findings.computedStyles.colors.includes('#c1ff00'), 'computed colors should include rendered brand accent');
-    assert.ok(data.findings.computedStyles.fonts.some(font => font.toLowerCase().includes('georgia')), 'computed fonts should include rendered font family');
+    assert.ok(
+      data.findings.computedStyles.colors.includes('#c1ff00'),
+      'computed colors should include rendered brand accent'
+    );
+    assert.ok(
+      data.findings.computedStyles.fonts.some((font) => font.toLowerCase().includes('georgia')),
+      'computed fonts should include rendered font family'
+    );
 
     const historyRes = await fetch(`http://127.0.0.1:${appPort}/api/research-history`);
     const history = await historyRes.json();
     assert.strictEqual(history.total, 1, 'deep research should persist to research history');
-    assert.ok(history.research[0].findings.screenshotPath, 'history should preserve screenshot path');
+    assert.ok(
+      history.research[0].findings.screenshotPath,
+      'history should preserve screenshot path'
+    );
 
     console.log('Deep research smoke tests passed');
   } finally {
     app.kill('SIGTERM');
     await close(fixtureServer);
   }
-})().catch(err => {
+})().catch((err) => {
   console.error(err);
   process.exit(1);
 });
