@@ -54,4 +54,5 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - run: npx playwright install chromium || true
       - run: npm test
