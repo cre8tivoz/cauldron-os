@@ -36,7 +36,6 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.CAULDRON_HOST || '127.0.0.1';
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
-const OLLAMA_URL = `${OLLAMA_BASE_URL}/api/generate`;
 const OLLAMA_TAGS_URL = `${OLLAMA_BASE_URL}/api/tags`;
 const OLLAMA_TIMEOUT_MS = 600000;
 const CLOUD_TIMEOUT_MS = Number(process.env.CAULDRON_CLOUD_TIMEOUT_MS || 300000);
@@ -469,7 +468,7 @@ async function _runCloudAgentBuild({
             fullText += content;
             if (onToken) onToken(content);
           }
-        } catch (e) {
+        } catch {
           // Skip malformed JSON lines
         }
       }
@@ -864,7 +863,7 @@ const deps = {
   listImportableProjects,
   getBuildStatus,
   callOllamaModel,
-  callCloudModel,
+  callCloudModel: (options) => callCloudModel({ ...options, timeoutMs: CLOUD_TIMEOUT_MS }),
   getCloudModelName,
   extractJsonObject,
   normaliseClarifyResult,
