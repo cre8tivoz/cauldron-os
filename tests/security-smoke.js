@@ -13,6 +13,7 @@ const { isInsideRoot, parseSessionId } = require('../lib/path-safety');
 const {
   assertSafeResearchUrl,
   assertHttpOrHttpsUrl,
+  assertSafeModelBaseUrl,
   validateHttpUrl,
   createPinnedLookup,
 } = require('../lib/url-safety');
@@ -107,6 +108,29 @@ async function jsonRequest(pathname, options = {}) {
       assert.equal(deleted.success, true, 'symlink delete should succeed');
       assert.equal(fs.existsSync(aliasPath), false, 'symlink should be removed');
       assert.equal(fs.readFileSync(targetPath, 'utf8'), 'safe', 'symlink target must remain');
+
+      // Symlink write must not follow a link that escapes the workspace.
+      const outsidePath = path.join(os.tmpdir(), `cauldron-write-escape-${Date.now()}.txt`);
+      fs.writeFileSync(outsidePath, 'ORIGINAL');
+      const escapeAlias = path.join(wsDir, 'escape-alias.txt');
+      fs.symlinkSync(outsidePath, escapeAlias);
+      await assert.rejects(
+        () => workspace.wsWriteFile(sid, 'escape-alias.txt', 'PWNED'),
+        /Security|escaped|symlink/i
+      );
+      assert.equal(
+        fs.readFileSync(outsidePath, 'utf8'),
+        'ORIGINAL',
+        'outside symlink target must be untouched'
+      );
+      fs.unlinkSync(escapeAlias);
+      fs.rmSync(outsidePath, { force: true });
+
+      // In-workspace symlink may still be written via confined realpath.
+      const innerAlias = path.join(wsDir, 'inner-alias.txt');
+      fs.symlinkSync(targetPath, innerAlias);
+      await workspace.wsWriteFile(sid, 'inner-alias.txt', 'UPDATED');
+      assert.equal(fs.readFileSync(targetPath, 'utf8'), 'UPDATED');
     } catch (err) {
       if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
         console.log(`  symlink delete test skipped: ${err.message}`);
@@ -164,6 +188,22 @@ async function jsonRequest(pathname, options = {}) {
     /http or https/
   );
   assert.throws(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
+  assert.throws(
+    () => assertSafeModelBaseUrl('http://169.254.169.254/v1'),
+    /link-local|metadata|not allowed/i
+  );
+  assert.throws(
+    () => assertSafeModelBaseUrl('http://metadata.google.internal/v1'),
+    /not allowed/i
+  );
+  assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'),
+    /link-local|metadata|not allowed/i
+  );
+  assert.equal(
+    normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1'),
+    'http://127.0.0.1:11434/v1/chat/completions'
+  );
   console.log('  ✓ research and model URL guards');
 
   const child = spawn(process.execPath, ['server.js'], {
@@ -189,6 +229,34 @@ async function jsonRequest(pathname, options = {}) {
 
     const localHost = await requestWithHost('/api/health', `127.0.0.1:${PORT}`);
     assert.equal(localHost.status, 200, 'loopback Host header should be allowed');
+
+    const ipv6Origin = await jsonRequest('/api/build/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: `http://[::1]:${PORT}`,
+      },
+      body: JSON.stringify({
+        prompt: 'Security smoke',
+        model: 'llama3.2',
+        sessionId: 'security-ipv6-origin',
+      }),
+    });
+    assert.equal(ipv6Origin.res.status, 200, 'loopback IPv6 Origin should be allowed');
+
+    const evilOrigin = await jsonRequest('/api/build/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'http://evil.example',
+      },
+      body: JSON.stringify({
+        prompt: 'Security smoke',
+        model: 'llama3.2',
+        sessionId: 'security-evil-origin',
+      }),
+    });
+    assert.equal(evilOrigin.res.status, 403, 'foreign Origin should be blocked');
 
     const start = await jsonRequest('/api/build/start', {
       method: 'POST',

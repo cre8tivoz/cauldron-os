@@ -554,7 +554,9 @@ app.use((req, res, next) => {
   } catch {
     return res.status(403).json({ error: 'Cross-origin request blocked' });
   }
-  if (host === 'localhost' || host === '127.0.0.1') return next();
+  // Node may return bracketed IPv6 hostnames (e.g. "[::1]"); normalize like Host checks.
+  if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return next();
   return res.status(403).json({ error: 'Cross-origin request blocked' });
 });
 
