@@ -57,11 +57,13 @@ Frontend agents should preserve these names unless the branch explicitly migrate
 
 Cauldron is a localhost daemon. Default bind is `127.0.0.1`. Additional guards:
 
-- Mutating `/api/*` requests with a foreign `Origin` are rejected.
+- Mutating `/api/*` requests with a foreign `Origin` are rejected. Allowed loopback origins are `localhost`, `127.0.0.1`, and `::1` (bracketed IPv6 hostnames normalized).
 - When bound to loopback, requests whose `Host` header is not `localhost`, `127.0.0.1`, or `::1` are rejected (DNS-rebinding hardening).
 - Build `sessionId` values must match `[a-zA-Z0-9_-]{1,128}`.
-- Workspace file APIs reject absolute paths, `..` traversal, and symlink escapes.
+- Workspace file APIs reject absolute paths, `..` traversal, and symlink escapes on read/write/delete (writes never follow a symlink that resolves outside the workspace).
 - `POST /api/research-url` only fetches `http`/`https` URLs, re-validates redirects, and blocks link-local/metadata plus private networks. Loopback targets such as `http://127.0.0.1` remain allowed for local fixtures. Set `CAULDRON_ALLOW_PRIVATE_RESEARCH=1` to permit RFC1918 research targets. Link-local and metadata hosts stay blocked.
+- OpenAI-compatible model base URLs allow loopback/private LAN gateways (including private `*.internal` names) but reject credentials, link-local addresses (IPv4 `169.254.0.0/16` and IPv6 `fe80::/10`, including IPv4-mapped forms), and known cloud-metadata hosts. Hostnames are DNS-resolved and the validated address is pinned for the outbound request so DNS rebinding cannot swap in a blocked target. Research URL checks still treat the whole `.internal` suffix as disallowed.
+- Handoff package copies skip workspace symlinks so export packages cannot leak host files through escaping links.
 - Workspace preview responses send `Content-Security-Policy: sandbox allow-scripts allow-forms allow-modals` so generated HTML does not share Cauldron's origin.
 
 ## Core API Routes

@@ -8,6 +8,7 @@ function registerProxyRoutes(app, deps) {
     CLOUD_TIMEOUT_MS,
     GEMINI_BASE_URL,
     normaliseOpenAICompatibleChatUrl,
+    fetchPinnedUrl,
     buildChatPayload,
     inferProviderFromModel,
   } = deps;
@@ -40,26 +41,46 @@ function registerProxyRoutes(app, deps) {
           .json({ error: { message: `${provider} routing is not implemented yet` } });
       }
 
-      let targetUrl;
+      const requestBody = JSON.stringify(
+        buildChatPayload({ model, messages, temperature, stream })
+      );
+      const requestHeaders = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      let upstream;
       try {
-        targetUrl =
-          provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
+        if (provider === 'gemini') {
+          upstream = await fetch(GEMINI_BASE_URL, {
+            method: 'POST',
+            headers: requestHeaders,
+            signal: controller.signal,
+            body: requestBody,
+          });
+        } else {
+          const target = await normaliseOpenAICompatibleChatUrl(baseUrl);
+          upstream = await fetchPinnedUrl(target, {
+            method: 'POST',
+            headers: requestHeaders,
+            signal: controller.signal,
+            body: requestBody,
+          });
+        }
       } catch (err) {
-        return res.status(400).json({ error: { message: err.message } });
+        if (/Model base URL|http or https|credentials|link-local|metadata|not allowed/i.test(err.message)) {
+          return res.status(400).json({ error: { message: err.message } });
+        }
+        throw err;
       }
-      const upstream = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        signal: controller.signal,
-        body: JSON.stringify(buildChatPayload({ model, messages, temperature, stream })),
-      });
 
       const text = await upstream.text();
       res.status(upstream.status);
-      res.type(upstream.headers.get('content-type') || 'application/json');
+      res.type(
+        (upstream.headers.get && upstream.headers.get('content-type')) ||
+          upstream.headers['content-type'] ||
+          'application/json'
+      );
       res.send(text);
     } catch (err) {
       const status = err.name === 'AbortError' ? 504 : 500;

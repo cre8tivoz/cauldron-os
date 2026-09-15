@@ -13,11 +13,15 @@ const { isInsideRoot, parseSessionId } = require('../lib/path-safety');
 const {
   assertSafeResearchUrl,
   assertHttpOrHttpsUrl,
+  assertSafeModelBaseUrl,
+  isExactMetadataHostname,
+  isMetadataHostname,
   validateHttpUrl,
   createPinnedLookup,
 } = require('../lib/url-safety');
 const { normaliseOpenAICompatibleChatUrl } = require('../lib/model-client');
 const workspace = require('../lib/workspace');
+const { copyWorkspaceFiles } = require('../lib/handoff-package');
 const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -107,6 +111,29 @@ async function jsonRequest(pathname, options = {}) {
       assert.equal(deleted.success, true, 'symlink delete should succeed');
       assert.equal(fs.existsSync(aliasPath), false, 'symlink should be removed');
       assert.equal(fs.readFileSync(targetPath, 'utf8'), 'safe', 'symlink target must remain');
+
+      // Symlink write must not follow a link that escapes the workspace.
+      const outsidePath = path.join(os.tmpdir(), `cauldron-write-escape-${Date.now()}.txt`);
+      fs.writeFileSync(outsidePath, 'ORIGINAL');
+      const escapeAlias = path.join(wsDir, 'escape-alias.txt');
+      fs.symlinkSync(outsidePath, escapeAlias);
+      await assert.rejects(
+        () => workspace.wsWriteFile(sid, 'escape-alias.txt', 'PWNED'),
+        /Security|escaped|symlink/i
+      );
+      assert.equal(
+        fs.readFileSync(outsidePath, 'utf8'),
+        'ORIGINAL',
+        'outside symlink target must be untouched'
+      );
+      fs.unlinkSync(escapeAlias);
+      fs.rmSync(outsidePath, { force: true });
+
+      // In-workspace symlink may still be written via confined realpath.
+      const innerAlias = path.join(wsDir, 'inner-alias.txt');
+      fs.symlinkSync(targetPath, innerAlias);
+      await workspace.wsWriteFile(sid, 'inner-alias.txt', 'UPDATED');
+      assert.equal(fs.readFileSync(targetPath, 'utf8'), 'UPDATED');
     } catch (err) {
       if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
         console.log(`  symlink delete test skipped: ${err.message}`);
@@ -156,15 +183,92 @@ async function jsonRequest(pathname, options = {}) {
   });
   validateHttpUrl('https://example.com/');
   assert.equal(
-    normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1'),
+    (await normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1')).href,
     'https://api.openai.com/v1/chat/completions'
   );
   assert.throws(
     () => assertHttpOrHttpsUrl('file:///etc/passwd', 'Model base URL'),
     /http or https/
   );
-  assert.throws(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
+  await assert.rejects(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://169.254.169.254/v1'),
+    /link-local|metadata|not allowed/i
+  );
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://metadata.google.internal/v1'),
+    /not allowed/i
+  );
+  await assert.rejects(
+    () => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'),
+    /link-local|metadata|not allowed/i
+  );
+  // IPv6 link-local is fe80::/10 (not only the fe80: prefix).
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://[fe90::1]/'),
+    /not allowed/
+  );
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://[fe90::1]'),
+    /link-local|metadata|not allowed/i
+  );
+  // Node may canonicalize IPv4-mapped addresses to hex form.
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://[::ffff:a9fe:a9fe]/'),
+    /not allowed/
+  );
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://[::ffff:a9fe:a9fe]'),
+    /link-local|metadata|not allowed/i
+  );
+  const localGateway = await normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1');
+  assert.equal(localGateway.href, 'http://127.0.0.1:11434/v1/chat/completions');
+  assert.equal(localGateway.address, '127.0.0.1');
+  assert.equal(localGateway.family, 4);
+
+  // Model URLs allow private *.internal LAN names; research still treats .internal as metadata.
+  assert.equal(isExactMetadataHostname('llm.corp.internal'), false);
+  assert.equal(isMetadataHostname('llm.corp.internal'), true);
+  assert.equal(isExactMetadataHostname('metadata.google.internal'), true);
+
   console.log('  ✓ research and model URL guards');
+
+  // Handoff copy must not follow escaping symlinks into the export package.
+  const handoffSid = 'security-handoff-symlink';
+  const handoffDest = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-handoff-out-'));
+  try {
+    await workspace.ensureWorkspace(handoffSid);
+    await workspace.wsWriteFile(handoffSid, 'keep.txt', 'inside');
+    const wsDir = workspace.workspaceDir(handoffSid);
+    const secretPath = path.join(os.tmpdir(), `cauldron-secret-${Date.now()}.txt`);
+    fs.writeFileSync(secretPath, 'TOP_SECRET');
+    try {
+      fs.symlinkSync(secretPath, path.join(wsDir, 'leak.txt'));
+      copyWorkspaceFiles({
+        workspace,
+        sessionId: handoffSid,
+        projectPath: handoffDest,
+      });
+      assert.equal(fs.existsSync(path.join(handoffDest, 'keep.txt')), true, 'regular file should copy');
+      assert.equal(
+        fs.existsSync(path.join(handoffDest, 'leak.txt')),
+        false,
+        'escaping symlink must not be copied'
+      );
+    } catch (err) {
+      if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
+        console.log(`  handoff symlink test skipped: ${err.message}`);
+      } else {
+        throw err;
+      }
+    } finally {
+      fs.rmSync(secretPath, { force: true });
+    }
+  } finally {
+    await workspace.cleanupWorkspace(handoffSid);
+    fs.rmSync(handoffDest, { recursive: true, force: true });
+  }
+  console.log('  ✓ handoff symlink copy confinement');
 
   const child = spawn(process.execPath, ['server.js'], {
     cwd: repoRoot,
@@ -189,6 +293,34 @@ async function jsonRequest(pathname, options = {}) {
 
     const localHost = await requestWithHost('/api/health', `127.0.0.1:${PORT}`);
     assert.equal(localHost.status, 200, 'loopback Host header should be allowed');
+
+    const ipv6Origin = await jsonRequest('/api/build/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: `http://[::1]:${PORT}`,
+      },
+      body: JSON.stringify({
+        prompt: 'Security smoke',
+        model: 'llama3.2',
+        sessionId: 'security-ipv6-origin',
+      }),
+    });
+    assert.equal(ipv6Origin.res.status, 200, 'loopback IPv6 Origin should be allowed');
+
+    const evilOrigin = await jsonRequest('/api/build/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'http://evil.example',
+      },
+      body: JSON.stringify({
+        prompt: 'Security smoke',
+        model: 'llama3.2',
+        sessionId: 'security-evil-origin',
+      }),
+    });
+    assert.equal(evilOrigin.res.status, 403, 'foreign Origin should be blocked');
 
     const start = await jsonRequest('/api/build/start', {
       method: 'POST',
