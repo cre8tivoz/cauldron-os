@@ -43,7 +43,9 @@ function registerProxyRoutes(app, deps) {
       let targetUrl;
       try {
         targetUrl =
-          provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
+          provider === 'gemini'
+            ? GEMINI_BASE_URL
+            : await normaliseOpenAICompatibleChatUrl(baseUrl);
       } catch (err) {
         return res.status(400).json({ error: { message: err.message } });
       }

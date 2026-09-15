@@ -19,6 +19,7 @@ const {
 } = require('../lib/url-safety');
 const { normaliseOpenAICompatibleChatUrl } = require('../lib/model-client');
 const workspace = require('../lib/workspace');
+const { copyWorkspaceFiles } = require('../lib/handoff-package');
 const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -180,31 +181,77 @@ async function jsonRequest(pathname, options = {}) {
   });
   validateHttpUrl('https://example.com/');
   assert.equal(
-    normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1'),
+    await normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1'),
     'https://api.openai.com/v1/chat/completions'
   );
   assert.throws(
     () => assertHttpOrHttpsUrl('file:///etc/passwd', 'Model base URL'),
     /http or https/
   );
-  assert.throws(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
-  assert.throws(
+  await assert.rejects(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
+  await assert.rejects(
     () => assertSafeModelBaseUrl('http://169.254.169.254/v1'),
     /link-local|metadata|not allowed/i
   );
-  assert.throws(
+  await assert.rejects(
     () => assertSafeModelBaseUrl('http://metadata.google.internal/v1'),
     /not allowed/i
   );
-  assert.throws(
+  await assert.rejects(
     () => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'),
     /link-local|metadata|not allowed/i
   );
+  // IPv6 link-local is fe80::/10 (not only the fe80: prefix).
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://[fe90::1]/'),
+    /not allowed/
+  );
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://[fe90::1]'),
+    /link-local|metadata|not allowed/i
+  );
+  // Node may canonicalize IPv4-mapped addresses to hex form.
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://[::ffff:a9fe:a9fe]/'),
+    /not allowed/
+  );
+  await assert.rejects(
+    () => assertSafeModelBaseUrl('http://[::ffff:a9fe:a9fe]'),
+    /link-local|metadata|not allowed/i
+  );
   assert.equal(
-    normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1'),
+    await normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1'),
     'http://127.0.0.1:11434/v1/chat/completions'
   );
   console.log('  ✓ research and model URL guards');
+
+  // Handoff copy must not follow escaping symlinks into the export package.
+  const handoffSid = 'security-handoff-symlink';
+  const handoffDest = fs.mkdtempSync(path.join(os.tmpdir(), 'cauldron-handoff-out-'));
+  try {
+    await workspace.ensureWorkspace(handoffSid);
+    await workspace.wsWriteFile(handoffSid, 'keep.txt', 'inside');
+    const wsDir = workspace.workspaceDir(handoffSid);
+    const secretPath = path.join(os.tmpdir(), `cauldron-secret-${Date.now()}.txt`);
+    fs.writeFileSync(secretPath, 'TOP_SECRET');
+    fs.symlinkSync(secretPath, path.join(wsDir, 'leak.txt'));
+    copyWorkspaceFiles({
+      workspace,
+      sessionId: handoffSid,
+      projectPath: handoffDest,
+    });
+    assert.equal(fs.existsSync(path.join(handoffDest, 'keep.txt')), true, 'regular file should copy');
+    assert.equal(
+      fs.existsSync(path.join(handoffDest, 'leak.txt')),
+      false,
+      'escaping symlink must not be copied'
+    );
+    fs.rmSync(secretPath, { force: true });
+  } finally {
+    await workspace.cleanupWorkspace(handoffSid);
+    fs.rmSync(handoffDest, { recursive: true, force: true });
+  }
+  console.log('  ✓ handoff symlink copy confinement');
 
   const child = spawn(process.execPath, ['server.js'], {
     cwd: repoRoot,

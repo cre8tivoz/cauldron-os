@@ -62,7 +62,8 @@ Cauldron is a localhost daemon. Default bind is `127.0.0.1`. Additional guards:
 - Build `sessionId` values must match `[a-zA-Z0-9_-]{1,128}`.
 - Workspace file APIs reject absolute paths, `..` traversal, and symlink escapes on read/write/delete (writes never follow a symlink that resolves outside the workspace).
 - `POST /api/research-url` only fetches `http`/`https` URLs, re-validates redirects, and blocks link-local/metadata plus private networks. Loopback targets such as `http://127.0.0.1` remain allowed for local fixtures. Set `CAULDRON_ALLOW_PRIVATE_RESEARCH=1` to permit RFC1918 research targets. Link-local and metadata hosts stay blocked.
-- OpenAI-compatible model base URLs allow loopback/private LAN gateways but reject credentials, link-local addresses, and cloud-metadata hosts.
+- OpenAI-compatible model base URLs allow loopback/private LAN gateways but reject credentials, link-local addresses (IPv4 `169.254.0.0/16` and IPv6 `fe80::/10`, including IPv4-mapped forms), and cloud-metadata hosts. Hostnames are DNS-resolved so names that round-trip to those addresses are rejected.
+- Handoff package copies skip workspace symlinks so export packages cannot leak host files through escaping links.
 - Workspace preview responses send `Content-Security-Policy: sandbox allow-scripts allow-forms allow-modals` so generated HTML does not share Cauldron's origin.
 
 ## Core API Routes
