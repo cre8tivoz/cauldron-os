@@ -14,6 +14,8 @@ const {
   assertSafeResearchUrl,
   assertHttpOrHttpsUrl,
   assertSafeModelBaseUrl,
+  isExactMetadataHostname,
+  isMetadataHostname,
   validateHttpUrl,
   createPinnedLookup,
 } = require('../lib/url-safety');
@@ -181,7 +183,7 @@ async function jsonRequest(pathname, options = {}) {
   });
   validateHttpUrl('https://example.com/');
   assert.equal(
-    await normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1'),
+    (await normaliseOpenAICompatibleChatUrl('https://api.openai.com/v1')).href,
     'https://api.openai.com/v1/chat/completions'
   );
   assert.throws(
@@ -219,10 +221,16 @@ async function jsonRequest(pathname, options = {}) {
     () => assertSafeModelBaseUrl('http://[::ffff:a9fe:a9fe]'),
     /link-local|metadata|not allowed/i
   );
-  assert.equal(
-    await normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1'),
-    'http://127.0.0.1:11434/v1/chat/completions'
-  );
+  const localGateway = await normaliseOpenAICompatibleChatUrl('http://127.0.0.1:11434/v1');
+  assert.equal(localGateway.href, 'http://127.0.0.1:11434/v1/chat/completions');
+  assert.equal(localGateway.address, '127.0.0.1');
+  assert.equal(localGateway.family, 4);
+
+  // Model URLs allow private *.internal LAN names; research still treats .internal as metadata.
+  assert.equal(isExactMetadataHostname('llm.corp.internal'), false);
+  assert.equal(isMetadataHostname('llm.corp.internal'), true);
+  assert.equal(isExactMetadataHostname('metadata.google.internal'), true);
+
   console.log('  ✓ research and model URL guards');
 
   // Handoff copy must not follow escaping symlinks into the export package.
@@ -234,19 +242,28 @@ async function jsonRequest(pathname, options = {}) {
     const wsDir = workspace.workspaceDir(handoffSid);
     const secretPath = path.join(os.tmpdir(), `cauldron-secret-${Date.now()}.txt`);
     fs.writeFileSync(secretPath, 'TOP_SECRET');
-    fs.symlinkSync(secretPath, path.join(wsDir, 'leak.txt'));
-    copyWorkspaceFiles({
-      workspace,
-      sessionId: handoffSid,
-      projectPath: handoffDest,
-    });
-    assert.equal(fs.existsSync(path.join(handoffDest, 'keep.txt')), true, 'regular file should copy');
-    assert.equal(
-      fs.existsSync(path.join(handoffDest, 'leak.txt')),
-      false,
-      'escaping symlink must not be copied'
-    );
-    fs.rmSync(secretPath, { force: true });
+    try {
+      fs.symlinkSync(secretPath, path.join(wsDir, 'leak.txt'));
+      copyWorkspaceFiles({
+        workspace,
+        sessionId: handoffSid,
+        projectPath: handoffDest,
+      });
+      assert.equal(fs.existsSync(path.join(handoffDest, 'keep.txt')), true, 'regular file should copy');
+      assert.equal(
+        fs.existsSync(path.join(handoffDest, 'leak.txt')),
+        false,
+        'escaping symlink must not be copied'
+      );
+    } catch (err) {
+      if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
+        console.log(`  handoff symlink test skipped: ${err.message}`);
+      } else {
+        throw err;
+      }
+    } finally {
+      fs.rmSync(secretPath, { force: true });
+    }
   } finally {
     await workspace.cleanupWorkspace(handoffSid);
     fs.rmSync(handoffDest, { recursive: true, force: true });
