@@ -343,6 +343,8 @@
             <button
               class="btn"
               type="button"
+              role="tab"
+              :aria-selected="settingsTab === 'general'"
               :class="{ active: settingsTab === 'general' }"
               @click="settingsTab = 'general'"
             >
@@ -351,6 +353,8 @@
             <button
               class="btn"
               type="button"
+              role="tab"
+              :aria-selected="settingsTab === 'routing'"
               :class="{ active: settingsTab === 'routing' }"
               @click="settingsTab = 'routing'"
             >
@@ -359,6 +363,8 @@
             <button
               class="btn"
               type="button"
+              role="tab"
+              :aria-selected="settingsTab === 'agents'"
               :class="{ active: settingsTab === 'agents' }"
               @click="settingsTab = 'agents'; loadBuildAgents()"
             >
@@ -367,6 +373,8 @@
             <button
               class="btn"
               type="button"
+              role="tab"
+              :aria-selected="settingsTab === 'api'"
               :class="{ active: settingsTab === 'api' }"
               @click="settingsTab = 'api'"
             >
@@ -421,13 +429,18 @@
                       x-model="stageModels[stageId].provider"
                       @change="stageModels[stageId].cloudModel = ''"
                       class="route-select"
+                      :aria-label="`Provider for ${cfg.label || stageId} stage`"
                     >
                       <option value="">Follow global</option>
                       <option value="gemini">Gemini</option>
                       <option value="openai">OpenAI-compatible</option>
                     </select>
                     <template x-if="stageModels[stageId].provider === 'gemini'">
-                      <select x-model="stageModels[stageId].cloudModel" class="route-select">
+                      <select
+                        x-model="stageModels[stageId].cloudModel"
+                        class="route-select"
+                        :aria-label="`Model for ${cfg.label || stageId} stage`"
+                      >
                         <template x-for="m in (cloudModels?.gemini?.models || [])" :key="m">
                           <option :value="m" x-text="m"></option>
                         </template>
@@ -438,6 +451,7 @@
                         x-model="stageModels[stageId].cloudModel"
                         placeholder="gpt-5.5, kimi-k2.6..."
                         class="route-input"
+                        :aria-label="`Custom model for ${cfg.label || stageId} stage`"
                       />
                     </template>
                   </div>
@@ -1054,6 +1068,7 @@
                       class="btn btn-ghost"
                       type="button"
                       @click="clearReferoSearch"
+                      aria-label="Clear selected Refero style"
                       style="margin-left: auto; font-size: 11px; padding: 2px 8px"
                     >
                       Clear
@@ -1598,6 +1613,7 @@
                     @focus="!buildAgentsLoaded && loadBuildAgents()"
                     :disabled="busy || buildAgentDetecting"
                     class="route-select"
+                    aria-label="Select build agent"
                   >
                     <template x-for="agent in buildAgents" :key="agent.id">
                       <option
@@ -1917,10 +1933,12 @@
                 to a builder.
               </p>
             </div>
-            <div class="pipeline-tabs">
+            <div class="pipeline-tabs" role="tablist" aria-label="Right panel view options">
               <button
                 class="pipeline-tab"
                 type="button"
+                role="tab"
+                :aria-selected="pipelineView === 'preview'"
                 :class="{ active: pipelineView === 'preview' }"
                 @click="switchPipelineView('preview')"
               >
@@ -1929,6 +1947,8 @@
               <button
                 class="pipeline-tab"
                 type="button"
+                role="tab"
+                :aria-selected="pipelineView === 'log'"
                 :class="{ active: pipelineView === 'log' }"
                 @click="switchPipelineView('log')"
               >
