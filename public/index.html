@@ -339,12 +339,10 @@
             </button>
           </div>
 
-          <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+          <div class="settings-tabs" aria-label="Settings sections">
             <button
               class="btn"
               type="button"
-              role="tab"
-              :aria-selected="settingsTab === 'general'"
               :class="{ active: settingsTab === 'general' }"
               @click="settingsTab = 'general'"
             >
@@ -353,8 +351,6 @@
             <button
               class="btn"
               type="button"
-              role="tab"
-              :aria-selected="settingsTab === 'routing'"
               :class="{ active: settingsTab === 'routing' }"
               @click="settingsTab = 'routing'"
             >
@@ -363,8 +359,6 @@
             <button
               class="btn"
               type="button"
-              role="tab"
-              :aria-selected="settingsTab === 'agents'"
               :class="{ active: settingsTab === 'agents' }"
               @click="settingsTab = 'agents'; loadBuildAgents()"
             >
@@ -373,8 +367,6 @@
             <button
               class="btn"
               type="button"
-              role="tab"
-              :aria-selected="settingsTab === 'api'"
               :class="{ active: settingsTab === 'api' }"
               @click="settingsTab = 'api'"
             >
@@ -1933,12 +1925,10 @@
                 to a builder.
               </p>
             </div>
-            <div class="pipeline-tabs" role="tablist" aria-label="Right panel view options">
+            <div class="pipeline-tabs" aria-label="Right panel view options">
               <button
                 class="pipeline-tab"
                 type="button"
-                role="tab"
-                :aria-selected="pipelineView === 'preview'"
                 :class="{ active: pipelineView === 'preview' }"
                 @click="switchPipelineView('preview')"
               >
@@ -1947,8 +1937,6 @@
               <button
                 class="pipeline-tab"
                 type="button"
-                role="tab"
-                :aria-selected="pipelineView === 'log'"
                 :class="{ active: pipelineView === 'log' }"
                 @click="switchPipelineView('log')"
               >
