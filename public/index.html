@@ -76,11 +76,16 @@
         flex-shrink: 0;
       }
       .pipeline-summary .summary-link {
+        background: transparent;
+        border: none;
+        padding: 0;
+        font: inherit;
         color: #b794f6;
         cursor: pointer;
         text-decoration: underline;
       }
-      .pipeline-summary .summary-link:hover {
+      .pipeline-summary .summary-link:hover,
+      .pipeline-summary .summary-link:focus-visible {
         color: #d9d9dd;
       }
       .pipeline-progress {
@@ -1965,14 +1970,19 @@
             </div>
 
             <!-- Pipeline Summary Bar -->
-            <div class="pipeline-summary" x-show="pipelineComplete && pipelineView === 'log'">
+            <div class="pipeline-summary" x-show="pipelineComplete">
               <span>OK</span>
               <span
                 >Generated in
                 <span x-text="Number(pipelineComplete?.duration || 0).toFixed(1)"></span>s ·
                 <span x-text="pipelineComplete?.steps"></span> steps</span
               >
-              <span class="summary-link" @click="switchPipelineView('log')">[View Log]</span>
+              <button
+                type="button"
+                class="summary-link"
+                @click="switchPipelineView(pipelineView === 'preview' ? 'log' : 'preview')"
+                x-text="pipelineView === 'preview' ? '[View Log]' : '[View Preview]'"
+              ></button>
             </div>
 
             <!-- Pipeline Log Container -->
