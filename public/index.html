@@ -1970,16 +1970,19 @@
             </div>
 
             <!-- Pipeline Summary Bar -->
-            <div class="pipeline-summary" x-show="pipelineComplete && pipelineView === 'log'">
+            <div class="pipeline-summary" x-show="pipelineComplete">
               <span>OK</span>
               <span
                 >Generated in
                 <span x-text="Number(pipelineComplete?.duration || 0).toFixed(1)"></span>s ·
                 <span x-text="pipelineComplete?.steps"></span> steps</span
               >
-              <button type="button" class="summary-link" @click="switchPipelineView('log')">
-                [View Log]
-              </button>
+              <button
+                type="button"
+                class="summary-link"
+                @click="switchPipelineView(pipelineView === 'preview' ? 'log' : 'preview')"
+                x-text="pipelineView === 'preview' ? '[View Log]' : '[View Preview]'"
+              ></button>
             </div>
 
             <!-- Pipeline Log Container -->
