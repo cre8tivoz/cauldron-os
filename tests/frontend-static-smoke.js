@@ -41,6 +41,7 @@ assert.match(
   /pipelineView === 'preview' && previewMode === 'blueprint' && blueprint/,
   'Blueprint preview should be gated to preview mode'
 );
+assert.match(html, /copyBlueprint/, 'Copy blueprint button should exist');
 assert.match(html, /Version history/, 'Blueprint version history controls should exist');
 assert.match(html, /blueprint-diff/, 'Blueprint diff preview mode should be wired');
 assert.match(html, /stageModels/, 'Stage model routing should be configured');
@@ -80,6 +81,7 @@ assert.match(appJs, /pipelineProgress/, 'Pipeline progress state should be wired
 assert.match(appJs, /loadRecentDraft/, 'Latest draft empty-state action should fetch full draft');
 assert.match(appJs, /previousStep >= 0/, 'Pipeline entries should replace same-step rows');
 assert.match(appJs, /\/api\/blueprint-diff/, 'Blueprint diff API should be called');
+assert.match(appJs, /copyBlueprint/, 'copyBlueprint handler should be defined in app.js');
 assert.match(appJs, /blueprintVersions/, 'Blueprint versions should be wired');
 assert.match(
   appJs,

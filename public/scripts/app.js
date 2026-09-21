@@ -47,6 +47,7 @@ function cauldronApp() {
     referoResultsOpen: false,
     selectedReferoStyle: null,
     blueprint: '',
+    copiedBlueprint: false,
     blueprintVersions: [],
     selectedBlueprintVersion: 0,
     blueprintDiff: null,
@@ -1845,6 +1846,29 @@ ${
       a.download = `${this.slug(this.form.projectName || 'cauldron-blueprint')}.md`;
       a.click();
       URL.revokeObjectURL(url);
+    },
+
+    async copyBlueprint() {
+      if (!this.blueprint.trim()) return;
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(this.blueprint);
+        } else {
+          const area = document.createElement('textarea');
+          area.value = this.blueprint;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+        }
+        this.copiedBlueprint = true;
+        this.toast('Blueprint copied', 'Blueprint Markdown copied to clipboard.');
+        setTimeout(() => {
+          this.copiedBlueprint = false;
+        }, 2000);
+      } catch (err) {
+        this.toast('Copy failed', err.message, 'error');
+      }
     },
 
     slug(value) {
