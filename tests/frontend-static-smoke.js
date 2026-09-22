@@ -38,6 +38,16 @@ assert.match(
 );
 assert.match(
   html,
+  /:aria-pressed="tasteInjectionEnabled"/,
+  'Taste injection toggle buttons should use aria-pressed toggle state'
+);
+assert.match(
+  html,
+  /:aria-selected="systemPanelTab === 'local'"/,
+  'Design reference panel tabs should use aria-selected tab state'
+);
+assert.match(
+  html,
   /pipelineView === 'preview' && previewMode === 'blueprint' && blueprint/,
   'Blueprint preview should be gated to preview mode'
 );
