@@ -863,15 +863,15 @@ cauldron-os/
 
 ## 17. Environment Variables
 
-| Variable                         | Default                  | Purpose                         |
-| -------------------------------- | ------------------------ | ------------------------------- |
-| `PORT`                           | `3000`                   | Server listen port              |
-| `CAULDRON_HOST`                  | `127.0.0.1`              | Server listen address           |
-| `CAULDRON_ALLOW_PRIVATE_RESEARCH`| unset                    | Allow RFC1918 research URLs     |
-| `OLLAMA_BASE_URL`                | `http://127.0.0.1:11434` | Ollama API base URL             |
-| `CAULDRON_DATA_DIR`              | `./data`                 | Runtime data directory          |
-| `CAULDRON_CLARIFY_NUM_PREDICT`   | `2048`                   | Max tokens for clarify output   |
-| `CAULDRON_BLUEPRINT_NUM_PREDICT` | `8192`                   | Max tokens for blueprint output |
+| Variable                          | Default                  | Purpose                         |
+| --------------------------------- | ------------------------ | ------------------------------- |
+| `PORT`                            | `3000`                   | Server listen port              |
+| `CAULDRON_HOST`                   | `127.0.0.1`              | Server listen address           |
+| `CAULDRON_ALLOW_PRIVATE_RESEARCH` | unset                    | Allow RFC1918 research URLs     |
+| `OLLAMA_BASE_URL`                 | `http://127.0.0.1:11434` | Ollama API base URL             |
+| `CAULDRON_DATA_DIR`               | `./data`                 | Runtime data directory          |
+| `CAULDRON_CLARIFY_NUM_PREDICT`    | `2048`                   | Max tokens for clarify output   |
+| `CAULDRON_BLUEPRINT_NUM_PREDICT`  | `8192`                   | Max tokens for blueprint output |
 
 ---
 

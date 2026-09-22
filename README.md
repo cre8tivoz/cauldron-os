@@ -237,14 +237,14 @@ cauldron-os/
 
 Copy [`.env.example`](.env.example) for the full list. Cauldron reads these straight from the process environment — it doesn't auto-load a `.env` file yet, so export them (or use your own loader) before `npm start`. The ones you'll actually reach for:
 
-| Variable                     | Default                  | What it does                                         |
-| ---------------------------- | ------------------------ | ---------------------------------------------------- |
-| `PORT`                       | `3000`                   | Port the server listens on (`PORT=4000 npm start`)   |
-| `CAULDRON_HOST`              | `127.0.0.1`              | Network interface to bind — see below                |
-| `CAULDRON_ALLOW_PRIVATE_RESEARCH` | `0`                 | Set to `1` to allow RFC1918 URL research targets     |
-| `OLLAMA_BASE_URL`            | `http://127.0.0.1:11434` | Where Cauldron looks for your local Ollama           |
-| `CAULDRON_DATA_DIR`          | `./data`                 | Where drafts, the local DB, and research assets live |
-| `CAULDRON_COMMUNITY_OFFLINE` | `0`                      | Set to `1` to skip remote community-catalog fetches  |
+| Variable                          | Default                  | What it does                                         |
+| --------------------------------- | ------------------------ | ---------------------------------------------------- |
+| `PORT`                            | `3000`                   | Port the server listens on (`PORT=4000 npm start`)   |
+| `CAULDRON_HOST`                   | `127.0.0.1`              | Network interface to bind — see below                |
+| `CAULDRON_ALLOW_PRIVATE_RESEARCH` | `0`                      | Set to `1` to allow RFC1918 URL research targets     |
+| `OLLAMA_BASE_URL`                 | `http://127.0.0.1:11434` | Where Cauldron looks for your local Ollama           |
+| `CAULDRON_DATA_DIR`               | `./data`                 | Where drafts, the local DB, and research assets live |
+| `CAULDRON_COMMUNITY_OFFLINE`      | `0`                      | Set to `1` to skip remote community-catalog fetches  |
 
 ### Network access
 

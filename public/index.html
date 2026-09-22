@@ -1400,6 +1400,15 @@
                 <button
                   class="btn btn-ghost"
                   type="button"
+                  @click="copyBlueprint"
+                  :disabled="!blueprint.trim()"
+                  :aria-label="copiedBlueprint ? 'Blueprint copied to clipboard' : 'Copy blueprint to clipboard'"
+                >
+                  <span x-text="copiedBlueprint ? '✓ Copied' : 'Copy blueprint'"></span>
+                </button>
+                <button
+                  class="btn btn-ghost"
+                  type="button"
                   @click="saveDraft"
                   :disabled="!blueprint || busy"
                 >
@@ -1861,6 +1870,15 @@
                   :disabled="!blueprint"
                 >
                   Download blueprint.md
+                </button>
+                <button
+                  class="btn btn-ghost"
+                  type="button"
+                  @click="copyBlueprint"
+                  :disabled="!blueprint.trim()"
+                  :aria-label="copiedBlueprint ? 'Blueprint copied to clipboard' : 'Copy blueprint to clipboard'"
+                >
+                  <span x-text="copiedBlueprint ? '✓ Copied' : 'Copy blueprint'"></span>
                 </button>
                 <button
                   class="btn btn-ghost"
