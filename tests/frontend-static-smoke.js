@@ -70,6 +70,21 @@ assert.match(html, /selectedBuildAgentId/, 'Build agent selection state should b
 assert.match(html, /selectedBuildAgentIds/, 'Multi-agent build selection state should be wired');
 assert.match(html, /Run verification/, 'Verification action should be visible');
 assert.match(html, /Include design package/, 'Design package export toggle should be visible');
+assert.match(
+  html,
+  /:title="action\.prompt"/,
+  'Critique quick action buttons should have title tooltip attribute'
+);
+assert.match(
+  html,
+  /:aria-label="`\${action\.label}: \${action\.prompt}`"/,
+  'Critique quick action buttons should have descriptive aria-label'
+);
+assert.match(
+  html,
+  /role="combobox"/,
+  'Refero search input should have combobox role'
+);
 assert.match(html, /Design reference sources/, 'Design reference panel should expose source tabs');
 assert.match(html, /Community\s*</, 'Community design reference tab should exist');
 assert.match(html, /Submit your own via PR/, 'Community contribution link should be visible');

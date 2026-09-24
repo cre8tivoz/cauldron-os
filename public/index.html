@@ -878,6 +878,11 @@
                       @input.debounce.300ms="searchRefero"
                       @focus="referoQuery.trim() && (referoResultsOpen = true)"
                       @blur="setTimeout(() => referoResultsOpen = false, 200)"
+                      @keydown.escape="clearReferoSearch"
+                      role="combobox"
+                      aria-autocomplete="list"
+                      :aria-expanded="referoResultsOpen && referoResults.length > 0"
+                      aria-controls="refero-search-results"
                       placeholder="Search Refero styles by name..."
                       autocomplete="off"
                     />
@@ -899,10 +904,13 @@
 
                   <!-- Refero search results dropdown -->
                   <div
+                    id="refero-search-results"
                     class="refero-dropdown"
                     x-show="referoResultsOpen && referoResults.length > 0"
                     x-transition
                     x-cloak
+                    role="listbox"
+                    aria-label="Refero search results"
                     style="
                       position: absolute;
                       top: 100%;
@@ -921,6 +929,7 @@
                     <template x-for="style in referoResults" :key="style.id">
                       <div
                         class="refero-result-card"
+                        role="option"
                         @mousedown.prevent="selectReferoStyle(style)"
                         style="
                           display: flex;
@@ -1546,6 +1555,8 @@
                       type="button"
                       @click="submitCritique(action.prompt)"
                       :disabled="busy"
+                      :title="action.prompt"
+                      :aria-label="`${action.label}: ${action.prompt}`"
                       x-text="action.label"
                     ></button>
                   </template>
