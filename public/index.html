@@ -349,6 +349,7 @@
               class="btn"
               type="button"
               :class="{ active: settingsTab === 'general' }"
+              :aria-pressed="settingsTab === 'general'"
               @click="settingsTab = 'general'"
             >
               General
@@ -357,6 +358,7 @@
               class="btn"
               type="button"
               :class="{ active: settingsTab === 'routing' }"
+              :aria-pressed="settingsTab === 'routing'"
               @click="settingsTab = 'routing'"
             >
               Stage Routing
@@ -365,6 +367,7 @@
               class="btn"
               type="button"
               :class="{ active: settingsTab === 'agents' }"
+              :aria-pressed="settingsTab === 'agents'"
               @click="settingsTab = 'agents'; loadBuildAgents()"
             >
               Build Agents
@@ -373,6 +376,7 @@
               class="btn"
               type="button"
               :class="{ active: settingsTab === 'api' }"
+              :aria-pressed="settingsTab === 'api'"
               @click="settingsTab = 'api'"
             >
               API keys
@@ -1955,6 +1959,7 @@
                 class="pipeline-tab"
                 type="button"
                 :class="{ active: pipelineView === 'preview' }"
+                :aria-pressed="pipelineView === 'preview'"
                 @click="switchPipelineView('preview')"
               >
                 🔍 Preview
@@ -1963,6 +1968,7 @@
                 class="pipeline-tab"
                 type="button"
                 :class="{ active: pipelineView === 'log' }"
+                :aria-pressed="pipelineView === 'log'"
                 @click="switchPipelineView('log')"
               >
                 📋 Log <span class="badge" x-text="pipelineLog.length || ''"></span>

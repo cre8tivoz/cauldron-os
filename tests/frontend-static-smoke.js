@@ -43,6 +43,16 @@ assert.match(
 );
 assert.match(
   html,
+  /:aria-pressed="settingsTab === 'general'"/,
+  'Settings tab buttons should use aria-pressed toggle state'
+);
+assert.match(
+  html,
+  /:aria-pressed="pipelineView === 'preview'"/,
+  'Pipeline view tab buttons should use aria-pressed toggle state'
+);
+assert.match(
+  html,
   /:aria-selected="systemPanelTab === 'local'"/,
   'Design reference panel tabs should use aria-selected tab state'
 );
