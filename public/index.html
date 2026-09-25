@@ -1352,6 +1352,7 @@
                       type="button"
                       @click="restoreBlueprintVersion()"
                       :disabled="!selectedBlueprintVersionEntry"
+                      :title="!selectedBlueprintVersionEntry ? 'Select a blueprint version to restore' : 'Restore selected blueprint version'"
                     >
                       Restore selected
                     </button>
@@ -1360,6 +1361,7 @@
                       type="button"
                       @click="previewMode = 'blueprint-diff'; pipelineView = 'preview'; refreshBlueprintDiff()"
                       :disabled="blueprintVersions.length < 2"
+                      :title="blueprintVersions.length < 2 ? 'At least 2 blueprint versions are needed to view diff' : 'View line-level diff between versions'"
                     >
                       View diff
                     </button>
@@ -1418,6 +1420,7 @@
                   @click="copyBlueprint"
                   :disabled="!blueprint.trim()"
                   :aria-label="copiedBlueprint ? 'Blueprint copied to clipboard' : 'Copy blueprint to clipboard'"
+                  :title="!blueprint.trim() ? 'Generate a blueprint first to copy' : 'Copy blueprint Markdown to clipboard'"
                 >
                   <span x-text="copiedBlueprint ? '✓ Copied' : 'Copy blueprint'"></span>
                 </button>
@@ -1426,6 +1429,7 @@
                   type="button"
                   @click="saveDraft"
                   :disabled="!blueprint || busy"
+                  :title="!blueprint ? 'Generate a blueprint first to save draft' : busy ? 'Busy processing...' : 'Save draft to local vault'"
                 >
                   Save draft
                 </button>
@@ -1567,6 +1571,7 @@
                     type="button"
                     @click="submitCritique()"
                     :disabled="busy || !prototypeHtml || !critiqueText.trim()"
+                    :title="!prototypeHtml ? 'Generate a prototype first to critique' : !critiqueText.trim() ? 'Enter feedback or select a quick critique first' : busy ? 'Busy processing...' : 'Apply critique to regenerate prototype'"
                   >
                     Apply critique
                   </button>
@@ -1575,6 +1580,7 @@
                     type="button"
                     @click="critiqueText = ''"
                     :disabled="busy || !critiqueText.trim()"
+                    :title="!critiqueText.trim() ? 'No critique text to clear' : 'Clear critique text'"
                   >
                     Clear critique
                   </button>
@@ -1866,6 +1872,7 @@
                   type="button"
                   @click="handoffToOpenCode"
                   :disabled="!blueprint || busy"
+                  :title="!blueprint ? 'Generate a blueprint first to create handoff' : busy ? 'Busy processing...' : 'Create build-agent handoff package'"
                 >
                   Create handoff package
                 </button>
@@ -1874,6 +1881,7 @@
                   type="button"
                   @click="runVerification({ projectPath: handoffResult?.projectPath })"
                   :disabled="verificationBusy || !handoffResult?.projectPath"
+                  :title="!handoffResult?.projectPath ? 'Create a handoff package first to verify' : verificationBusy ? 'Running verification...' : 'Verify exported project files'"
                 >
                   Verify exported project
                 </button>
@@ -1885,6 +1893,7 @@
                   type="button"
                   @click="downloadBlueprint"
                   :disabled="!blueprint"
+                  :title="!blueprint ? 'Generate a blueprint first to download' : 'Download blueprint Markdown file'"
                 >
                   Download blueprint.md
                 </button>
@@ -1894,6 +1903,7 @@
                   @click="copyBlueprint"
                   :disabled="!blueprint.trim()"
                   :aria-label="copiedBlueprint ? 'Blueprint copied to clipboard' : 'Copy blueprint to clipboard'"
+                  :title="!blueprint.trim() ? 'Generate a blueprint first to copy' : 'Copy blueprint Markdown to clipboard'"
                 >
                   <span x-text="copiedBlueprint ? '✓ Copied' : 'Copy blueprint'"></span>
                 </button>
@@ -1902,6 +1912,7 @@
                   type="button"
                   @click="saveDraft"
                   :disabled="!blueprint || busy"
+                  :title="!blueprint ? 'Generate a blueprint first to save draft' : busy ? 'Busy processing...' : 'Save draft to local vault'"
                 >
                   Save draft
                 </button>
