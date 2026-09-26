@@ -740,15 +740,23 @@
                   </select>
                 </div>
                 <div class="field full">
-                  <label for="brainDump">Brain dump</label>
+                  <div class="field-header">
+                    <label for="brainDump">Brain dump</label>
+                    <span
+                      class="word-count"
+                      x-text="`${(form.brainDump || '').trim() ? (form.brainDump || '').trim().split(/\s+/).length : 0} words`"
+                    ></span>
+                  </div>
                   <textarea
                     id="brainDump"
                     x-model="form.brainDump"
+                    @keydown.cmd.enter.prevent="runInterrogate"
+                    @keydown.ctrl.enter.prevent="runInterrogate"
                     placeholder="Describe the vibe, audience, pages, interactions, references, anti-references, and what done looks like."
                   ></textarea>
                   <small
                     >This should feel like a creative director's messy notebook, not a startup pitch
-                    deck.</small
+                    deck. Press <kbd>Cmd/Ctrl+Enter</kbd> to interrogate.</small
                   >
                 </div>
               </div>
@@ -758,7 +766,8 @@
                   class="btn btn-primary"
                   type="button"
                   @click="runInterrogate"
-                  :disabled="busy"
+                  :disabled="busy || !(form.brainDump || '').trim()"
+                  :title="!(form.brainDump || '').trim() ? 'Write a brain dump first to interrogate' : busy ? 'Busy processing...' : 'Interrogate brief (Cmd/Ctrl+Enter)'"
                 >
                   Interrogate brief
                 </button>
@@ -766,7 +775,8 @@
                   class="btn btn-purple"
                   type="button"
                   @click="goToTasteEngine"
-                  :disabled="busy"
+                  :disabled="busy || !(form.brainDump || '').trim()"
+                  :title="!(form.brainDump || '').trim() ? 'Write a brain dump first to continue' : busy ? 'Busy processing...' : 'Skip interrogation and go to taste engine'"
                 >
                   Skip to taste engine
                 </button>
@@ -1221,7 +1231,13 @@
               </div>
 
               <div class="button-row" x-show="systemPanelTab === 'local'">
-                <button class="btn btn-purple" type="button" @click="runResearch" :disabled="busy">
+                <button
+                  class="btn btn-purple"
+                  type="button"
+                  @click="runResearch"
+                  :disabled="busy || !(form.referenceUrl || '').trim()"
+                  :title="!(form.referenceUrl || '').trim() ? 'Enter a reference URL first to research' : busy ? 'Busy processing...' : 'Research visual DNA from reference URL'"
+                >
                   Research URL
                 </button>
                 <button class="btn btn-primary" type="button" @click="setStage('blueprint')">
