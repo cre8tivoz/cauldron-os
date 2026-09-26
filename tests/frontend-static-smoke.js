@@ -80,11 +80,7 @@ assert.match(
   /:aria-label="`\${action\.label}: \${action\.prompt}`"/,
   'Critique quick action buttons should have descriptive aria-label'
 );
-assert.match(
-  html,
-  /role="combobox"/,
-  'Refero search input should have combobox role'
-);
+assert.match(html, /role="combobox"/, 'Refero search input should have combobox role');
 assert.match(html, /Design reference sources/, 'Design reference panel should expose source tabs');
 assert.match(html, /Community\s*</, 'Community design reference tab should exist');
 assert.match(html, /Submit your own via PR/, 'Community contribution link should be visible');
