@@ -107,6 +107,17 @@ async function jsonRequest(pathname, options = {}) {
       assert.equal(deleted.success, true, 'symlink delete should succeed');
       assert.equal(fs.existsSync(aliasPath), false, 'symlink should be removed');
       assert.equal(fs.readFileSync(targetPath, 'utf8'), 'safe', 'symlink target must remain');
+
+      // Test escaping symlink write protection
+      const outsideFile = path.join(tempDir, 'outside.txt');
+      fs.writeFileSync(outsideFile, 'secret', 'utf8');
+      const escapingSymlink = path.join(wsDir, 'escape-link.txt');
+      fs.symlinkSync(outsideFile, escapingSymlink);
+      await assert.rejects(
+        () => workspace.wsWriteFile(sid, 'escape-link.txt', 'pwned'),
+        /Symlink target outside workspace/
+      );
+      assert.equal(fs.readFileSync(outsideFile, 'utf8'), 'secret', 'outside file must remain unmodified');
     } catch (err) {
       if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
         console.log(`  symlink delete test skipped: ${err.message}`);
