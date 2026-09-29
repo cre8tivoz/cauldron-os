@@ -53,6 +53,16 @@ assert.match(
 );
 assert.match(
   html,
+  /aria-controls="settingsApiKey"/,
+  'API key toggle button should associate with input via aria-controls'
+);
+assert.match(
+  html,
+  /:aria-label="apiKeyVisible \? 'Hide API key' : 'Show API key'"/,
+  'API key toggle button should have accessible aria-label'
+);
+assert.match(
+  html,
   /:aria-selected="systemPanelTab === 'local'"/,
   'Design reference panel tabs should use aria-selected tab state'
 );
