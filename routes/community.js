@@ -40,6 +40,8 @@ function registerCommunityRoutes(app, deps) {
           origin: system.origin,
         };
         designSystemCache.delete(system.id);
+        const { invalidateDesignSystemCatalogCache } = require('../lib/design-system-catalog');
+        invalidateDesignSystemCatalogCache();
         return res.json({
           success: true,
           type,
