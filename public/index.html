@@ -610,6 +610,10 @@
                     class="btn btn-ghost"
                     type="button"
                     @click="apiKeyVisible = !apiKeyVisible"
+                    aria-controls="settingsApiKey"
+                    :aria-label="apiKeyVisible ? 'Hide API key' : 'Show API key'"
+                    :aria-pressed="apiKeyVisible"
+                    :title="apiKeyVisible ? 'Hide API key' : 'Show API key'"
                     x-text="apiKeyVisible ? 'Hide' : 'Show'"
                   ></button>
                 </div>
@@ -1998,18 +2002,23 @@
                 type="button"
                 :class="{ active: pipelineView === 'preview' }"
                 :aria-pressed="pipelineView === 'preview'"
+                aria-label="Preview output"
+                title="View preview output"
                 @click="switchPipelineView('preview')"
               >
-                🔍 Preview
+                <span aria-hidden="true">🔍 </span>Preview
               </button>
               <button
                 class="pipeline-tab"
                 type="button"
                 :class="{ active: pipelineView === 'log' }"
                 :aria-pressed="pipelineView === 'log'"
+                :aria-label="`Activity log, ${pipelineLog.length || 0} entries`"
+                :title="`View activity log (${pipelineLog.length || 0} entries)`"
                 @click="switchPipelineView('log')"
               >
-                📋 Log <span class="badge" x-text="pipelineLog.length || ''"></span>
+                <span aria-hidden="true">📋 </span>Log
+                <span class="badge" x-text="pipelineLog.length || ''" aria-hidden="true"></span>
               </button>
             </div>
           </div>
