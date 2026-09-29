@@ -21,3 +21,9 @@
 **Learning:** `wsEditFile` in `lib/workspace.js` executed `content.includes(oldStr)`, dynamic `new RegExp(escapeRegex(oldStr), 'g')` compilation, `content.match(...)` match array creation, and `content.split(oldStr).join(newStr)` when in `replaceAll` mode. Splitting directly by `oldStr` yields the replacement parts in a single pass where `parts.length - 1` is the occurrence count, eliminating dynamic regex compilation and 3 redundant string/array scans (~35% speedup). Additionally, single-replacement mode used `indexOf` + `replace`, causing a second linear scan; string slicing around the known index (`slice(0, idx) + newStr + slice(idx + oldStr.length)`) eliminates the second scan. Moving static tool arg normalization structures in `lib/tools.js` to module top-level scope prevents object/array/Set allocations on every tool execution call.
 
 **Action:** For string replacement with known replacement boundaries or global literal replacements, prefer single-pass `split` or index-based `slice` over multi-pass `replace` / dynamic `RegExp` matching. Hoist static helper maps/sets to module scope.
+
+## 2026-06-04 - Design System Discovery Disk Scanning Bottleneck
+
+**Learning:** `discoverLocalDesignSystems` and `discoverCommunityDesignSystems` in `lib/design-system-catalog.js` previously performed synchronous filesystem directory traversals (`fs.readdirSync`, `fs.existsSync`, `fs.readFileSync`) over 150+ design system folders on every call to `createDesignSystems`. Module-level memoization (`cachedLocalDesignSystems` and `cachedCommunityDesignSystems`) keyed on root directory and catalog path avoids 150+ synchronous disk reads per request, eliminating disk I/O on repeated calls.
+
+**Action:** Cache static or slowly-changing catalog discovery results in module-level variables and expose explicit invalidation functions (e.g. `invalidateDesignSystemCatalogCache`) when dynamic imports occur.
