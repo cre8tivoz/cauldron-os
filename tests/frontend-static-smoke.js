@@ -91,6 +91,21 @@ assert.match(
   'Critique quick action buttons should have descriptive aria-label'
 );
 assert.match(html, /role="combobox"/, 'Refero search input should have combobox role');
+assert.match(
+  html,
+  /handleReferoKeydown/,
+  'Refero search input should handle keyboard navigation events'
+);
+assert.match(
+  html,
+  /:aria-activedescendant="referoFocusedIndex >= 0/,
+  'Refero search input should set aria-activedescendant dynamically'
+);
+assert.match(
+  html,
+  /:aria-selected="referoFocusedIndex === index"/,
+  'Refero dropdown option should set aria-selected dynamically'
+);
 assert.match(html, /Design reference sources/, 'Design reference panel should expose source tabs');
 assert.match(html, /Community\s*</, 'Community design reference tab should exist');
 assert.match(html, /Submit your own via PR/, 'Community contribution link should be visible');
