@@ -61,18 +61,23 @@ function registerProjectsRoutes(app, deps) {
 
       if (dryRun) return res.json({ success: true, dryRun: true, project: safe, command, logPath });
 
-      const outFd = fs.openSync(logPath, 'a');
-      fs.appendFileSync(
-        logPath,
-        `\n\n=== Resume launched ${new Date().toISOString()} ===\n${command}\n\n`
-      );
-      const child = spawn('opencode', opencodeArgs, {
-        cwd: projectPath,
-        detached: true,
-        stdio: ['ignore', outFd, outFd],
-      });
-      child.unref();
-      res.json({ success: true, dryRun: false, project: safe, pid: child.pid, command, logPath });
+      let outFd = null;
+      try {
+        outFd = fs.openSync(logPath, 'a');
+        fs.appendFileSync(
+          outFd,
+          `\n\n=== Resume launched ${new Date().toISOString()} ===\n${command}\n\n`
+        );
+        const child = spawn('opencode', opencodeArgs, {
+          cwd: projectPath,
+          detached: true,
+          stdio: ['ignore', outFd, outFd],
+        });
+        child.unref();
+        res.json({ success: true, dryRun: false, project: safe, pid: child.pid, command, logPath });
+      } finally {
+        if (outFd !== null) fs.closeSync(outFd);
+      }
     } catch (err) {
       console.error('[Cauldron] Resume build error:', err);
       res.status(500).json({ success: false, error: 'Resume build failed', details: err.message });
