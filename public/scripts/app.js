@@ -28,6 +28,7 @@ function cauldronApp() {
     apiKeyVisible: false,
     settingsOpen: false,
     settingsTab: 'general',
+    settingsTriggerElement: null,
     pendingStageAfterKey: '',
     pendingActionAfterKey: '',
     savedKeyVersion: 0,
@@ -511,6 +512,9 @@ function cauldronApp() {
     },
 
     openSettings(tab = 'general') {
+      if (!this.settingsOpen) {
+        this.settingsTriggerElement = document.activeElement;
+      }
       this.settingsTab = tab;
       this.settingsOpen = true;
       this.$nextTick(() => {
@@ -529,6 +533,10 @@ function cauldronApp() {
 
     closeSettings() {
       this.settingsOpen = false;
+      if (this.settingsTriggerElement && typeof this.settingsTriggerElement.focus === 'function') {
+        this.settingsTriggerElement.focus();
+      }
+      this.settingsTriggerElement = null;
     },
 
     async testApiKey() {
