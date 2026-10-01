@@ -825,6 +825,7 @@ function cauldronApp() {
     handleReferoKeydown(event) {
       if (!this.referoResultsOpen || !this.referoResults.length) {
         if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && this.referoQuery.trim()) {
+          event.preventDefault();
           this.searchRefero();
         }
         return;
