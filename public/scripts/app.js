@@ -886,31 +886,6 @@ function cauldronApp() {
       this.selectedReferoStyle = null;
     },
 
-    async runResearch() {
-      if (!this.form.referenceUrl.trim()) {
-        this.toast('No URL', 'Give me a reference URL first.', 'error');
-        return;
-      }
-      await this.withBusy('Researching visual DNA...', async () => {
-        const data = await this.api('/api/research-url', {
-          method: 'POST',
-          body: JSON.stringify({
-            url: this.form.referenceUrl.trim(),
-            projectName: this.form.projectName,
-            brainDump: this.form.brainDump,
-            mode: this.form.researchMode,
-          }),
-        });
-        this.researchResult = data;
-        this.status = 'Reference research captured.';
-        this.toast(
-          'Research captured',
-          'Design signals are now feeding the prompt. Delicious theft, legally styled.'
-        );
-        this.setStage('system');
-      });
-    },
-
     async runInterrogate() {
       if (!this.form.brainDump.trim()) {
         this.toast('Empty cauldron', 'Write a brain dump first.', 'error');
