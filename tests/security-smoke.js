@@ -117,7 +117,11 @@ async function jsonRequest(pathname, options = {}) {
         () => workspace.wsWriteFile(sid, 'escape-link.txt', 'pwned'),
         /Symlink target outside workspace/
       );
-      assert.equal(fs.readFileSync(outsideFile, 'utf8'), 'secret', 'outside file must remain unmodified');
+      assert.equal(
+        fs.readFileSync(outsideFile, 'utf8'),
+        'secret',
+        'outside file must remain unmodified'
+      );
     } catch (err) {
       if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
         console.log(`  symlink delete test skipped: ${err.message}`);

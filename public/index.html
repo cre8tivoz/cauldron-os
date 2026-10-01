@@ -892,11 +892,12 @@
                       @input.debounce.300ms="searchRefero"
                       @focus="referoQuery.trim() && (referoResultsOpen = true)"
                       @blur="setTimeout(() => referoResultsOpen = false, 200)"
-                      @keydown.escape="clearReferoSearch"
+                      @keydown="handleReferoKeydown"
                       role="combobox"
                       aria-autocomplete="list"
                       :aria-expanded="referoResultsOpen && referoResults.length > 0"
                       aria-controls="refero-search-results"
+                      :aria-activedescendant="referoFocusedIndex >= 0 && referoResults[referoFocusedIndex] ? 'refero-option-' + referoResults[referoFocusedIndex].id : null"
                       placeholder="Search Refero styles by name..."
                       autocomplete="off"
                     />
@@ -940,11 +941,15 @@
                       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
                     "
                   >
-                    <template x-for="style in referoResults" :key="style.id">
+                    <template x-for="(style, index) in referoResults" :key="style.id">
                       <div
                         class="refero-result-card"
+                        :class="{ 'is-focused': referoFocusedIndex === index }"
+                        :id="'refero-option-' + style.id"
                         role="option"
+                        :aria-selected="referoFocusedIndex === index"
                         @mousedown.prevent="selectReferoStyle(style)"
+                        @mouseenter="referoFocusedIndex = index"
                         style="
                           display: flex;
                           align-items: center;
@@ -954,6 +959,7 @@
                           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                           transition: background 0.15s;
                         "
+                        :style="referoFocusedIndex === index ? 'background: rgba(183, 148, 246, 0.18);' : ''"
                       >
                         <img
                           x-show="style.thumbnailUrl"

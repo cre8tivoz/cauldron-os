@@ -45,6 +45,7 @@ function cauldronApp() {
     referoResults: [],
     referoSearching: false,
     referoResultsOpen: false,
+    referoFocusedIndex: -1,
     selectedReferoStyle: null,
     blueprint: '',
     copiedBlueprint: false,
@@ -804,10 +805,12 @@ function cauldronApp() {
       if (!query) {
         this.referoResults = [];
         this.referoResultsOpen = false;
+        this.referoFocusedIndex = -1;
         return;
       }
       this.referoSearching = true;
       this.referoResultsOpen = true;
+      this.referoFocusedIndex = -1;
       try {
         const data = await this.api(`/api/refero-search?q=${encodeURIComponent(query)}`);
         this.referoResults = data.results || [];
@@ -819,11 +822,60 @@ function cauldronApp() {
       }
     },
 
+    handleReferoKeydown(event) {
+      if (!this.referoResultsOpen || !this.referoResults.length) {
+        if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && this.referoQuery.trim()) {
+          event.preventDefault();
+          this.searchRefero();
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.referoFocusedIndex = (this.referoFocusedIndex + 1) % this.referoResults.length;
+        this.scrollReferoOptionIntoView();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.referoFocusedIndex =
+          (this.referoFocusedIndex - 1 + this.referoResults.length) % this.referoResults.length;
+        this.scrollReferoOptionIntoView();
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        this.referoFocusedIndex = 0;
+        this.scrollReferoOptionIntoView();
+      } else if (event.key === 'End') {
+        event.preventDefault();
+        this.referoFocusedIndex = this.referoResults.length - 1;
+        this.scrollReferoOptionIntoView();
+      } else if (event.key === 'Enter') {
+        if (this.referoFocusedIndex >= 0 && this.referoFocusedIndex < this.referoResults.length) {
+          event.preventDefault();
+          this.selectReferoStyle(this.referoResults[this.referoFocusedIndex]);
+        }
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.referoResultsOpen = false;
+        this.referoFocusedIndex = -1;
+      }
+    },
+
+    scrollReferoOptionIntoView() {
+      if (this.referoFocusedIndex < 0) return;
+      this.$nextTick(() => {
+        const option = document.getElementById(
+          `refero-option-${this.referoResults[this.referoFocusedIndex]?.id}`
+        );
+        option?.scrollIntoView?.({ block: 'nearest' });
+      });
+    },
+
     selectReferoStyle(style) {
       this.selectedReferoStyle = style;
       this.form.designReference = style.siteName;
       this.referoQuery = style.siteName;
       this.referoResultsOpen = false;
+      this.referoFocusedIndex = -1;
       this.toast('Refero style selected', `${style.siteName} set as design reference.`);
     },
 
@@ -831,32 +883,8 @@ function cauldronApp() {
       this.referoQuery = '';
       this.referoResults = [];
       this.referoResultsOpen = false;
+      this.referoFocusedIndex = -1;
       this.selectedReferoStyle = null;
-    },
-
-    async runResearch() {
-      if (!this.form.referenceUrl.trim()) {
-        this.toast('No URL', 'Give me a reference URL first.', 'error');
-        return;
-      }
-      await this.withBusy('Researching visual DNA...', async () => {
-        const data = await this.api('/api/research-url', {
-          method: 'POST',
-          body: JSON.stringify({
-            url: this.form.referenceUrl.trim(),
-            projectName: this.form.projectName,
-            brainDump: this.form.brainDump,
-            mode: this.form.researchMode,
-          }),
-        });
-        this.researchResult = data;
-        this.status = 'Reference research captured.';
-        this.toast(
-          'Research captured',
-          'Design signals are now feeding the prompt. Delicious theft, legally styled.'
-        );
-        this.setStage('system');
-      });
     },
 
     async runInterrogate() {
