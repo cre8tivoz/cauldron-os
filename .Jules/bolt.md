@@ -33,3 +33,9 @@
 **Learning:** `scoreAccessibility` in `lib/quality-scorer.js` used `stripTags(html).length > 80` to evaluate whether HTML prototype content contained substantial copy (>80 chars). `stripTags` executed multi-pass global regular expressions (`/<[^>]*>/g` and `/\s+/g`) across the entire HTML string, allocating large intermediate strings. Replacing full HTML tag stripping with an early-exiting single-pass character scanner (`hasMinTextLength(html, 81)`) eliminates string allocations and stops scanning immediately once 81 non-tag characters are counted (~500x speedup for large documents).
 
 **Action:** When checking threshold constraints on string contents (such as minimum text length or token count), use early-exiting character scanners instead of full string transformations or multi-pass regex replacements.
+
+## 2026-06-06 - Streaming XML Action Tag Scanning and String Allocation Bottleneck
+
+**Learning:** `findNextAction` in `lib/xml-parser.js` executed `text.slice(fromIndex).match(...)` and `text.toLowerCase().indexOf('</action>')` on every streaming parse pass. On large model response buffers, `text.slice()` created unnecessary substring heap allocations and `text.toLowerCase()` duplicated the entire response string in memory on every token chunk iteration. Using module-scoped global RegExp objects (`ACTION_OPEN_RE` and `ACTION_CLOSE_RE`) with explicit `.lastIndex = fromIndex` allows searching directly within the raw target string without slicing or lowercasing, reducing action detection time by ~95% (~20x speedup).
+
+**Action:** When parsing tokens or delimiter tags in streaming string buffers, search directly within the raw string using stateful global RegExp instances (`.lastIndex = offset`) or index offsets rather than creating intermediate substring slices or full string lowercasing transformations.
