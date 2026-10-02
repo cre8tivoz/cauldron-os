@@ -18,6 +18,7 @@ const {
 } = require('../lib/url-safety');
 const { normaliseOpenAICompatibleChatUrl } = require('../lib/model-client');
 const workspace = require('../lib/workspace');
+const { createHandoffPackage } = require('../lib/handoff-package');
 const { stopProcess } = require('./_process-cleanup');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -122,9 +123,36 @@ async function jsonRequest(pathname, options = {}) {
         'secret',
         'outside file must remain unmodified'
       );
+
+      // Test handoff package excludes symlinks pointing outside workspace
+      const handoffProjectDir = path.join(tempDir, 'handoff-symlink-test');
+      const handoffRes = await createHandoffPackage({
+        projectPath: handoffProjectDir,
+        projectName: 'handoff-symlink-test',
+        safeName: 'handoff-symlink-test',
+        cauldronVersion: '0.50.0',
+        sessionId: sid,
+        workspace,
+      });
+
+      assert.equal(
+        fs.existsSync(path.join(handoffProjectDir, 'nested', 'ok.txt')),
+        true,
+        'safe workspace file must be copied to handoff'
+      );
+      assert.equal(
+        fs.existsSync(path.join(handoffProjectDir, 'escape-link.txt')),
+        false,
+        'escaping symlink must not be copied to handoff'
+      );
+      assert.equal(
+        handoffRes.manifest.copiedWorkspaceFiles.includes('escape-link.txt'),
+        false,
+        'escaping symlink must not be listed in copiedWorkspaceFiles'
+      );
     } catch (err) {
       if (err.code === 'EPERM' || /symlink/i.test(err.message)) {
-        console.log(`  symlink delete test skipped: ${err.message}`);
+        console.log(`  symlink test skipped: ${err.message}`);
       } else {
         throw err;
       }
