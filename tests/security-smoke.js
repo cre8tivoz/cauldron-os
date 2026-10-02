@@ -207,6 +207,18 @@ async function jsonRequest(pathname, options = {}) {
     /http or https/
   );
   assert.throws(() => normaliseOpenAICompatibleChatUrl('file:///tmp'), /http or https/);
+  assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://user:pass@example.com/v1'),
+    /credentials/
+  );
+  assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'),
+    /not allowed/
+  );
+  assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://metadata.google.internal/v1'),
+    /not allowed/
+  );
   console.log('  ✓ research and model URL guards');
 
   const child = spawn(process.execPath, ['server.js'], {
