@@ -128,6 +128,7 @@ assert.match(appJs, /\/api\/build-agents\/run/, 'Build agent run API should be c
 assert.match(appJs, /toggleBuildAgent/, 'Multi-agent toggle handler should be wired');
 assert.match(appJs, /agentIds/, 'Build agent run should send multiple selected agent ids');
 assert.match(appJs, /submitCritique/, 'Critique submit handler should be wired');
+assert.match(appJs, /settingsTriggerElement/, 'Settings modal focus restoration element state should exist');
 assert.match(appJs, /prototypeQuality/, 'Prototype quality score state should be wired');
 assert.match(appJs, /qualitySuggestions/, 'Prototype quality suggestions should be wired');
 assert.match(appJs, /prototypeIterations/, 'Prototype iteration state should be wired');
