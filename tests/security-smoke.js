@@ -211,10 +211,7 @@ async function jsonRequest(pathname, options = {}) {
     () => normaliseOpenAICompatibleChatUrl('http://user:pass@example.com/v1'),
     /credentials/
   );
-  assert.throws(
-    () => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'),
-    /not allowed/
-  );
+  assert.throws(() => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'), /not allowed/);
   assert.throws(
     () => normaliseOpenAICompatibleChatUrl('http://metadata.google.internal/v1'),
     /not allowed/
@@ -280,6 +277,22 @@ async function jsonRequest(pathname, options = {}) {
       body: JSON.stringify({ url: 'http://192.168.0.1/' }),
     });
     assert.equal(privateNet.res.status, 400, 'private research URL should be rejected');
+
+    const invalidBaseUrlBuild = await jsonRequest('/api/build/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        prompt: 'test',
+        model: 'openai',
+        apiKey: 'sk-test',
+        sessionId: 'security-http-session',
+        baseUrl: 'http://169.254.169.254/v1',
+      }),
+    });
+    assert.match(
+      invalidBaseUrlBuild.text,
+      /Model base URL host is not allowed/,
+      'build/generate must reject metadata baseUrl'
+    );
 
     console.log('Security smoke tests passed');
   } catch (err) {
