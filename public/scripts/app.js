@@ -645,6 +645,18 @@ function cauldronApp() {
     },
 
     newWorkspace() {
+      const hasContent =
+        Boolean((this.form.brainDump || '').trim()) ||
+        Boolean((this.blueprint || '').trim()) ||
+        Boolean((this.prototypeHtml || '').trim());
+      if (
+        hasContent &&
+        !window.confirm(
+          'Start a new workspace? Unsaved changes in the current brief or blueprint will be cleared.'
+        )
+      ) {
+        return;
+      }
       this.activeStage = 'dump';
       this.answers = {};
       this.savedDraftId = null;

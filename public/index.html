@@ -219,7 +219,14 @@
           </div>
           <div class="brand-title">
             <nav class="eyebrow-menu" aria-label="Application menu">
-              <button type="button" class="menu-item" @click="newWorkspace">File</button>
+              <button
+                type="button"
+                class="menu-item"
+                @click="newWorkspace"
+                title="Start a new workspace"
+              >
+                New workspace
+              </button>
               <button type="button" class="menu-item" @click="openSettings('general')">
                 Settings
               </button>

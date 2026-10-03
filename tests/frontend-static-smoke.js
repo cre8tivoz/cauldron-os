@@ -128,7 +128,11 @@ assert.match(appJs, /\/api\/build-agents\/run/, 'Build agent run API should be c
 assert.match(appJs, /toggleBuildAgent/, 'Multi-agent toggle handler should be wired');
 assert.match(appJs, /agentIds/, 'Build agent run should send multiple selected agent ids');
 assert.match(appJs, /submitCritique/, 'Critique submit handler should be wired');
-assert.match(appJs, /settingsTriggerElement/, 'Settings modal focus restoration element state should exist');
+assert.match(
+  appJs,
+  /settingsTriggerElement/,
+  'Settings modal focus restoration element state should exist'
+);
 assert.match(appJs, /prototypeQuality/, 'Prototype quality score state should be wired');
 assert.match(appJs, /qualitySuggestions/, 'Prototype quality suggestions should be wired');
 assert.match(appJs, /prototypeIterations/, 'Prototype iteration state should be wired');
@@ -139,6 +143,12 @@ assert.match(appJs, /loadRecentDraft/, 'Latest draft empty-state action should f
 assert.match(appJs, /previousStep >= 0/, 'Pipeline entries should replace same-step rows');
 assert.match(appJs, /\/api\/blueprint-diff/, 'Blueprint diff API should be called');
 assert.match(appJs, /copyBlueprint/, 'copyBlueprint handler should be defined in app.js');
+assert.match(appJs, /window\.confirm/, 'newWorkspace should confirm before clearing unsaved work');
+assert.match(
+  html,
+  /title="Start a new workspace"/,
+  'New workspace menu button should have descriptive title tooltip'
+);
 assert.match(appJs, /blueprintVersions/, 'Blueprint versions should be wired');
 assert.match(
   appJs,
