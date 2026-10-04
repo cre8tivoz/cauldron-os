@@ -58,6 +58,21 @@ assert.match(
 );
 assert.match(
   html,
+  /aria-describedby="settingsApiKeyHint"/,
+  'API key input should reference hint text via aria-describedby'
+);
+assert.match(
+  html,
+  /aria-describedby="brainDumpHint"/,
+  'Brain dump input should reference hint text via aria-describedby'
+);
+assert.match(
+  html,
+  /aria-describedby="referoSearchHint"/,
+  'Refero search input should reference hint text via aria-describedby'
+);
+assert.match(
+  html,
   /:aria-label="apiKeyVisible \? 'Hide API key' : 'Show API key'"/,
   'API key toggle button should have accessible aria-label'
 );
