@@ -21,9 +21,11 @@ function registerProxyRoutes(app, deps) {
         messages = [],
         temperature = 0.55,
         stream = false,
-        base_url: baseUrl = '',
+        baseUrl = '',
+        base_url = '',
         provider: explicitProvider = '',
       } = req.body || {};
+      const effectiveBaseUrl = baseUrl || base_url || '';
       if (!model) return res.status(400).json({ error: { message: 'model is required' } });
       if (!Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: { message: 'messages array is required' } });
@@ -43,7 +45,7 @@ function registerProxyRoutes(app, deps) {
       let targetUrl;
       try {
         targetUrl =
-          provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
+          provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(effectiveBaseUrl);
       } catch (err) {
         return res.status(400).json({ error: { message: err.message } });
       }

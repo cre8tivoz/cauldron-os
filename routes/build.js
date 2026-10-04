@@ -107,7 +107,10 @@ function registerBuildRoutes(app, deps) {
       cloudModel,
       verify = false,
       templateId = '',
+      baseUrl = '',
+      base_url = '',
     } = req.body;
+    const effectiveBaseUrl = baseUrl || base_url || '';
     let sid;
     try {
       sid = requireRequestSessionId(sessionId);
@@ -156,6 +159,7 @@ function registerBuildRoutes(app, deps) {
           onToken: (text) => sendEvent('token', { text }),
           signal: controller.signal,
           cloudModel,
+          baseUrl: effectiveBaseUrl,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
@@ -181,6 +185,7 @@ function registerBuildRoutes(app, deps) {
           model,
           systemPrompt: sysPrompt,
           sessionId: sid,
+          baseUrl: effectiveBaseUrl || undefined,
           onStream: (chunk) => {
             if (chunk && chunk.token) sendEvent('token', { text: chunk.token });
           },
@@ -277,7 +282,10 @@ function registerBuildRoutes(app, deps) {
       cloudModel,
       verify = false,
       templateId = '',
+      baseUrl = '',
+      base_url = '',
     } = req.body;
+    const effectiveBaseUrl = baseUrl || base_url || '';
     let sid;
     try {
       sid = requireRequestSessionId(sessionId);
@@ -326,6 +334,7 @@ function registerBuildRoutes(app, deps) {
           onToken: (text) => sendEvent('token', { text }),
           signal: controller.signal,
           cloudModel,
+          baseUrl: effectiveBaseUrl,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
@@ -351,6 +360,7 @@ function registerBuildRoutes(app, deps) {
           model: model || 'llama3.2',
           systemPrompt: sysPrompt,
           sessionId: sid,
+          baseUrl: effectiveBaseUrl || undefined,
           onStream: (chunk) => {
             if (chunk && chunk.token) sendEvent('token', { text: chunk.token });
           },

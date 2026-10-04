@@ -144,7 +144,7 @@ Draft saves accept optional `blueprintVersions`, `prototypeHtml`, and `prototype
 
 The BYOK/CLI work should treat this as an existing local-agent path, not assume the build stage is empty.
 
-`/api/build/generate` and `/api/build/refine` are wired and covered by `tests/build-generate-smoke.js`. When callers pass `verify: true`, these SSE routes may emit a `verification` event before `done`. Build-session status payloads now expose `status.verification`.
+`/api/build/generate` and `/api/build/refine` are wired and covered by `tests/build-generate-smoke.js`. Request payloads accept `{ prompt, sessionId, systemPrompt?, model?, apiKey?, cloudModel?, verify?, templateId?, baseUrl?, base_url? }`. When configuring custom OpenAI-compatible endpoints or self-hosted models, both `baseUrl` (camelCase) and `base_url` (snake_case) are accepted in request bodies across build SSE and chat completion proxy endpoints, with `baseUrl` taking precedence if both spellings are supplied. When callers pass `verify: true`, these SSE routes may emit a `verification` event before `done`. Build-session status payloads now expose `status.verification`.
 
 ### Models And Design Systems
 
