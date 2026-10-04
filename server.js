@@ -410,10 +410,11 @@ async function _runCloudAgentBuild({
   onToken,
   signal,
   cloudModel,
+  baseUrl = '',
 }) {
   const MAX_ROUNDS = 40;
   const provider = model;
-  const url = provider === 'gemini' ? GEMINI_BASE_URL : OPENAI_BASE_URL;
+  const url = provider === 'gemini' ? GEMINI_BASE_URL : normaliseOpenAICompatibleChatUrl(baseUrl);
   const modelName = getCloudModelName(provider, 'app', cloudModel || '');
 
   const messages = [

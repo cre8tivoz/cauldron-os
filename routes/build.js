@@ -105,6 +105,8 @@ function registerBuildRoutes(app, deps) {
       systemPrompt,
       apiKey,
       cloudModel,
+      baseUrl,
+      base_url,
       verify = false,
       templateId = '',
     } = req.body;
@@ -156,6 +158,7 @@ function registerBuildRoutes(app, deps) {
           onToken: (text) => sendEvent('token', { text }),
           signal: controller.signal,
           cloudModel,
+          baseUrl: baseUrl || base_url,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
@@ -275,6 +278,8 @@ function registerBuildRoutes(app, deps) {
       model,
       apiKey,
       cloudModel,
+      baseUrl,
+      base_url,
       verify = false,
       templateId = '',
     } = req.body;
@@ -326,6 +331,7 @@ function registerBuildRoutes(app, deps) {
           onToken: (text) => sendEvent('token', { text }),
           signal: controller.signal,
           cloudModel,
+          baseUrl: baseUrl || base_url,
         });
         finalFiles = result.files || [];
         finalActions = result.actions || [];
