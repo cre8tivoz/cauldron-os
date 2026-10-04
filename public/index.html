@@ -612,6 +612,7 @@
                     placeholder="Paste selected provider key"
                     autocomplete="off"
                     spellcheck="false"
+                    aria-describedby="settingsApiKeyHint"
                   />
                   <button
                     class="btn btn-ghost"
@@ -624,7 +625,7 @@
                     x-text="apiKeyVisible ? 'Hide' : 'Show'"
                   ></button>
                 </div>
-                <small
+                <small id="settingsApiKeyHint"
                   ><span x-text="keyStatus"></span> Saved keys stay in this browser's localStorage
                   only.</small
                 >
@@ -764,8 +765,9 @@
                     @keydown.cmd.enter.prevent="runInterrogate"
                     @keydown.ctrl.enter.prevent="runInterrogate"
                     placeholder="Describe the vibe, audience, pages, interactions, references, anti-references, and what done looks like."
+                    aria-describedby="brainDumpHint"
                   ></textarea>
-                  <small
+                  <small id="brainDumpHint"
                     >This should feel like a creative director's messy notebook, not a startup pitch
                     deck. Press <kbd>Cmd/Ctrl+Enter</kbd> to interrogate.</small
                   >
@@ -907,6 +909,7 @@
                       :aria-activedescendant="referoFocusedIndex >= 0 && referoResults[referoFocusedIndex] ? 'refero-option-' + referoResults[referoFocusedIndex].id : null"
                       placeholder="Search Refero styles by name..."
                       autocomplete="off"
+                      aria-describedby="referoSearchHint"
                     />
                     <button
                       class="btn btn-ghost"
@@ -918,7 +921,7 @@
                       &times;
                     </button>
                   </div>
-                  <small
+                  <small id="referoSearchHint"
                     >Search
                     <a href="https://refero.design" target="_blank" rel="noopener">Refero</a> for
                     style inspiration. Results are cached for 5 minutes.</small
