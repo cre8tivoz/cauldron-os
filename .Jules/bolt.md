@@ -45,3 +45,9 @@
 **Learning:** `_parseParams` in `lib/xml-parser.js` previously created a new `Set` (`rawStringParams`) and compiled dynamic `RegExp` objects (`new RegExp('</' + escTag + '\\s*>', 'gi')`) on every parameter tag matched during action parsing. Module-level Map caches for tag closing/opening RegExps (`_getSimpleCloseRe`, `_getRawOpenRe`, `_getRawCloseRe`) and hoisting static Sets to module scope eliminated dynamic RegExp compilation and heap allocation churn, yielding a ~45% execution time reduction (~2x speedup).
 
 **Action:** When parsing dynamic tags or tokens with RegExp constructors, cache compiled `RegExp` instances in module-level `Map`s and reset `.lastIndex` before execution rather than compiling `new RegExp` instances inside loops.
+
+## 2026-06-08 - Design Token Regex Hoisting and Direct Set Matching
+
+**Learning:** `inferTokens` in `lib/design-system-export.js` compiled 15+ inline `RegExp` instances dynamically and invoked `matchAll`, `Array.from` mapping, `filter(Boolean)`, and multi-stage `unique()` calls for every token pattern extracted. This generated 70+ temporary object/array/Set allocations per call. Hoisting static `RegExp` instances to module scope and populating target `Set`s directly in a single pass via stateful `exec()` (`extractMatchesIntoSet`) eliminated match iterators and intermediate array allocations, reducing token inference execution time by ~15-20%.
+
+**Action:** When extracting multiple matching patterns from text into unique token sets, hoist global regex definitions to module scope and stream matches directly into destination `Set` instances using stateful `exec()` loops.

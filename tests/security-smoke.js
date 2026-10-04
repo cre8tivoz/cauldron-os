@@ -213,6 +213,14 @@ async function jsonRequest(pathname, options = {}) {
   );
   assert.throws(() => normaliseOpenAICompatibleChatUrl('http://169.254.169.254/v1'), /not allowed/);
   assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://[::ffff:169.254.169.254]/v1'),
+    /not allowed/
+  );
+  assert.throws(
+    () => normaliseOpenAICompatibleChatUrl('http://[::ffff:a9fe:a9fe]/v1'),
+    /not allowed/
+  );
+  assert.throws(
     () => normaliseOpenAICompatibleChatUrl('http://metadata.google.internal/v1'),
     /not allowed/
   );
