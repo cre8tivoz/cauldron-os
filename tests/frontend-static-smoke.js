@@ -53,6 +53,11 @@ assert.match(
 );
 assert.match(
   html,
+  /@keydown\.tab="trapSettingsFocus\(\$event\)"/,
+  'Settings modal should bind Tab keydown event to trap focus'
+);
+assert.match(
+  html,
   /aria-controls="settingsApiKey"/,
   'API key toggle button should associate with input via aria-controls'
 );
@@ -142,6 +147,7 @@ assert.match(appJs, /\/api\/build-agents/, 'Build agent detection API should be 
 assert.match(appJs, /\/api\/build-agents\/run/, 'Build agent run API should be called');
 assert.match(appJs, /toggleBuildAgent/, 'Multi-agent toggle handler should be wired');
 assert.match(appJs, /agentIds/, 'Build agent run should send multiple selected agent ids');
+assert.match(appJs, /trapSettingsFocus/, 'Settings modal focus trap method should be defined in app.js');
 assert.match(appJs, /submitCritique/, 'Critique submit handler should be wired');
 assert.match(
   appJs,

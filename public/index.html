@@ -329,6 +329,7 @@
           role="dialog"
           aria-modal="true"
           aria-labelledby="settingsTitle"
+          @keydown.tab="trapSettingsFocus($event)"
         >
           <div class="settings-head">
             <div>

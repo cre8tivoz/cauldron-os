@@ -526,6 +526,29 @@ function cauldronApp() {
       });
     },
 
+    trapSettingsFocus(event) {
+      if (!this.settingsOpen) return;
+      const modal = document.querySelector('.settings-panel');
+      if (!modal) return;
+      const focusables = modal.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first || !modal.contains(document.activeElement)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last || !modal.contains(document.activeElement)) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    },
+
     openApiKeySettings(message = '') {
       if (message) this.keyStatus = message;
       this.openSettings('api');
