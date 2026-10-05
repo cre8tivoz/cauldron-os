@@ -218,6 +218,8 @@ async function jsonRequest(pathname, options = {}) {
     () => normaliseOpenAICompatibleChatUrl('http://metadata.google.internal/v1'),
     /not allowed/
   );
+  assert.throws(() => normaliseOpenAICompatibleChatUrl('http://10.0.0.1.nip.io/v1'), /not allowed/);
+  assert.throws(() => normaliseOpenAICompatibleChatUrl('http://service.local/v1'), /not allowed/);
   assert.equal(
     normaliseOpenAICompatibleChatUrl('http://127.0.0.1:1234/v1'),
     'http://127.0.0.1:1234/v1/chat/completions'
