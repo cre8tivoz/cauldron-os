@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.50-blue.svg)](CHANGELOG.md)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
-[![GitHub](https://img.shields.io/badge/github-witchdaddylabs-181717.svg)](https://github.com/witchdaddylabs)
+[![GitHub](https://img.shields.io/badge/github-cre8tivoz-181717.svg)](https://github.com/cre8tivoz)
 
 <div align="center">
 
@@ -27,7 +27,7 @@ It is built for hobbyists, indie builders, designers, enthusiasts, and developer
 
 **Windows (easiest):**
 
-1. [Download Cauldron OS as a ZIP](https://github.com/witchdaddylabs/cauldron-os/archive/refs/heads/main.zip) and extract it.
+1. [Download Cauldron OS as a ZIP](https://github.com/cre8tivoz/cauldron-os/archive/refs/heads/main.zip) and extract it.
 2. Open the extracted folder and double-click `start-cauldron.bat`.
 3. Keep the launcher window open, then visit [http://localhost:3000](http://localhost:3000).
 
@@ -57,7 +57,7 @@ To generate with AI, choose either:
 <summary>Developer install from Git</summary>
 
 ```bash
-git clone https://github.com/witchdaddylabs/cauldron-os.git
+git clone https://github.com/cre8tivoz/cauldron-os.git
 cd cauldron-os
 npm install
 npm start
