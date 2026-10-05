@@ -530,8 +530,15 @@ function cauldronApp() {
       if (!this.settingsOpen) return;
       const modal = document.querySelector('.settings-panel');
       if (!modal) return;
-      const focusables = modal.querySelectorAll(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      const focusables = Array.from(
+        modal.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter(
+        (el) =>
+          el.checkVisibility
+            ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+            : Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
       );
       if (!focusables.length) return;
       const first = focusables[0];
