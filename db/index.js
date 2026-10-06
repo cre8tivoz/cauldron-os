@@ -111,6 +111,16 @@ function runMigrations() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  // Performance optimization: Database indexes on frequently queried/sorted fields avoid
+  // full table scans and in-memory sorts during draft, session, and research history lookups.
+  db.run('CREATE INDEX IF NOT EXISTS idx_drafts_updated_at ON drafts(updated_at DESC)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_drafts_project_name ON drafts(project_name)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_sessions_created_at ON sessions(created_at DESC)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_sessions_draft_id ON sessions(draft_id)');
+  db.run(
+    'CREATE INDEX IF NOT EXISTS idx_research_history_order ON research_history(favorite DESC, last_used_at DESC, updated_at DESC)'
+  );
 }
 
 function hasColumn(tableName, columnName) {
