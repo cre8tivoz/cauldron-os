@@ -172,6 +172,22 @@ async function jsonRequest(pathname, options = {}) {
     /private or reserved/
   );
   await assert.rejects(
+    () => assertSafeResearchUrl('http://192.0.2.1/test'),
+    /private or reserved/
+  );
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://198.18.0.1/bench'),
+    /private or reserved/
+  );
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://198.51.100.1/test2'),
+    /private or reserved/
+  );
+  await assert.rejects(
+    () => assertSafeResearchUrl('http://203.0.113.1/test3'),
+    /private or reserved/
+  );
+  await assert.rejects(
     () => assertSafeResearchUrl('http://metadata.google.internal/'),
     /not allowed/
   );
