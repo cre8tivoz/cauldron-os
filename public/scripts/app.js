@@ -526,6 +526,36 @@ function cauldronApp() {
       });
     },
 
+    trapSettingsFocus(event) {
+      if (!this.settingsOpen) return;
+      const modal = document.querySelector('.settings-panel');
+      if (!modal) return;
+      const focusables = Array.from(
+        modal.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter(
+        (el) =>
+          el.checkVisibility
+            ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+            : Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+      );
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first || !modal.contains(document.activeElement)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last || !modal.contains(document.activeElement)) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    },
+
     openApiKeySettings(message = '') {
       if (message) this.keyStatus = message;
       this.openSettings('api');
