@@ -1197,6 +1197,7 @@
                           type="button"
                           @click="importCommunityDesignSystem(system)"
                           :disabled="busy"
+                          :aria-label="'Import ' + (system.name || 'design system')"
                         >
                           Import
                         </button>
@@ -1237,6 +1238,7 @@
                           type="button"
                           @click="useCommunityTemplate(template)"
                           :disabled="busy"
+                          :aria-label="'Use ' + (template.name || 'scaffold') + ' starter'"
                         >
                           Use scaffold
                         </button>
@@ -1653,6 +1655,8 @@
                       style="margin-top: 8px"
                       @click="restorePrototypeIteration(iteration)"
                       :disabled="iteration.version === activePrototypeVersion"
+                      :aria-label="'Restore prototype version ' + iteration.version"
+                      :title="iteration.version === activePrototypeVersion ? 'Current active prototype version' : 'Restore prototype version ' + iteration.version"
                     >
                       Restore
                     </button>

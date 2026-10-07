@@ -534,11 +534,10 @@ function cauldronApp() {
         modal.querySelectorAll(
           'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
         )
-      ).filter(
-        (el) =>
-          el.checkVisibility
-            ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
-            : Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
+      ).filter((el) =>
+        el.checkVisibility
+          ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+          : Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length)
       );
       if (!focusables.length) return;
       const first = focusables[0];

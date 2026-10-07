@@ -134,7 +134,22 @@ assert.match(
   /importCommunityDesignSystem\(system\)/,
   'Community design-system import action should be wired'
 );
+assert.match(
+  html,
+  /:aria-label="'Import ' \+ \(system\.name \|\| 'design system'\)"/,
+  'Community design-system import buttons should have descriptive aria-label'
+);
 assert.match(html, /useCommunityTemplate\(template\)/, 'Community scaffold action should be wired');
+assert.match(
+  html,
+  /:aria-label="'Use ' \+ \(template\.name \|\| 'scaffold'\) \+ ' starter'"/,
+  'Community scaffold starter buttons should have descriptive aria-label'
+);
+assert.match(
+  html,
+  /:aria-label="'Restore prototype version ' \+ iteration\.version"/,
+  'Prototype iteration restore buttons should have descriptive aria-label'
+);
 assert.match(html, /:srcdoc="prototypeHtml"/, 'Prototype preview iframe should be present');
 assert.equal(
   (html.match(/allow-same-origin/g) || []).length,
@@ -147,7 +162,11 @@ assert.match(appJs, /\/api\/build-agents/, 'Build agent detection API should be 
 assert.match(appJs, /\/api\/build-agents\/run/, 'Build agent run API should be called');
 assert.match(appJs, /toggleBuildAgent/, 'Multi-agent toggle handler should be wired');
 assert.match(appJs, /agentIds/, 'Build agent run should send multiple selected agent ids');
-assert.match(appJs, /trapSettingsFocus/, 'Settings modal focus trap method should be defined in app.js');
+assert.match(
+  appJs,
+  /trapSettingsFocus/,
+  'Settings modal focus trap method should be defined in app.js'
+);
 assert.match(appJs, /submitCritique/, 'Critique submit handler should be wired');
 assert.match(
   appJs,
