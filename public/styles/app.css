@@ -1351,16 +1351,16 @@ select:focus {
   color: var(--acid-500);
 }
 .toast.success {
-  border-color: rgba(52, 211, 153, 0.38);
+  border-color: rgba(134, 239, 172, 0.38);
 }
 .toast.success strong {
-  color: #34d399;
+  color: var(--success);
 }
 .toast.warn {
   border-color: rgba(251, 191, 36, 0.42);
 }
 .toast.warn strong {
-  color: #fbbf24;
+  color: var(--warning);
 }
 .toast.error {
   border-color: rgba(251, 113, 133, 0.38);
@@ -1384,7 +1384,7 @@ select:focus {
 }
 
 .pipeline-empty {
-  color: #72727d;
+  color: var(--text-faint);
   font-style: italic;
   font-size: 12px;
 }
@@ -1495,6 +1495,53 @@ select:focus {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --text-muted: #c6cec5;
+    --text-faint: #aeb9b6;
+    --border-subtle: rgba(255, 255, 255, 0.28);
+    --border-strong: rgba(255, 255, 255, 0.48);
+  }
+}
+
+@media (forced-colors: active) {
+  .topbar,
+  .statusbar,
+  .workspace-panel,
+  .preview-panel,
+  .side-card,
+  .stage-card,
+  .modal-panel,
+  .toast,
+  .quality-badge,
+  .quality-chip,
+  .community-card,
+  .blueprint-history,
+  .stage-route-card {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid ButtonText;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
   }
 }
 
@@ -1620,12 +1667,12 @@ select:focus {
   border-radius: 2px;
 }
 .diff-line.is-add {
-  background: rgba(52, 211, 153, 0.1);
-  color: #34d399;
+  background: rgba(134, 239, 172, 0.1);
+  color: var(--success);
 }
 .diff-line.is-remove {
   background: rgba(251, 113, 133, 0.1);
-  color: #fb7185;
+  color: var(--danger);
 }
 .diff-line.is-context {
   color: var(--text-muted);
@@ -1655,29 +1702,29 @@ select:focus {
   border: 1px solid;
 }
 .quality-badge.grade-a {
-  background: rgba(52, 211, 153, 0.12);
-  border-color: rgba(52, 211, 153, 0.3);
-  color: #34d399;
+  background: rgba(134, 239, 172, 0.12);
+  border-color: rgba(134, 239, 172, 0.3);
+  color: var(--success);
 }
 .quality-badge.grade-b {
-  background: rgba(183, 148, 246, 0.12);
-  border-color: rgba(183, 148, 246, 0.3);
-  color: #b794f6;
+  background: rgba(167, 139, 250, 0.12);
+  border-color: rgba(167, 139, 250, 0.3);
+  color: var(--purple-400);
 }
 .quality-badge.grade-c {
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.3);
-  color: #fbbf24;
+  color: var(--warning);
 }
 .quality-badge.grade-d {
   background: rgba(251, 113, 133, 0.12);
   border-color: rgba(251, 113, 133, 0.3);
-  color: #fb7185;
+  color: var(--danger);
 }
 .quality-badge.grade-none {
-  background: rgba(114, 114, 125, 0.12);
-  border-color: rgba(114, 114, 125, 0.3);
-  color: #72727d;
+  background: rgba(141, 153, 150, 0.12);
+  border-color: rgba(141, 153, 150, 0.3);
+  color: var(--text-faint);
 }
 .quality-badge strong {
   font-size: 14px;
@@ -1705,7 +1752,7 @@ select:focus {
 .quality-chip.weak {
   background: rgba(251, 191, 36, 0.1);
   border-color: rgba(251, 191, 36, 0.3);
-  color: #fbbf24;
+  color: var(--warning);
 }
 .quality-chip strong {
   font-size: 11px;

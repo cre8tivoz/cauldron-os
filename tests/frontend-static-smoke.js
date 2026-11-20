@@ -217,4 +217,40 @@ assert.equal(
 );
 assert.match(html, /Follow global/, 'per-stage provider select must offer Follow global');
 
+const tokensCss = fs.readFileSync(
+  path.resolve(__dirname, '..', 'public', 'styles', 'tokens.css'),
+  'utf8'
+);
+const appCss = fs.readFileSync(
+  path.resolve(__dirname, '..', 'public', 'styles', 'app.css'),
+  'utf8'
+);
+
+assert.match(
+  tokensCss,
+  /--text-faint:\s*#8d9996;/,
+  '--text-faint should meet WCAG AA 4.5:1 contrast on dark card surfaces'
+);
+assert.match(tokensCss, /--text-subtle:/, 'Semantic --text-subtle token should be defined');
+assert.match(
+  appCss,
+  /@media\s*\(prefers-contrast:\s*more\)/,
+  'app.css should reinforce contrast when prefers-contrast: more is active'
+);
+assert.match(
+  appCss,
+  /@media\s*\(forced-colors:\s*active\)/,
+  'app.css should provide system color fallbacks for forced-colors mode'
+);
+assert.doesNotMatch(
+  html,
+  /#72727d/i,
+  'public/index.html should use --text-faint token instead of low-contrast #72727d'
+);
+assert.doesNotMatch(
+  appCss,
+  /#72727d/i,
+  'public/styles/app.css should use --text-faint token instead of low-contrast #72727d'
+);
+
 console.log('Frontend static smoke tests passed');

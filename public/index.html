@@ -23,24 +23,24 @@
     <style>
       /* ─── Pipeline Activity Log ─── */
       .pipeline-log {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--font-code);
         font-size: 12px;
         line-height: 1.8;
-        padding: 16px;
+        padding: var(--space-4);
         overflow-y: auto;
-        background: rgba(13, 13, 15, 0.6);
+        background: var(--surface-elevated);
         flex: 1;
         min-height: 0;
       }
       .pipeline-entry {
         display: flex;
         gap: 10px;
-        padding: 4px 0;
+        padding: var(--space-1) 0;
         opacity: 0;
         animation: pipelineLogIn 0.3s ease forwards;
       }
       .pipeline-entry .time {
-        color: #72727d;
+        color: var(--text-faint);
         flex-shrink: 0;
         min-width: 60px;
       }
@@ -48,16 +48,16 @@
         flex: 1;
       }
       .pipeline-entry .info {
-        color: #b794f6;
+        color: var(--purple-400);
       }
       .pipeline-entry .ok {
-        color: #34d399;
+        color: var(--success);
       }
       .pipeline-entry .warn {
-        color: #fbbf24;
+        color: var(--warning);
       }
       .pipeline-entry .error {
-        color: #fb7185;
+        color: var(--danger);
       }
       @keyframes pipelineLogIn {
         to {
@@ -67,12 +67,12 @@
       .pipeline-summary {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 8px 16px;
-        background: rgba(52, 211, 153, 0.06);
-        border-bottom: 1px solid rgba(52, 211, 153, 0.15);
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-4);
+        background: rgba(134, 239, 172, 0.06);
+        border-bottom: 1px solid rgba(134, 239, 172, 0.15);
         font-size: 11px;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--font-code);
         flex-shrink: 0;
       }
       .pipeline-summary .summary-link {
@@ -80,28 +80,28 @@
         border: none;
         padding: 0;
         font: inherit;
-        color: #b794f6;
+        color: var(--purple-400);
         cursor: pointer;
         text-decoration: underline;
       }
       .pipeline-summary .summary-link:hover,
       .pipeline-summary .summary-link:focus-visible {
-        color: #d9d9dd;
+        color: var(--text-subtle);
       }
       .pipeline-progress {
         display: grid;
-        gap: 8px;
-        padding: 10px 16px;
+        gap: var(--space-2);
+        padding: 10px var(--space-4);
         border-bottom: 1px solid rgba(193, 255, 0, 0.14);
         background: rgba(193, 255, 0, 0.045);
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--font-code);
         font-size: 11px;
       }
       .pipeline-progress-head {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
-        color: #a9b1a9;
+        gap: var(--space-3);
+        color: var(--text-muted);
       }
       .pipeline-progress-track {
         height: 7px;
@@ -133,19 +133,19 @@
         background: transparent;
       }
       .pipeline-tab.active {
-        background: rgba(183, 148, 246, 0.15);
-        color: #b794f6;
+        background: rgba(167, 139, 250, 0.15);
+        color: var(--purple-400);
       }
       .pipeline-tab:not(.active) {
-        color: #72727d;
+        color: var(--text-faint);
       }
       .pipeline-tab:not(.active):hover {
-        color: #d9d9dd;
+        color: var(--text-subtle);
       }
       .stage-model-label {
         display: block;
         font-size: 9px;
-        color: #72727d;
+        color: var(--text-faint);
         margin-top: 1px;
         font-weight: 400;
       }
@@ -154,11 +154,11 @@
         width: 10px;
         height: 10px;
         border: 2px solid rgba(251, 191, 36, 0.3);
-        border-top-color: #fbbf24;
+        border-top-color: var(--warning);
         border-radius: 50%;
         animation: pipelineSpin 0.6s linear infinite;
         vertical-align: middle;
-        margin-right: 4px;
+        margin-inline-end: var(--space-1);
       }
       @keyframes pipelineSpin {
         to {
@@ -2095,7 +2095,11 @@
                       <span class="info" x-text="entry.label"></span>
                       <span
                         x-show="entry.duration"
-                        style="color: #72727d; font-size: 11px; margin-left: 4px"
+                        style="
+                          color: var(--text-faint);
+                          font-size: 11px;
+                          margin-inline-start: var(--space-1);
+                        "
                         x-text="'(' + Number(entry.duration || 0).toFixed(1) + 's)'"
                       ></span>
                       <span
